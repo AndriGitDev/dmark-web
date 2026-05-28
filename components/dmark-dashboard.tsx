@@ -9,14 +9,19 @@ import {
   Check,
   ChevronDown,
   Clock3,
+  Copy,
+  Download,
+  Filter,
   FileText,
   Gauge,
   Globe2,
   LayoutDashboard,
   Menu,
   Plus,
+  RefreshCw,
   Search,
   Settings,
+  SlidersHorizontal,
   ShieldCheck,
   Sparkles,
   X,
@@ -53,6 +58,37 @@ const scoreBands = [
   { label: "Fri", value: 88 },
   { label: "Sat", value: 90 },
   { label: "Sun", value: 92 },
+];
+
+const dnsChangePlan = [
+  {
+    label: "SPF flatten",
+    record: "v=spf1 include:_dmark.northwind.is include:spf.protection.outlook.com -all",
+    state: "Ready",
+  },
+  {
+    label: "DMARC quarantine",
+    record: "v=DMARC1; p=quarantine; pct=25; rua=mailto:dmarc@northwind.is",
+    state: "Review",
+  },
+  {
+    label: "DKIM selector",
+    record: "selector1._domainkey CNAME selector1-northwind-is._domainkey.tenant.onmicrosoft.com",
+    state: "Waiting",
+  },
+];
+
+const policySteps = [
+  { label: "Monitor", policy: "p=none", active: true },
+  { label: "Quarantine", policy: "pct=25", active: true },
+  { label: "Reject", policy: "p=reject", active: false },
+];
+
+const reporterBars = [
+  { label: "Microsoft 365", value: 99, color: "bg-emerald-500" },
+  { label: "Google", value: 98, color: "bg-blue-500" },
+  { label: "Sendgrid", value: 92, color: "bg-amber-500" },
+  { label: "Unknown ASN", value: 42, color: "bg-red-500" },
 ];
 
 function metricTone(tone: string) {
@@ -299,6 +335,8 @@ function OverviewTab({
 }) {
   return (
     <div className="grid gap-6">
+      <CommandCenter selectedDomain={selectedDomain} onOpenReporter={() => onOpenTab("reporter")} />
+
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {dashboardMetrics.map((metric) => {
           const Icon = metric.icon;
@@ -411,6 +449,85 @@ function OverviewTab({
   );
 }
 
+function CommandCenter({
+  selectedDomain,
+  onOpenReporter,
+}: {
+  selectedDomain: ProtectedDomain;
+  onOpenReporter: () => void;
+}) {
+  return (
+    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="grid gap-0 lg:grid-cols-[1fr_420px]">
+        <div className="p-5 sm:p-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="inline-flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 font-mono text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-trust">
+              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+              Operator view
+            </span>
+            <span className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${statusTone(selectedDomain.status)}`}>
+              {formatStatus(selectedDomain.status)}
+            </span>
+          </div>
+          <div className="mt-5 flex flex-col justify-between gap-5 xl:flex-row xl:items-end">
+            <div>
+              <h2 className="text-3xl font-semibold tracking-tight text-navy">{selectedDomain.domain}</h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{selectedDomain.nextAction}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-trust px-4 text-sm font-semibold text-white transition hover:bg-trust-hover"
+              >
+                <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                Recheck DNS
+              </button>
+              <button
+                type="button"
+                onClick={onOpenReporter}
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:border-trust hover:text-trust"
+              >
+                <BarChart3 className="h-4 w-4" aria-hidden="true" />
+                Reports
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-3 md:grid-cols-3">
+            <CompactStat label="Trust score" value={`${selectedDomain.score}`} detail="Weighted DNS posture" />
+            <CompactStat label="Alignment" value={`${selectedDomain.alignmentRate}%`} detail="Last 7 days" />
+            <CompactStat label="Unknown senders" value={`${selectedDomain.unknownSenders}`} detail="Needs classification" />
+          </div>
+        </div>
+
+        <div className="border-t border-slate-200 bg-slate-50 p-5 lg:border-l lg:border-t-0">
+          <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Enforcement ladder
+          </p>
+          <div className="mt-5 grid gap-3">
+            {policySteps.map((step, index) => (
+              <div key={step.label} className="flex items-center gap-3">
+                <span
+                  className={`grid h-9 w-9 place-items-center rounded-md border text-sm font-semibold ${
+                    step.active ? "border-trust bg-blue-50 text-trust" : "border-slate-200 bg-white text-slate-400"
+                  }`}
+                >
+                  {index + 1}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-navy">{step.label}</p>
+                  <p className="font-mono text-xs text-slate-500">{step.policy}</p>
+                </div>
+                {step.active ? <Check className="h-4 w-4 text-emerald-600" aria-hidden="true" /> : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function DomainsTab({
   domains,
   selectedDomainID,
@@ -486,7 +603,56 @@ function DomainsTab({
           </article>
         ))}
       </div>
+
+      <DNSChangePlan />
     </div>
+  );
+}
+
+function DNSChangePlan() {
+  return (
+    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+        <div>
+          <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Change plan
+          </p>
+          <h3 className="mt-2 text-xl font-semibold text-navy">DNS records ready for approval</h3>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            Staged changes are written as provider-safe records before anyone touches production DNS.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:border-trust hover:text-trust"
+        >
+          <Download className="h-4 w-4" aria-hidden="true" />
+          Export
+        </button>
+      </div>
+      <div className="mt-5 grid gap-3">
+        {dnsChangePlan.map((change) => (
+          <div key={change.label} className="grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[180px_1fr_auto] lg:items-center">
+            <div>
+              <p className="text-sm font-semibold text-navy">{change.label}</p>
+              <span className="mt-2 inline-flex rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">
+                {change.state}
+              </span>
+            </div>
+            <code className="overflow-x-auto rounded-md border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-700">
+              {change.record}
+            </code>
+            <button
+              type="button"
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-navy px-3 text-sm font-semibold text-white transition hover:bg-navy-soft"
+            >
+              <Copy className="h-4 w-4" aria-hidden="true" />
+              Copy
+            </button>
+          </div>
+        ))}
+      </div>
+    </article>
   );
 }
 
@@ -506,6 +672,59 @@ function ReporterTab({ selectedDomain }: { selectedDomain: ProtectedDomain }) {
         <CompactStat label="Report volume" value="1.8M" detail="Last 7 days" />
         <CompactStat label="Aligned messages" value="96.4%" detail="SPF or DKIM aligned" />
         <CompactStat label="Reporter orgs" value="14" detail="Google, Yahoo, Microsoft and more" />
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
+        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Alignment by source
+              </p>
+              <h3 className="mt-2 text-xl font-semibold text-navy">Where trust is drifting</h3>
+            </div>
+            <button
+              type="button"
+              className="grid h-10 w-10 place-items-center rounded-md border border-slate-200 text-slate-600 transition hover:border-trust hover:text-trust"
+              aria-label="Filter sources"
+            >
+              <Filter className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
+          <div className="mt-5 grid gap-4">
+            {reporterBars.map((bar) => (
+              <div key={bar.label}>
+                <div className="flex items-center justify-between gap-4 text-sm">
+                  <span className="font-semibold text-navy">{bar.label}</span>
+                  <span className="font-mono text-xs text-slate-500">{bar.value}%</span>
+                </div>
+                <div className="mt-2 h-3 overflow-hidden rounded-full bg-slate-100">
+                  <div className={`h-full rounded-full ${bar.color}`} style={{ width: `${bar.value}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Report controls
+              </p>
+              <h3 className="mt-2 text-xl font-semibold text-navy">Executive packet</h3>
+            </div>
+            <SlidersHorizontal className="h-5 w-5 text-trust" aria-hidden="true" />
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            <CompactStat label="Window" value="7d" detail="Rolling import" />
+            <CompactStat label="Failures" value="64k" detail="Needs owner" />
+            <CompactStat label="Ready" value="4" detail="p=reject candidates" />
+          </div>
+          <p className="mt-4 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-800">
+            Package the sender inventory, DMARC progression, and DNS change plan into one approval-ready report.
+          </p>
+        </article>
       </section>
 
       <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
