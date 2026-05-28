@@ -35,6 +35,7 @@ export type BackendDashboardDomainDetailResponse = {
 
 export type BackendDashboardRecheckResponse = {
   job_id?: string;
+  check_id?: string;
   domain_id: string;
   status: "queued" | "coalesced" | "completed" | string;
   queued_at?: string;
@@ -84,6 +85,34 @@ export type BackendDashboardReporterResponse = {
   reject_candidates: number;
   setup_guidance?: string;
   sender_inventory: BackendDashboardSender[];
+};
+
+export type BackendDashboardBrandRiskFinding = {
+  category: string;
+  type: string;
+  title: string;
+  severity: "Info" | "Low" | "Medium" | "High" | "Critical" | string;
+  evidence: string;
+  recommended_action: string;
+};
+
+export type BackendDashboardLookalikeRiskSignal = {
+  domain: string;
+  kind: "typo" | "homoglyph" | string;
+  reason: string;
+  has_address_records: boolean;
+  has_mx_records: boolean;
+  severity: "Info" | "Low" | "Medium" | "High" | "Critical" | string;
+  evidence: string;
+  recommended_action: string;
+};
+
+export type BackendDashboardBrandRiskResponse = {
+  domain_id: string;
+  domain: string;
+  generated_at: string;
+  findings: BackendDashboardBrandRiskFinding[];
+  lookalikes: BackendDashboardLookalikeRiskSignal[];
 };
 
 export type BackendDashboardAlert = {
@@ -138,7 +167,7 @@ export function shouldUseDashboardMock(): boolean {
 }
 
 export function dashboardBackendURL(path: string): URL {
-  const base = process.env.DMARK_APP_API_BASE_URL?.trim();
+  const base = (process.env.DMARK_APP_API_BASE_URL || process.env.DMARK_API_BASE_URL || "").trim();
 
   if (!base) {
     throw new DashboardAPIError("Dashboard backend base URL is not configured.", 503);
@@ -162,7 +191,7 @@ export async function dashboardFetch<T>(path: string, init: RequestInit = {}): P
 }
 
 export async function dashboardProxyFetch(path: string, init: RequestInit = {}): Promise<Response> {
-  const token = process.env.DMARK_APP_API_TOKEN?.trim();
+  const token = (process.env.DMARK_APP_API_TOKEN || process.env.DMARK_API_TOKEN || "").trim();
 
   if (!token) {
     throw new DashboardAPIError("Dashboard backend API token is not configured.", 503);
@@ -172,12 +201,30 @@ export async function dashboardProxyFetch(path: string, init: RequestInit = {}):
   const headers = new Headers(init.headers);
   headers.set("accept", headers.get("accept") || "application/json");
   headers.set("authorization", `Bearer ${token}`);
+  const timeoutMs = Number(process.env.DMARK_API_TIMEOUT_MS || 10000);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), Number.isFinite(timeoutMs) ? timeoutMs : 10000);
 
-  const response = await fetch(url, {
-    ...init,
-    headers,
-    cache: "no-store",
-  });
+  if (init.signal) {
+    init.signal.addEventListener("abort", () => controller.abort(), { once: true });
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...init,
+      headers,
+      cache: "no-store",
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new DashboardAPIError("Dashboard backend request timed out.", 504);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
     throw new DashboardAPIError(await dashboardErrorMessage(response), response.status);

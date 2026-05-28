@@ -34,6 +34,7 @@ import {
 import {
   acknowledgeDashboardAlert,
   fetchReporterCSV,
+  getBrandRiskData,
   getChangePlan,
   getDashboardData,
   getReporterData,
@@ -41,6 +42,8 @@ import {
   recheckDashboardDomain,
   saveDashboardSettings,
   type AlertSeverity,
+  type BrandRiskSeverity,
+  type BrandRiskViewModel,
   type ChangePlanViewModel,
   type DashboardAlert,
   type DashboardIconName,
@@ -56,12 +59,14 @@ const navItems = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "domains", label: "Domains", icon: Globe2 },
   { id: "reporter", label: "Reporter", icon: BarChart3 },
+  { id: "brand-risk", label: "Brand Risk", icon: ShieldAlert },
   { id: "alerts", label: "Alerts", icon: Bell },
   { id: "settings", label: "Settings", icon: Settings },
 ] as const;
 
 type TabID = (typeof navItems)[number]["id"];
-type SettingsKey = "alignmentGate" | "pauseOnUnknownSpike" | "monthlyReports";
+type SettingsKey = "pauseOnUnknownSpike" | "monthlyReports";
+type NotificationChannel = "email" | "slack" | "webhook";
 type LoadState = "idle" | "loading" | "ready" | "error";
 
 type DmarkDashboardProps = {
@@ -105,6 +110,34 @@ function severityTone(severity: AlertSeverity) {
       return "border-amber-200 bg-amber-50 text-amber-700";
     default:
       return "border-slate-200 bg-slate-50 text-slate-700";
+  }
+}
+
+function brandRiskSeverityTone(severity: BrandRiskSeverity) {
+  switch (severity) {
+    case "Critical":
+      return "border-red-200 bg-red-50 text-red-700";
+    case "High":
+      return "border-orange-200 bg-orange-50 text-orange-700";
+    case "Medium":
+      return "border-amber-200 bg-amber-50 text-amber-700";
+    case "Low":
+      return "border-blue-200 bg-blue-50 text-blue-700";
+    default:
+      return "border-slate-200 bg-slate-50 text-slate-700";
+  }
+}
+
+function changeStatusTone(status: string) {
+  switch (status) {
+    case "ready":
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    case "review":
+      return "border-blue-200 bg-blue-50 text-blue-700";
+    case "blocked":
+      return "border-red-200 bg-red-50 text-red-700";
+    default:
+      return "border-amber-200 bg-amber-50 text-amber-700";
   }
 }
 
@@ -162,6 +195,12 @@ export function DmarkDashboard({
   const [changePlan, setChangePlan] = useState<ChangePlanViewModel | null>(null);
   const [changePlanState, setChangePlanState] = useState<LoadState>("idle");
   const [changePlanError, setChangePlanError] = useState("");
+  const [brandRisk, setBrandRisk] = useState<BrandRiskViewModel | null>(null);
+  const [brandRiskState, setBrandRiskState] = useState<LoadState>("idle");
+  const [brandRiskError, setBrandRiskError] = useState("");
+  const [includeInactiveBrandRisk, setIncludeInactiveBrandRisk] = useState(false);
+  const [savingSettingsForm, setSavingSettingsForm] = useState(false);
+  const [settingsError, setSettingsError] = useState("");
 
   const domains = dashboard.protectedDomains;
 
@@ -236,6 +275,35 @@ export function DmarkDashboard({
       ignore = true;
     };
   }, [activeTab, selectedDomain]);
+
+  useEffect(() => {
+    if (!selectedDomain || activeTab !== "brand-risk") return;
+
+    let ignore = false;
+
+    async function loadBrandRisk() {
+      setBrandRiskState("loading");
+      setBrandRiskError("");
+
+      try {
+        const payload = await getBrandRiskData(selectedDomain!.id, { tld: "is", limit: 25, includeInactive: includeInactiveBrandRisk });
+        if (ignore) return;
+        setBrandRisk(payload);
+        setBrandRiskState("ready");
+      } catch (error) {
+        if (ignore) return;
+        setBrandRisk(null);
+        setBrandRiskState("error");
+        setBrandRiskError(errorMessage(error, "Brand Risk data could not be loaded."));
+      }
+    }
+
+    void loadBrandRisk();
+
+    return () => {
+      ignore = true;
+    };
+  }, [activeTab, selectedDomain, includeInactiveBrandRisk]);
 
   function announce(message: string) {
     setActionNotice(message);
@@ -317,6 +385,7 @@ export function DmarkDashboard({
     const previous = settings;
     setSettings(next);
     setSavingSetting(key);
+    setSettingsError("");
 
     try {
       const saved = await saveDashboardSettings(next);
@@ -324,10 +393,52 @@ export function DmarkDashboard({
       announce("Automation setting saved.");
     } catch (error) {
       setSettings(previous);
-      announce(errorMessage(error, "Settings could not be saved."));
+      const message = errorMessage(error, "Settings could not be saved.");
+      setSettingsError(message);
+      announce(message);
     } finally {
       setSavingSetting(null);
     }
+  }
+
+  async function saveSettingsPatch(next: SettingsState) {
+    const threshold = Math.round(next.alignmentThreshold);
+    if (!Number.isFinite(threshold) || threshold < 1 || threshold > 100) {
+      setSettingsError("Alignment threshold must be between 1 and 100.");
+      announce("Alignment threshold must be between 1 and 100.");
+      return;
+    }
+
+    const previous = settings;
+    const normalized = { ...next, alignmentThreshold: threshold };
+    setSettings(normalized);
+    setSavingSettingsForm(true);
+    setSettingsError("");
+
+    try {
+      const saved = await saveDashboardSettings(normalized);
+      setSettings(saved);
+      announce("Dashboard settings saved.");
+    } catch (error) {
+      const message = errorMessage(error, "Settings could not be saved.");
+      setSettings(previous);
+      setSettingsError(message);
+      announce(message);
+    } finally {
+      setSavingSettingsForm(false);
+    }
+  }
+
+  function updateSettingsDraft(next: SettingsState) {
+    setSettings(next);
+    if (settingsError) setSettingsError("");
+  }
+
+  function toggleNotificationChannel(channel: NotificationChannel) {
+    const channels = settings.notificationChannels.includes(channel)
+      ? settings.notificationChannels.filter((item) => item !== channel)
+      : [...settings.notificationChannels, channel];
+    void saveSettingsPatch({ ...settings, notificationChannels: channels });
   }
 
   async function exportReporterCSV() {
@@ -448,11 +559,33 @@ export function DmarkDashboard({
               onExport={exportReporterCSV}
             />
           ) : null}
+          {activeTab === "brand-risk" ? (
+            <BrandRiskTab
+              selectedDomain={selectedDomain}
+              brandRisk={brandRisk}
+              brandRiskState={brandRiskState}
+              brandRiskError={brandRiskError}
+              includeInactive={includeInactiveBrandRisk}
+              onToggleInactive={() => {
+                setIncludeInactiveBrandRisk((current) => !current);
+                announce(!includeInactiveBrandRisk ? "Including inactive lookalike candidates." : "Showing active lookalike evidence only.");
+              }}
+            />
+          ) : null}
           {activeTab === "alerts" ? (
             <AlertsTab alerts={activeAlerts} onOpenDomains={() => setActiveTab("domains")} onResolveAlert={resolveAlert} />
           ) : null}
           {activeTab === "settings" ? (
-            <SettingsTab settings={settings} savingSetting={savingSetting} onToggle={toggleSetting} />
+            <SettingsTab
+              settings={settings}
+              savingSetting={savingSetting}
+              savingSettingsForm={savingSettingsForm}
+              error={settingsError}
+              onToggle={toggleSetting}
+              onDraftChange={updateSettingsDraft}
+              onSave={saveSettingsPatch}
+              onToggleChannel={toggleNotificationChannel}
+            />
           ) : null}
         </main>
       </div>
@@ -576,6 +709,7 @@ function OverviewTab({
       <CommandCenter
         selectedDomain={selectedDomain}
         onOpenReporter={() => onOpenTab("reporter")}
+        onOpenBrandRisk={() => onOpenTab("brand-risk")}
         onRecheckDomain={onRecheckDomain}
         recheckingDomainID={recheckingDomainID}
       />
@@ -681,11 +815,13 @@ function OverviewTab({
 function CommandCenter({
   selectedDomain,
   onOpenReporter,
+  onOpenBrandRisk,
   onRecheckDomain,
   recheckingDomainID,
 }: {
   selectedDomain: ProtectedDomain;
   onOpenReporter: () => void;
+  onOpenBrandRisk: () => void;
   onRecheckDomain: (domain: ProtectedDomain) => void;
   recheckingDomainID: string | null;
 }) {
@@ -726,6 +862,14 @@ function CommandCenter({
               >
                 <BarChart3 className="h-4 w-4" aria-hidden="true" />
                 Reports
+              </button>
+              <button
+                type="button"
+                onClick={onOpenBrandRisk}
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:border-trust hover:text-trust"
+              >
+                <ShieldAlert className="h-4 w-4" aria-hidden="true" />
+                Brand Risk
               </button>
             </div>
           </div>
@@ -921,32 +1065,63 @@ function DNSChangePlan({
         <PanelNotice text={changePlan.nextAction || "No DNS changes are currently staged for this domain."} />
       ) : null}
 
+      {changePlan ? (
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          {changePlan.journeyState ? <CompactStat label="Journey state" value={changePlan.journeyState.replaceAll("_", " ")} /> : null}
+          {changePlan.nextAction ? <CompactStat label="Next action" value={changePlan.nextAction} /> : null}
+        </div>
+      ) : null}
+
       {changePlan?.changes.length ? (
-        <div className="mt-5 grid gap-3">
+        <div className="mt-5 overflow-x-auto">
+          <table className="w-full min-w-[940px] text-left text-sm">
+            <thead className="bg-slate-50 text-xs uppercase tracking-[0.12em] text-slate-500">
+              <tr>
+                <th className="px-4 py-3 font-semibold">Change</th>
+                <th className="px-4 py-3 font-semibold">Record</th>
+                <th className="px-4 py-3 font-semibold">Evidence</th>
+                <th className="px-4 py-3 font-semibold">Risk</th>
+                <th className="px-4 py-3 font-semibold">Rollback</th>
+                <th className="px-4 py-3 font-semibold">Copy</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
           {changePlan.changes.map((change) => (
-            <div
+            <tr
               key={change.id}
-              className="grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-4 lg:grid-cols-[180px_1fr_auto] lg:items-center"
+              className="align-top"
             >
-              <div>
-                <p className="text-sm font-semibold text-navy">{change.label}</p>
-                <span className="mt-2 inline-flex rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">
+              <td className="px-4 py-4">
+                <p className="font-semibold text-navy">{change.title}</p>
+                <span className={`mt-2 inline-flex rounded-md border px-2.5 py-1 text-xs font-semibold ${changeStatusTone(change.state)}`}>
                   {change.state}
                 </span>
-              </div>
-              <code className="overflow-x-auto rounded-md border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-700">
-                {change.record}
-              </code>
-              <button
-                type="button"
-                onClick={() => onCopy(change.record, `${change.label} record`)}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-navy px-3 text-sm font-semibold text-white transition hover:bg-navy-soft"
-              >
-                <Copy className="h-4 w-4" aria-hidden="true" />
-                Copy
-              </button>
-            </div>
+              </td>
+              <td className="px-4 py-4">
+                <p className="font-mono text-xs font-semibold text-slate-500">
+                  {[change.recordName, change.recordType].filter(Boolean).join(" ")}
+                </p>
+                <code className="mt-2 block max-w-[26rem] overflow-x-auto rounded-md border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-700">
+                  {change.recordText}
+                </code>
+              </td>
+              <td className="max-w-[15rem] px-4 py-4 text-slate-600">{change.evidence || "No evidence returned."}</td>
+              <td className="max-w-[15rem] px-4 py-4 text-slate-600">{change.risk || "No risk note returned."}</td>
+              <td className="max-w-[15rem] px-4 py-4 text-slate-600">{change.rollbackNote || "No rollback note returned."}</td>
+              <td className="px-4 py-4">
+                <button
+                  type="button"
+                  onClick={() => onCopy(change.recordText, `${change.title} record`)}
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-navy px-3 text-sm font-semibold text-white transition hover:bg-navy-soft"
+                >
+                  <Copy className="h-4 w-4" aria-hidden="true" />
+                  Copy
+                </button>
+              </td>
+            </tr>
           ))}
+            </tbody>
+          </table>
         </div>
       ) : null}
     </article>
@@ -991,10 +1166,12 @@ function ReporterTab({
 
       {reporter ? (
         <>
-          <section className="grid gap-4 md:grid-cols-3">
+          <section className="grid gap-4 md:grid-cols-5">
             <CompactStat label="Report volume" value={reporter.reportVolume} detail="Current reporting window" />
             <CompactStat label="Aligned messages" value={`${reporter.alignedPercentage}%`} detail="SPF or DKIM aligned" />
             <CompactStat label="Reporter orgs" value={`${reporter.reporterOrgCount}`} detail="Aggregate senders" />
+            <CompactStat label="Failures" value={reporter.failures} detail="Unaligned reports" />
+            <CompactStat label="Reject candidates" value={`${reporter.rejectCandidates}`} detail="Ready to review" />
           </section>
 
           {reporter.setupGuidance ? <PanelNotice text={reporter.setupGuidance} /> : null}
@@ -1064,6 +1241,174 @@ function ReporterTab({
             ) : (
               <div className="p-5">
                 <PanelNotice text={reporter.setupGuidance || "Reporter is configured, but no sender inventory has been received yet."} />
+              </div>
+            )}
+          </article>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function BrandRiskTab({
+  selectedDomain,
+  brandRisk,
+  brandRiskState,
+  brandRiskError,
+  includeInactive,
+  onToggleInactive,
+}: {
+  selectedDomain?: ProtectedDomain;
+  brandRisk: BrandRiskViewModel | null;
+  brandRiskState: LoadState;
+  brandRiskError: string;
+  includeInactive: boolean;
+  onToggleInactive: () => void;
+}) {
+  if (!selectedDomain) {
+    return <EmptyState icon={ShieldAlert} title="Domain not found" detail="Select an existing protected domain before opening Brand Risk." />;
+  }
+
+  return (
+    <div className="grid gap-6">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-trust">Brand Risk</p>
+          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-navy">{selectedDomain.domain}</h2>
+        </div>
+        <button
+          type="button"
+          onClick={onToggleInactive}
+          className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-4 text-sm font-semibold transition ${
+            includeInactive
+              ? "border-trust bg-blue-50 text-trust"
+              : "border-slate-300 bg-white text-slate-700 hover:border-trust hover:text-trust"
+          }`}
+          aria-pressed={includeInactive}
+        >
+          <Filter className="h-4 w-4" aria-hidden="true" />
+          {includeInactive ? "Hide inactive" : "Include inactive"}
+        </button>
+      </div>
+
+      {brandRiskState === "loading" ? <PanelNotice text="Loading Brand Risk data..." /> : null}
+      {brandRiskState === "error" ? <PanelNotice tone="error" text={brandRiskError || "Brand Risk data could not be loaded."} /> : null}
+
+      {brandRisk ? (
+        <>
+          <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+              <div>
+                <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Email-auth findings
+                </p>
+                <h3 className="mt-2 text-xl font-semibold text-navy">Authentication posture</h3>
+              </div>
+              <span className="rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">
+                {brandRisk.findings.length} finding{brandRisk.findings.length === 1 ? "" : "s"}
+              </span>
+            </div>
+
+            {brandRisk.findings.length ? (
+              <div className="mt-5 grid gap-3">
+                {brandRisk.findings.map((finding) => (
+                  <div key={finding.id} className="rounded-md border border-slate-200 bg-slate-50 p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${brandRiskSeverityTone(finding.severity)}`}>
+                        {finding.severity}
+                      </span>
+                      <span className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">
+                        {finding.category}
+                      </span>
+                    </div>
+                    <h4 className="mt-3 text-base font-semibold text-navy">{finding.title}</h4>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{finding.evidence}</p>
+                    <p className="mt-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm leading-6 text-blue-800">
+                      {finding.recommendedAction}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <PanelNotice text="No email-auth Brand Risk findings were returned for this domain." />
+            )}
+          </article>
+
+          <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+            <div className="flex flex-col justify-between gap-3 border-b border-slate-200 p-5 sm:flex-row sm:items-center">
+              <div>
+                <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Defender lookalikes
+                </p>
+                <h3 className="mt-2 text-xl font-semibold text-navy">Lookalike-domain evidence</h3>
+              </div>
+              <span className="rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">
+                {brandRisk.lookalikes.filter((candidate) => candidate.activeEvidence).length} active
+              </span>
+            </div>
+
+            {brandRisk.lookalikes.length ? (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[900px] text-left text-sm">
+                  <thead className="bg-slate-50 text-xs uppercase tracking-[0.12em] text-slate-500">
+                    <tr>
+                      <th className="px-5 py-3 font-semibold">Domain</th>
+                      <th className="px-5 py-3 font-semibold">Kind</th>
+                      <th className="px-5 py-3 font-semibold">DNS evidence</th>
+                      <th className="px-5 py-3 font-semibold">Severity</th>
+                      <th className="px-5 py-3 font-semibold">Recommended action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {brandRisk.lookalikes.map((candidate) => (
+                      <tr key={candidate.id} className="align-top">
+                        <td className="px-5 py-4">
+                          <p className="font-semibold text-navy">{candidate.domain}</p>
+                          <p className="mt-1 max-w-[18rem] text-sm leading-6 text-slate-600">{candidate.reason}</p>
+                          {!candidate.activeEvidence ? (
+                            <span className="mt-2 inline-flex rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                              Inactive candidate
+                            </span>
+                          ) : null}
+                        </td>
+                        <td className="px-5 py-4 text-slate-600">{candidate.kind}</td>
+                        <td className="px-5 py-4">
+                          <div className="flex flex-wrap gap-2">
+                            <span
+                              className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${
+                                candidate.hasAddressRecords
+                                  ? "border-orange-200 bg-orange-50 text-orange-700"
+                                  : "border-slate-200 bg-slate-50 text-slate-500"
+                              }`}
+                            >
+                              A/AAAA
+                            </span>
+                            <span
+                              className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${
+                                candidate.hasMXRecords
+                                  ? "border-orange-200 bg-orange-50 text-orange-700"
+                                  : "border-slate-200 bg-slate-50 text-slate-500"
+                              }`}
+                            >
+                              MX
+                            </span>
+                          </div>
+                          <p className="mt-2 max-w-[18rem] text-sm leading-6 text-slate-600">{candidate.evidence}</p>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${brandRiskSeverityTone(candidate.severity)}`}>
+                            {candidate.severity}
+                          </span>
+                        </td>
+                        <td className="max-w-[18rem] px-5 py-4 text-slate-600">{candidate.recommendedAction}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="p-5">
+                <PanelNotice text="Brand Risk has no active lookalike DNS or MX evidence for this domain." />
               </div>
             )}
           </article>
@@ -1150,12 +1495,24 @@ function AlertsTab({
 function SettingsTab({
   settings,
   savingSetting,
+  savingSettingsForm,
+  error,
   onToggle,
+  onDraftChange,
+  onSave,
+  onToggleChannel,
 }: {
   settings: SettingsState;
   savingSetting: SettingsKey | null;
+  savingSettingsForm: boolean;
+  error: string;
   onToggle: (key: SettingsKey) => void;
+  onDraftChange: (settings: SettingsState) => void;
+  onSave: (settings: SettingsState) => void;
+  onToggleChannel: (channel: NotificationChannel) => void;
 }) {
+  const channels: NotificationChannel[] = ["email", "slack", "webhook"];
+
   return (
     <div className="grid gap-6">
       <div>
@@ -1175,12 +1532,30 @@ function SettingsTab({
             <Gauge className="h-5 w-5 text-trust" aria-hidden="true" />
           </div>
           <div className="mt-6 grid gap-4">
-            <SettingRow
-              title="Require 95% alignment before p=reject"
-              enabled={settings.alignmentGate}
-              saving={savingSetting === "alignmentGate"}
-              onToggle={() => onToggle("alignmentGate")}
-            />
+            <label className="grid gap-2">
+              <span className="text-sm font-semibold text-navy">Alignment threshold before p=reject</span>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={settings.alignmentThreshold}
+                  onChange={(event) =>
+                    onDraftChange({ ...settings, alignmentThreshold: Number.parseInt(event.target.value || "0", 10) })
+                  }
+                  className="min-h-11 w-28 rounded-md border border-slate-300 px-3 text-sm font-semibold text-navy outline-none focus:border-trust"
+                />
+                <span className="text-sm font-semibold text-slate-600">%</span>
+                <button
+                  type="button"
+                  onClick={() => onSave(settings)}
+                  disabled={savingSettingsForm}
+                  className="inline-flex min-h-11 items-center justify-center rounded-md bg-trust px-4 text-sm font-semibold text-white transition hover:bg-trust-hover disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {savingSettingsForm ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </label>
             <SettingRow
               title="Pause automation when unknown senders spike"
               enabled={settings.pauseOnUnknownSpike}
@@ -1194,6 +1569,7 @@ function SettingsTab({
               onToggle={() => onToggle("monthlyReports")}
             />
           </div>
+          {error ? <PanelNotice tone="error" text={error} /> : null}
         </article>
 
         <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
@@ -1206,28 +1582,30 @@ function SettingsTab({
             </div>
             <Bell className="h-5 w-5 text-trust" aria-hidden="true" />
           </div>
-          {settings.notificationChannels.length ? (
-            <div className="mt-6 grid gap-3">
-              {settings.notificationChannels.map((channel) => (
-                <div
+          <div className="mt-6 grid gap-3">
+            {channels.map((channel) => {
+              const enabled = settings.notificationChannels.includes(channel);
+              return (
+                <label
                   key={channel}
-                  className="flex min-h-16 items-center justify-between gap-4 rounded-md border border-slate-200 px-4"
+                  className="flex min-h-16 items-center justify-between gap-4 rounded-md border border-slate-200 px-4 transition hover:border-trust"
                 >
-                  <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-3">
                     <span className="grid h-9 w-9 place-items-center rounded-md bg-slate-100 text-slate-600">
                       <Bell className="h-4 w-4" aria-hidden="true" />
                     </span>
-                    <p className="text-sm font-semibold capitalize text-navy">{channel}</p>
-                  </div>
-                  <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                    On
+                    <span className="text-sm font-semibold capitalize text-navy">{channel}</span>
                   </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <PanelNotice text="No notification channels are configured in dashboard settings." />
-          )}
+                  <input
+                    type="checkbox"
+                    checked={enabled}
+                    onChange={() => onToggleChannel(channel)}
+                    className="h-5 w-5 accent-trust"
+                  />
+                </label>
+              );
+            })}
+          </div>
         </article>
       </section>
     </div>

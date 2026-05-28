@@ -1,9 +1,12 @@
 import type {
   BackendDashboardAlert,
   BackendDashboardAlertsResponse,
+  BackendDashboardBrandRiskFinding,
+  BackendDashboardBrandRiskResponse,
   BackendDashboardChangePlanResponse,
   BackendDashboardDNSChange,
   BackendDashboardDomain,
+  BackendDashboardLookalikeRiskSignal,
   BackendDashboardReporterResponse,
   BackendDashboardResponse,
   BackendDashboardRecheckResponse,
@@ -94,9 +97,11 @@ export type DashboardViewModel = {
 
 export type ChangePlanRow = {
   id: string;
-  label: string;
-  record: string;
+  title: string;
   state: string;
+  recordName?: string;
+  recordType?: string;
+  recordText: string;
   evidence?: string;
   risk?: string;
   rollbackNote?: string;
@@ -123,8 +128,41 @@ export type ReporterViewModel = {
   senderSources: SenderSource[];
 };
 
+export type BrandRiskSeverity = "Info" | "Low" | "Medium" | "High" | "Critical";
+
+export type BrandRiskFinding = {
+  id: string;
+  category: string;
+  type: string;
+  title: string;
+  severity: BrandRiskSeverity;
+  evidence: string;
+  recommendedAction: string;
+};
+
+export type LookalikeRiskSignal = {
+  id: string;
+  domain: string;
+  kind: string;
+  reason: string;
+  hasAddressRecords: boolean;
+  hasMXRecords: boolean;
+  severity: BrandRiskSeverity;
+  evidence: string;
+  recommendedAction: string;
+  activeEvidence: boolean;
+};
+
+export type BrandRiskViewModel = {
+  domainID: string;
+  domain: string;
+  generatedAt?: string;
+  findings: BrandRiskFinding[];
+  lookalikes: LookalikeRiskSignal[];
+};
+
 export type SettingsState = {
-  alignmentGate: boolean;
+  alignmentThreshold: number;
   pauseOnUnknownSpike: boolean;
   monthlyReports: boolean;
   notificationChannels: string[];
@@ -140,6 +178,7 @@ export type DashboardInitialState = {
 
 export type RecheckResult = {
   jobID?: string;
+  checkID?: string;
   domainID: string;
   status: string;
   queuedAt?: string;
@@ -225,17 +264,25 @@ export const mockChangePlan: ChangePlanViewModel = {
   changes: [
     {
       id: "spf-flatten",
-      label: "SPF flatten",
-      record: "v=spf1 include:_dmark.northwind.is include:spf.protection.outlook.com -all",
+      title: "SPF flatten",
+      recordName: "@",
+      recordType: "TXT",
+      recordText: "v=spf1 include:_dmark.northwind.is include:spf.protection.outlook.com -all",
       state: "ready",
       evidence: "SPF currently exceeds the lookup budget.",
+      risk: "DNS lookup failures can leave legitimate mail unauthenticated.",
+      rollbackNote: "Restore the previous SPF TXT record if delivery anomalies appear.",
     },
     {
       id: "dmarc-quarantine",
-      label: "DMARC quarantine",
-      record: "v=DMARC1; p=quarantine; pct=25; rua=mailto:dmarc@northwind.is",
+      title: "DMARC quarantine",
+      recordName: "_dmarc",
+      recordType: "TXT",
+      recordText: "v=DMARC1; p=quarantine; pct=25; rua=mailto:dmarc@northwind.is",
       state: "review",
       evidence: "Reporter evidence supports a gradual enforcement step.",
+      risk: "Unknown senders may be quarantined if they are not classified first.",
+      rollbackNote: "Move p=quarantine back to p=none while sender evidence is reviewed.",
     },
   ],
 };
@@ -252,10 +299,53 @@ export const mockReporterView: ReporterViewModel = {
 };
 
 export const mockSettings: SettingsState = {
-  alignmentGate: true,
+  alignmentThreshold: 95,
   pauseOnUnknownSpike: true,
   monthlyReports: false,
   notificationChannels: ["email", "slack"],
+};
+
+export const mockBrandRiskView: BrandRiskViewModel = {
+  domainID: "northwind",
+  domain: "northwind.is",
+  generatedAt: new Date().toISOString(),
+  findings: [
+    {
+      id: "dmarc-policy",
+      category: "Email authentication",
+      type: "dmarc-policy",
+      title: "DMARC enforcement is not complete",
+      severity: "Medium",
+      evidence: "The current DMARC policy allows some unauthenticated mail to pass without enforcement.",
+      recommendedAction: "Move to quarantine or reject once Reporter evidence shows expected senders are aligned.",
+    },
+  ],
+  lookalikes: [
+    {
+      id: "n0rthwind-is",
+      domain: "n0rthwind.is",
+      kind: "typo",
+      reason: "Digit substitution in the registered label.",
+      hasAddressRecords: true,
+      hasMXRecords: true,
+      severity: "High",
+      evidence: "Address and MX records are visible for this candidate.",
+      recommendedAction: "Review registration ownership and consider defensive action.",
+      activeEvidence: true,
+    },
+    {
+      id: "northwínd-is",
+      domain: "northwínd.is",
+      kind: "homoglyph",
+      reason: "Accent variation of the protected domain.",
+      hasAddressRecords: false,
+      hasMXRecords: false,
+      severity: "Info",
+      evidence: "No DNS address or MX evidence is currently observed.",
+      recommendedAction: "Track as an inactive candidate; do not treat as a confirmed threat.",
+      activeEvidence: false,
+    },
+  ],
 };
 
 export const mockDashboardViewModel: DashboardViewModel = dashboardViewModelFromDomains(
@@ -317,12 +407,13 @@ export function mapChangePlanResponse(payload: BackendDashboardChangePlanRespons
 }
 
 export function mapChangePlanRow(payload: BackendDashboardDNSChange): ChangePlanRow {
-  const parts = [payload.record_name, payload.record_type, payload.record_text].filter(Boolean);
   return {
     id: payload.id,
-    label: payload.title,
+    title: payload.title,
     state: payload.status,
-    record: parts.join(" "),
+    recordName: payload.record_name,
+    recordType: payload.record_type,
+    recordText: payload.record_text,
     evidence: payload.evidence,
     risk: payload.risk,
     rollbackNote: payload.rollback_note,
@@ -343,6 +434,45 @@ export function mapReporterResponse(payload: BackendDashboardReporterResponse): 
   };
 }
 
+export function mapBrandRiskResponse(payload: BackendDashboardBrandRiskResponse): BrandRiskViewModel {
+  return {
+    domainID: payload.domain_id,
+    domain: payload.domain,
+    generatedAt: payload.generated_at,
+    findings: (payload.findings || []).map(mapBrandRiskFinding),
+    lookalikes: (payload.lookalikes || []).map(mapLookalikeRiskSignal),
+  };
+}
+
+export function mapBrandRiskFinding(payload: BackendDashboardBrandRiskFinding, index: number): BrandRiskFinding {
+  return {
+    id: `${payload.category || "finding"}-${payload.type || index}-${index}`,
+    category: payload.category || "Email authentication",
+    type: payload.type || "finding",
+    title: payload.title || "Brand-risk finding",
+    severity: mapBrandRiskSeverity(payload.severity),
+    evidence: payload.evidence || "No evidence details were returned.",
+    recommendedAction: payload.recommended_action || "Review this finding.",
+  };
+}
+
+export function mapLookalikeRiskSignal(payload: BackendDashboardLookalikeRiskSignal, index: number): LookalikeRiskSignal {
+  const hasAddressRecords = Boolean(payload.has_address_records);
+  const hasMXRecords = Boolean(payload.has_mx_records);
+  return {
+    id: `${payload.domain || "lookalike"}-${index}`,
+    domain: payload.domain || "unknown-domain",
+    kind: payload.kind || "lookalike",
+    reason: payload.reason || "Potential brand lookalike.",
+    hasAddressRecords,
+    hasMXRecords,
+    severity: mapBrandRiskSeverity(payload.severity),
+    evidence: payload.evidence || "No DNS evidence was returned.",
+    recommendedAction: payload.recommended_action || "Review this candidate.",
+    activeEvidence: hasAddressRecords || hasMXRecords,
+  };
+}
+
 export function mapSenderSource(payload: BackendDashboardSender): SenderSource {
   const provider = payload.provider || payload.source_ip || "Unknown sender";
   return {
@@ -360,7 +490,7 @@ export function mapSenderSource(payload: BackendDashboardSender): SenderSource {
 
 export function mapSettingsResponse(payload: BackendDashboardSettingsResponse): SettingsState {
   return {
-    alignmentGate: payload.require_alignment_before_reject >= 95,
+    alignmentThreshold: clampThreshold(payload.require_alignment_before_reject),
     pauseOnUnknownSpike: Boolean(payload.pause_automation_on_unknown_senders_spike),
     monthlyReports: Boolean(payload.auto_generate_monthly_executive_reports),
     notificationChannels: payload.notification_channels || [],
@@ -370,7 +500,7 @@ export function mapSettingsResponse(payload: BackendDashboardSettingsResponse): 
 
 export function settingsToBackendPayload(settings: SettingsState): BackendDashboardSettingsResponse {
   return {
-    require_alignment_before_reject: settings.alignmentGate ? 95 : 1,
+    require_alignment_before_reject: clampThreshold(settings.alignmentThreshold),
     pause_automation_on_unknown_senders_spike: settings.pauseOnUnknownSpike,
     auto_generate_monthly_executive_reports: settings.monthlyReports,
     notification_channels: settings.notificationChannels,
@@ -391,6 +521,20 @@ export async function getChangePlan(domainID: string): Promise<ChangePlanViewMod
   return mapChangePlanResponse(await dashboardJSON<BackendDashboardChangePlanResponse>(`/api/dashboard/domains/${domainID}/change-plan`));
 }
 
+export async function getBrandRiskData(
+  domainID: string,
+  options: { tld?: string; limit?: number; includeInactive?: boolean } = {},
+): Promise<BrandRiskViewModel> {
+  const query = new URLSearchParams();
+  query.set("tld", options.tld || "is");
+  query.set("limit", `${options.limit || 25}`);
+  if (options.includeInactive) query.set("include_inactive", "true");
+
+  return mapBrandRiskResponse(
+    await dashboardJSON<BackendDashboardBrandRiskResponse>(`/api/dashboard/domains/${domainID}/brand-risk?${query.toString()}`),
+  );
+}
+
 export async function getDashboardAlerts(): Promise<DashboardAlert[]> {
   return mapAlertsResponse(await dashboardJSON<BackendDashboardAlertsResponse>("/api/dashboard/alerts"));
 }
@@ -405,6 +549,7 @@ export async function recheckDashboardDomain(domainID: string): Promise<RecheckR
   });
   return {
     jobID: payload.job_id,
+    checkID: payload.check_id,
     domainID: payload.domain_id,
     status: payload.status,
     queuedAt: payload.queued_at,
@@ -458,7 +603,7 @@ export function emptyDashboardState(notice: string): DashboardInitialState {
     dashboard: dashboardViewModelFromDomains([], 0, new Date().toISOString()),
     alerts: [],
     settings: {
-      alignmentGate: false,
+      alignmentThreshold: 95,
       pauseOnUnknownSpike: false,
       monthlyReports: false,
       notificationChannels: [],
@@ -600,6 +745,18 @@ function mapAlertSeverity(severity: string): AlertSeverity {
   return "low";
 }
 
+function mapBrandRiskSeverity(severity: string): BrandRiskSeverity {
+  if (severity === "Critical" || severity === "High" || severity === "Medium" || severity === "Low" || severity === "Info") {
+    return severity;
+  }
+  const normalized = (severity || "").toLowerCase();
+  if (normalized === "critical") return "Critical";
+  if (normalized === "high") return "High";
+  if (normalized === "medium" || normalized === "warn") return "Medium";
+  if (normalized === "low") return "Low";
+  return "Info";
+}
+
 function formatRelativeTime(value?: string): string {
   if (!value) return "not checked";
 
@@ -630,4 +787,11 @@ function numberOrZero(value: number | undefined): number {
 
 function roundOne(value: number): number {
   return Math.round(numberOrZero(value) * 10) / 10;
+}
+
+function clampThreshold(value: number | undefined): number {
+  const threshold = Math.round(numberOrZero(value));
+  if (threshold < 1) return 1;
+  if (threshold > 100) return 100;
+  return threshold;
 }

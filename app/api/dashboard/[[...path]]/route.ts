@@ -6,6 +6,7 @@ import {
 } from "@/lib/dashboard-api";
 import {
   mockChangePlan,
+  mockBrandRiskView,
   mockDashboardAlerts,
   mockDashboardViewModel,
   mockReporterView,
@@ -160,10 +161,47 @@ function mockGET(path: string): Response {
       next_action: mockChangePlan.nextAction,
       changes: mockChangePlan.changes.map((change) => ({
         id: change.id,
-        title: change.label,
+        title: change.title,
         status: change.state,
-        record_text: change.record.replaceAll("northwind.is", domainName).replaceAll("northwind-is", dnsSafeName),
+        record_name: change.recordName?.replaceAll("northwind.is", domainName).replaceAll("northwind-is", dnsSafeName),
+        record_type: change.recordType,
+        record_text: change.recordText.replaceAll("northwind.is", domainName).replaceAll("northwind-is", dnsSafeName),
         evidence: change.evidence,
+        risk: change.risk,
+        rollback_note: change.rollbackNote,
+      })),
+    });
+  }
+
+  if (tail[0] === "domains" && tail[2] === "brand-risk") {
+    const domain = mockDashboardViewModel.protectedDomains.find((item) => item.id === tail[1]);
+    const includeInactive = url.searchParams.get("include_inactive") === "true";
+    const domainName = domain?.domain || mockBrandRiskView.domain;
+    const lookalikes = includeInactive
+      ? mockBrandRiskView.lookalikes
+      : mockBrandRiskView.lookalikes.filter((candidate) => candidate.activeEvidence);
+
+    return NextResponse.json({
+      domain_id: tail[1],
+      domain: domainName,
+      generated_at: new Date().toISOString(),
+      findings: mockBrandRiskView.findings.map((finding) => ({
+        category: finding.category,
+        type: finding.type,
+        title: finding.title,
+        severity: finding.severity,
+        evidence: finding.evidence,
+        recommended_action: finding.recommendedAction,
+      })),
+      lookalikes: lookalikes.map((candidate) => ({
+        domain: candidate.domain.replaceAll(mockBrandRiskView.domain, domainName),
+        kind: candidate.kind,
+        reason: candidate.reason,
+        has_address_records: candidate.hasAddressRecords,
+        has_mx_records: candidate.hasMXRecords,
+        severity: candidate.severity,
+        evidence: candidate.evidence,
+        recommended_action: candidate.recommendedAction,
       })),
     });
   }

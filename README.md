@@ -18,8 +18,11 @@ The marketing scanner lives at `/`. The product dashboard lives at `/dashboard`.
 - `DMARK_API_BASE_URL`: optional backend origin for relative backend endpoint values.
 - `DMARK_API_TOKEN`: optional bearer token for the scan endpoint.
 - `DMARK_USE_MOCK`: set to `false` to require the backend scan endpoint.
-- `DMARK_APP_API_BASE_URL`: backend origin for the authenticated dashboard API, e.g. `http://localhost:8080`.
-- `DMARK_APP_API_TOKEN`: server-only dashboard proxy bearer token with `domain:read`, `domain:write`, and `reporter:read`.
+- `DMARK_API_BASE_URL`: backend origin for the authenticated dashboard API, e.g. `http://localhost:8080`.
+- `DMARK_API_TOKEN`: server-only dashboard proxy bearer token with `domain:read`, `domain:write`, and `reporter:read`.
+- `DMARK_APP_API_BASE_URL`: legacy alias for `DMARK_API_BASE_URL`.
+- `DMARK_APP_API_TOKEN`: legacy alias for `DMARK_API_TOKEN`.
+- `DMARK_API_TIMEOUT_MS`: optional dashboard backend request timeout in milliseconds. Defaults to `10000`.
 - `DMARK_DASHBOARD_MOCK`: set to `1` to use explicit dashboard mock fixtures; set to `0` for live backend mode.
 - `NOCODB_WEBHOOK_URL`: optional upgrade-request webhook.
 
@@ -28,7 +31,7 @@ Production frontend settings:
 ```sh
 DMARK_SCAN_API_URL=https://dmark.kastro.is/api/public/scan
 DMARK_USE_MOCK=false
-DMARK_APP_API_BASE_URL=https://dmark-backend.example
-DMARK_APP_API_TOKEN=meil_production_dashboard_proxy_key
+DMARK_API_BASE_URL=https://dmark-backend.example
+DMARK_API_TOKEN=meil_production_dashboard_proxy_key
 DMARK_DASHBOARD_MOCK=0
 ```

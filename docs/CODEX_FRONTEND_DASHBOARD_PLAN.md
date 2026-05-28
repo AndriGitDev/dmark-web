@@ -1,5 +1,179 @@
 # Codex Frontend Dashboard Integration Plan
 
+## Next Agent Handoff - 2026-05-28
+
+This is the current handoff for the next frontend agent. The dashboard integration is now substantially implemented in `dmark-web`, including the new Brand Risk endpoint, but it still needs live-backend QA and visual/browser validation once the in-app browser connector is available.
+
+### Completed In Latest Pass
+
+- Added server-only dashboard API support for `GET /api/v1/dashboard/domains/{id}/brand-risk`.
+- Added Brand Risk backend types, UI view models, mappers, mock fixtures, and client fetch helper.
+- Added a dashboard `Brand Risk` tab with:
+  - Email-auth findings.
+  - Defender lookalike rows.
+  - DNS evidence badges for `A/AAAA` and `MX`.
+  - An `Include inactive` toggle that calls `include_inactive=true`.
+  - Explicit inactive candidate labeling so inactive rows are not presented as confirmed threats.
+- Updated the dashboard API client to read the recommended server-only env names:
+  - `DMARK_API_BASE_URL`
+  - `DMARK_API_TOKEN`
+  - legacy aliases `DMARK_APP_API_BASE_URL` and `DMARK_APP_API_TOKEN` still work.
+- Added `DMARK_API_TIMEOUT_MS`, defaulting to `10000`.
+- Expanded Change Plan UI to show journey state, next action, DNS record name/type/text, evidence, risk, rollback notes, and copy buttons.
+- Expanded Reporter summary metrics with failures and reject candidates.
+- Updated Settings UI to use:
+  - Numeric `require_alignment_before_reject` threshold from `1..100`.
+  - Toggles for unknown-sender spike pause and monthly reports.
+  - Checkboxes for `email`, `slack`, and `webhook` notification channels.
+- Added a dependency-free Node test harness with `npm test` covering:
+  - Dashboard API token attachment and env aliases.
+  - Backend error JSON mapping.
+  - Dashboard summary/domain mapping.
+  - Brand Risk DNS/MX and inactive-candidate semantics.
+  - Settings threshold clamping.
+- Updated `README.md` with the new env names.
+
+### Files Changed In Latest Pass
+
+- `lib/dashboard-api.ts`
+- `lib/dashboard.ts`
+- `components/dmark-dashboard.tsx`
+- `app/api/dashboard/[[...path]]/route.ts`
+- `test/dashboard-model.test.mjs`
+- `package.json`
+- `README.md`
+- `docs/CODEX_FRONTEND_DASHBOARD_PLAN.md`
+
+### Verification Already Run
+
+From `/Users/andri/Documents/GitHub/dmark-web`:
+
+```sh
+npm run lint
+npm test
+npm run build
+git diff --check
+```
+
+All passed.
+
+Mock local smoke checks also passed after starting the frontend with `DMARK_DASHBOARD_MOCK=1`:
+
+```sh
+curl -I http://127.0.0.1:3000/dashboard
+curl 'http://127.0.0.1:3000/api/dashboard/domains/northwind/brand-risk?tld=is&limit=25'
+curl 'http://127.0.0.1:3000/api/dashboard/domains/northwind/brand-risk?tld=is&limit=25&include_inactive=true'
+```
+
+The default Brand Risk mock response returns only the active DNS/MX evidence row. The `include_inactive=true` response also returns an inactive `Info` homoglyph candidate with no DNS/MX evidence.
+
+### Known Blocker
+
+Visual QA was not completed because the Codex Browser plugin was loaded but no in-app browser instance was registered:
+
+```json
+{
+  "browserListAfterReset": [],
+  "iabResult": {
+    "ok": false,
+    "message": "Browser is not available: iab"
+  }
+}
+```
+
+This appears to be a host/session attachment issue, not a repo issue. Once the host registers the in-app browser, verify `agent.browsers.list()` returns an entry or `agent.browsers.get("iab")` succeeds, then run visual passes.
+
+### Next Steps For The Next Agent
+
+1. Run live backend QA.
+
+   Start the backend:
+
+   ```sh
+   cd /Users/andri/Documents/GitHub/dmark-app
+   make dev
+   ```
+
+   Start the frontend:
+
+   ```sh
+   cd /Users/andri/Documents/GitHub/dmark-web
+   DMARK_API_BASE_URL=http://localhost:8080 \
+   DMARK_API_TOKEN=meil_from_backend_seed_or_local_config \
+   DMARK_DASHBOARD_MOCK=0 \
+   npm run dev
+   ```
+
+   Open `/dashboard` and verify the browser only calls frontend-owned `/api/dashboard/*` routes. The backend token must never appear in browser network requests or client bundles.
+
+2. Verify all live dashboard endpoints.
+
+   Required live checks:
+
+   - Dashboard summary loads.
+   - Domain list renders status, score, DMARC policy, DKIM coverage, alignment, unknown senders, last checked, and next action.
+   - Manual recheck returns `202` and displays queued/completed state.
+   - Change Plan renders journey state, next action, and DNS changes.
+   - Reporter handles populated inventory, `filter=unknown`, CSV export, no reports, and `setup_guidance`.
+   - Brand Risk renders email-auth findings and lookalikes from `?tld=is&limit=25`.
+   - Brand Risk `include_inactive=true` shows inactive `Info` rows as inactive candidates, not confirmed threats.
+   - Alerts active list renders, acknowledge works, mute works.
+   - Settings load and save with backend 400 errors displayed inline.
+
+3. Do visual QA after fixing the in-app browser attachment.
+
+   Viewports to check:
+
+   - Desktop around `1440x900`.
+   - Tablet around `1024x768`.
+   - Mobile around `390x844`.
+
+   Screens to inspect:
+
+   - Overview.
+   - Domains with long DNS record text in Change Plan.
+   - Reporter with populated and empty states.
+   - Brand Risk with active-only and inactive-included modes.
+   - Alerts.
+   - Settings.
+
+   Pay special attention to long DNS records, evidence text, lookalike domains, and table overflow on mobile.
+
+4. Complete accessibility pass.
+
+   Check keyboard navigation across tabs, buttons, settings inputs, notification checkboxes, copy buttons, and alert actions. Confirm focus states remain visible and table scroll containers are usable.
+
+5. Add interaction tests when a browser runner is available.
+
+   The repo now has `npm test` for mapper/client logic but no React/browser test stack. Add Playwright or the team’s preferred browser runner only after confirming project preference. Suggested coverage:
+
+   - Dashboard renders summary metrics.
+   - Domain table/list renders status and next action.
+   - Recheck action shows queued response.
+   - Brand Risk renders findings and DNS/MX evidence.
+   - Brand Risk inactive candidates are labeled inactive and not as confirmed threats.
+   - Reporter empty state renders setup guidance.
+   - Settings validates threshold and displays backend 400 errors.
+
+6. Revisit product routing.
+
+   The current dashboard is a tabbed single screen. The original brief suggested `/dashboard/domains/[id]` for protected-domain detail. Decide whether to keep the operational tabbed layout or add the detail route. If adding it, reuse existing fetchers and avoid duplicating backend token logic in client components.
+
+7. Final release checks.
+
+   Before shipping, run:
+
+   ```sh
+   npm run lint
+   npm test
+   npm run build
+   git diff --check
+   ```
+
+   Then run live backend/browser QA again with `DMARK_DASHBOARD_MOCK=0`.
+
+---
+
 This plan is for completing the `dmark-web` frontend integration against the authenticated dashboard API now implemented in `/Users/andri/Documents/GitHub/dmark-app`.
 
 ## Current State
