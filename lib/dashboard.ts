@@ -1,18 +1,27 @@
-import {
-  AlertTriangle,
-  Bell,
-  CheckCircle2,
-  DatabaseZap,
-  Gauge,
-  KeyRound,
-  MailCheck,
-  ShieldAlert,
-  ShieldCheck,
-  type LucideIcon,
-} from "lucide-react";
+import type {
+  BackendDashboardAlert,
+  BackendDashboardAlertsResponse,
+  BackendDashboardChangePlanResponse,
+  BackendDashboardDNSChange,
+  BackendDashboardDomain,
+  BackendDashboardReporterResponse,
+  BackendDashboardResponse,
+  BackendDashboardRecheckResponse,
+  BackendDashboardSender,
+  BackendDashboardSettingsResponse,
+} from "@/lib/dashboard-api";
 
 export type DomainStatus = "protected" | "needs-work" | "monitoring";
 export type AlertSeverity = "critical" | "high" | "medium" | "low";
+export type DashboardIconName =
+  | "alert-triangle"
+  | "check-circle"
+  | "database-zap"
+  | "gauge"
+  | "key"
+  | "mail-check"
+  | "shield-alert"
+  | "shield-check";
 
 export type DashboardMetric = {
   label: string;
@@ -20,7 +29,7 @@ export type DashboardMetric = {
   detail: string;
   trend: string;
   tone: "blue" | "green" | "amber" | "red";
-  icon: LucideIcon;
+  icon: DashboardIconName;
 };
 
 export type ProtectedDomain = {
@@ -39,11 +48,15 @@ export type ProtectedDomain = {
 };
 
 export type SenderSource = {
+  id: string;
   provider: string;
+  sourceIP?: string;
   volume: string;
+  volumeCount: number;
   aligned: number;
   unknown: boolean;
   trend: string;
+  risk?: string;
 };
 
 export type DashboardAlert = {
@@ -56,6 +69,7 @@ export type DashboardAlert = {
 };
 
 export type Recommendation = {
+  id: string;
   title: string;
   domain: string;
   impact: string;
@@ -67,49 +81,76 @@ export type ActivityEvent = {
   title: string;
   detail: string;
   time: string;
-  icon: LucideIcon;
+  icon: DashboardIconName;
 };
 
-export const dashboardMetrics: DashboardMetric[] = [
-  {
-    label: "Protected domains",
-    value: "18",
-    detail: "4 ready for p=reject",
-    trend: "+3 this month",
-    tone: "blue",
-    icon: ShieldCheck,
-  },
-  {
-    label: "Alignment rate",
-    value: "96.4%",
-    detail: "Across 1.8M messages",
-    trend: "+2.1% in 7 days",
-    tone: "green",
-    icon: Gauge,
-  },
-  {
-    label: "Open findings",
-    value: "11",
-    detail: "2 critical changes need review",
-    trend: "-5 since Monday",
-    tone: "amber",
-    icon: AlertTriangle,
-  },
-  {
-    label: "Unknown senders",
-    value: "7",
-    detail: "Mostly low-volume marketing tools",
-    trend: "2 new today",
-    tone: "red",
-    icon: ShieldAlert,
-  },
-];
+export type DashboardViewModel = {
+  generatedAt?: string;
+  metrics: DashboardMetric[];
+  protectedDomains: ProtectedDomain[];
+  recommendations: Recommendation[];
+  activityEvents: ActivityEvent[];
+};
 
-export const protectedDomains: ProtectedDomain[] = [
+export type ChangePlanRow = {
+  id: string;
+  label: string;
+  record: string;
+  state: string;
+  evidence?: string;
+  risk?: string;
+  rollbackNote?: string;
+};
+
+export type ChangePlanViewModel = {
+  domainID: string;
+  domain: string;
+  generatedAt?: string;
+  journeyState?: string;
+  nextAction?: string;
+  changes: ChangePlanRow[];
+};
+
+export type ReporterViewModel = {
+  domainID: string;
+  domain: string;
+  reportVolume: string;
+  alignedPercentage: number;
+  reporterOrgCount: number;
+  failures: string;
+  rejectCandidates: number;
+  setupGuidance?: string;
+  senderSources: SenderSource[];
+};
+
+export type SettingsState = {
+  alignmentGate: boolean;
+  pauseOnUnknownSpike: boolean;
+  monthlyReports: boolean;
+  notificationChannels: string[];
+  updatedAt?: string;
+};
+
+export type DashboardInitialState = {
+  dashboard: DashboardViewModel;
+  alerts: DashboardAlert[];
+  settings: SettingsState;
+  notice: string;
+};
+
+export type RecheckResult = {
+  jobID?: string;
+  domainID: string;
+  status: string;
+  queuedAt?: string;
+  nextAllowedAt?: string;
+};
+
+export const mockProtectedDomains: ProtectedDomain[] = [
   {
     id: "kastro",
     domain: "kastro.is",
-    owner: "Kastro HQ",
+    owner: "Dmark",
     status: "protected",
     score: 98,
     dmarcPolicy: "reject",
@@ -123,12 +164,12 @@ export const protectedDomains: ProtectedDomain[] = [
   {
     id: "northwind",
     domain: "northwind.is",
-    owner: "Finance",
+    owner: "Dmark",
     status: "needs-work",
     score: 64,
     dmarcPolicy: "none",
     spfLookups: 13,
-    dkimCoverage: 72,
+    dkimCoverage: 0,
     alignmentRate: 87.1,
     unknownSenders: 4,
     lastChecked: "16 min ago",
@@ -137,42 +178,27 @@ export const protectedDomains: ProtectedDomain[] = [
   {
     id: "reknet",
     domain: "reknet.is",
-    owner: "Operations",
+    owner: "Dmark",
     status: "monitoring",
     score: 82,
     dmarcPolicy: "quarantine",
     spfLookups: 9,
-    dkimCoverage: 91,
+    dkimCoverage: 100,
     alignmentRate: 94.8,
     unknownSenders: 2,
     lastChecked: "41 min ago",
     nextAction: "Validate Sendgrid DKIM before p=reject.",
   },
-  {
-    id: "fjordpay",
-    domain: "fjordpay.is",
-    owner: "Payments",
-    status: "needs-work",
-    score: 71,
-    dmarcPolicy: "quarantine",
-    spfLookups: 11,
-    dkimCoverage: 84,
-    alignmentRate: 90.3,
-    unknownSenders: 1,
-    lastChecked: "1 hr ago",
-    nextAction: "Remove stale HubSpot include and approve Brevo sender.",
-  },
 ];
 
-export const senderSources: SenderSource[] = [
-  { provider: "Microsoft 365", volume: "842k", aligned: 99.8, unknown: false, trend: "+4%" },
-  { provider: "Google Workspace", volume: "391k", aligned: 98.4, unknown: false, trend: "-1%" },
-  { provider: "Sendgrid", volume: "184k", aligned: 92.1, unknown: false, trend: "+12%" },
-  { provider: "Unclassified ASN 1299", volume: "18k", aligned: 41.7, unknown: true, trend: "new" },
-  { provider: "Mailchimp", volume: "11k", aligned: 88.6, unknown: false, trend: "-6%" },
+export const mockSenderSources: SenderSource[] = [
+  { id: "m365", provider: "Microsoft 365", volume: "842k", volumeCount: 842000, aligned: 99.8, unknown: false, trend: "stable" },
+  { id: "google", provider: "Google Workspace", volume: "391k", volumeCount: 391000, aligned: 98.4, unknown: false, trend: "stable" },
+  { id: "sendgrid", provider: "Sendgrid", volume: "184k", volumeCount: 184000, aligned: 92.1, unknown: false, trend: "rising" },
+  { id: "unknown-asn", provider: "Unclassified ASN 1299", volume: "18k", volumeCount: 18000, aligned: 41.7, unknown: true, trend: "new" },
 ];
 
-export const dashboardAlerts: DashboardAlert[] = [
+export const mockDashboardAlerts: DashboardAlert[] = [
   {
     id: "a1",
     severity: "critical",
@@ -183,14 +209,6 @@ export const dashboardAlerts: DashboardAlert[] = [
   },
   {
     id: "a2",
-    severity: "high",
-    title: "SPF lookup limit exceeded",
-    domain: "fjordpay.is",
-    detail: "Current policy resolves to 11 DNS lookups. Some receivers may treat SPF as permerror.",
-    age: "38 min",
-  },
-  {
-    id: "a3",
     severity: "medium",
     title: "Unknown sender detected",
     domain: "reknet.is",
@@ -199,59 +217,417 @@ export const dashboardAlerts: DashboardAlert[] = [
   },
 ];
 
-export const recommendations: Recommendation[] = [
-  {
-    title: "Quarantine northwind.is at 25%",
-    domain: "northwind.is",
-    impact: "Reduces spoofing risk while preserving room for sender cleanup.",
-    effort: "Medium",
-    due: "Today",
-  },
-  {
-    title: "Approve Sendgrid DKIM selector",
-    domain: "reknet.is",
-    impact: "Unlocks p=reject readiness for high-volume product email.",
-    effort: "Low",
-    due: "Tomorrow",
-  },
-  {
-    title: "Remove stale SPF include",
-    domain: "fjordpay.is",
-    impact: "Brings SPF back under the 10-lookup receiver limit.",
-    effort: "Low",
-    due: "This week",
-  },
-];
+export const mockChangePlan: ChangePlanViewModel = {
+  domainID: "northwind",
+  domain: "northwind.is",
+  journeyState: "ready_for_quarantine",
+  nextAction: "Move the domain to quarantine after sender cleanup.",
+  changes: [
+    {
+      id: "spf-flatten",
+      label: "SPF flatten",
+      record: "v=spf1 include:_dmark.northwind.is include:spf.protection.outlook.com -all",
+      state: "ready",
+      evidence: "SPF currently exceeds the lookup budget.",
+    },
+    {
+      id: "dmarc-quarantine",
+      label: "DMARC quarantine",
+      record: "v=DMARC1; p=quarantine; pct=25; rua=mailto:dmarc@northwind.is",
+      state: "review",
+      evidence: "Reporter evidence supports a gradual enforcement step.",
+    },
+  ],
+};
 
-export const activityEvents: ActivityEvent[] = [
-  {
-    title: "Weekly trust report generated",
-    detail: "Kastro HQ report includes zero unknown senders and 99.2% alignment.",
-    time: "8 min ago",
-    icon: CheckCircle2,
-  },
-  {
-    title: "SPF flattening plan updated",
-    detail: "fjordpay.is can drop one vendor include after Brevo validation.",
-    time: "29 min ago",
-    icon: DatabaseZap,
-  },
-  {
-    title: "Reporter feed received",
-    detail: "Google, Microsoft, and Yahoo aggregate reports imported successfully.",
-    time: "1 hr ago",
-    icon: MailCheck,
-  },
-  {
-    title: "API key rotated",
-    detail: "Monitoring integration key rotated by andri@kastro.is.",
-    time: "Yesterday",
-    icon: KeyRound,
-  },
-];
+export const mockReporterView: ReporterViewModel = {
+  domainID: "kastro",
+  domain: "kastro.is",
+  reportVolume: "1.4M",
+  alignedPercentage: 96.4,
+  reporterOrgCount: 14,
+  failures: "64k",
+  rejectCandidates: 4,
+  senderSources: mockSenderSources,
+};
 
-export const notificationChannels = [
-  { name: "Security inbox", target: "security@kastro.is", active: true, icon: Bell },
-  { name: "Slack incident channel", target: "#dmark-alerts", active: true, icon: ShieldAlert },
-  { name: "Weekly executive digest", target: "Mondays 09:00", active: false, icon: MailCheck },
-];
+export const mockSettings: SettingsState = {
+  alignmentGate: true,
+  pauseOnUnknownSpike: true,
+  monthlyReports: false,
+  notificationChannels: ["email", "slack"],
+};
+
+export const mockDashboardViewModel: DashboardViewModel = dashboardViewModelFromDomains(
+  mockProtectedDomains,
+  mockDashboardAlerts.length,
+  new Date().toISOString(),
+);
+
+export function mapDashboardResponse(payload: BackendDashboardResponse): DashboardViewModel {
+  const domains = (payload.domains || []).map(mapBackendDomain);
+  return dashboardViewModelFromDomains(domains, payload.alert_count || 0, payload.generated_at, {
+    protectedDomainCount: payload.protected_domain_count,
+    averageScore: payload.average_score,
+    unknownSenderCount: payload.unknown_sender_count,
+  });
+}
+
+export function mapBackendDomain(payload: BackendDashboardDomain): ProtectedDomain {
+  return {
+    id: payload.id,
+    domain: payload.domain,
+    owner: "Dmark",
+    status: mapDomainStatus(payload.status),
+    score: numberOrZero(payload.score),
+    dmarcPolicy: mapDMARCPolicy(payload.dmarc_policy),
+    spfLookups: numberOrZero(payload.spf_lookup_count),
+    dkimCoverage: mapDKIMCoverage(payload.dkim_coverage),
+    alignmentRate: roundOne(payload.alignment_rate),
+    unknownSenders: numberOrZero(payload.unknown_sender_count),
+    lastChecked: formatRelativeTime(payload.last_checked_at),
+    nextAction: payload.next_action || "Review domain posture and sender alignment.",
+  };
+}
+
+export function mapAlertsResponse(payload: BackendDashboardAlertsResponse): DashboardAlert[] {
+  return (payload.alerts || []).map(mapBackendAlert);
+}
+
+export function mapBackendAlert(payload: BackendDashboardAlert): DashboardAlert {
+  return {
+    id: payload.id,
+    severity: mapAlertSeverity(payload.severity),
+    title: payload.message || `${payload.check_name || "Dashboard"} alert`,
+    domain: payload.domain,
+    detail: payload.evidence || payload.kind || "Review the latest backend finding.",
+    age: formatRelativeTime(payload.created_at),
+  };
+}
+
+export function mapChangePlanResponse(payload: BackendDashboardChangePlanResponse): ChangePlanViewModel {
+  return {
+    domainID: payload.domain_id,
+    domain: payload.domain,
+    generatedAt: payload.generated_at,
+    journeyState: payload.journey_state,
+    nextAction: payload.next_action,
+    changes: (payload.changes || []).map(mapChangePlanRow),
+  };
+}
+
+export function mapChangePlanRow(payload: BackendDashboardDNSChange): ChangePlanRow {
+  const parts = [payload.record_name, payload.record_type, payload.record_text].filter(Boolean);
+  return {
+    id: payload.id,
+    label: payload.title,
+    state: payload.status,
+    record: parts.join(" "),
+    evidence: payload.evidence,
+    risk: payload.risk,
+    rollbackNote: payload.rollback_note,
+  };
+}
+
+export function mapReporterResponse(payload: BackendDashboardReporterResponse): ReporterViewModel {
+  return {
+    domainID: payload.domain_id,
+    domain: payload.domain,
+    reportVolume: compactNumber(payload.report_volume),
+    alignedPercentage: roundOne(payload.aligned_percentage),
+    reporterOrgCount: numberOrZero(payload.reporter_org_count),
+    failures: compactNumber(payload.failures),
+    rejectCandidates: numberOrZero(payload.reject_candidates),
+    setupGuidance: payload.setup_guidance,
+    senderSources: (payload.sender_inventory || []).map(mapSenderSource),
+  };
+}
+
+export function mapSenderSource(payload: BackendDashboardSender): SenderSource {
+  const provider = payload.provider || payload.source_ip || "Unknown sender";
+  return {
+    id: `${provider}-${payload.source_ip || ""}`,
+    provider,
+    sourceIP: payload.source_ip,
+    volume: compactNumber(payload.volume),
+    volumeCount: numberOrZero(payload.volume),
+    aligned: roundOne(payload.aligned_percentage),
+    unknown: payload.classification === "unknown" || payload.risk === "review",
+    trend: payload.trend || "stable",
+    risk: payload.risk,
+  };
+}
+
+export function mapSettingsResponse(payload: BackendDashboardSettingsResponse): SettingsState {
+  return {
+    alignmentGate: payload.require_alignment_before_reject >= 95,
+    pauseOnUnknownSpike: Boolean(payload.pause_automation_on_unknown_senders_spike),
+    monthlyReports: Boolean(payload.auto_generate_monthly_executive_reports),
+    notificationChannels: payload.notification_channels || [],
+    updatedAt: payload.updated_at,
+  };
+}
+
+export function settingsToBackendPayload(settings: SettingsState): BackendDashboardSettingsResponse {
+  return {
+    require_alignment_before_reject: settings.alignmentGate ? 95 : 1,
+    pause_automation_on_unknown_senders_spike: settings.pauseOnUnknownSpike,
+    auto_generate_monthly_executive_reports: settings.monthlyReports,
+    notification_channels: settings.notificationChannels,
+    updated_at: settings.updatedAt,
+  };
+}
+
+export async function getDashboardData(): Promise<DashboardViewModel> {
+  return mapDashboardResponse(await dashboardJSON<BackendDashboardResponse>("/api/dashboard"));
+}
+
+export async function getReporterData(domainID: string, filter?: "unknown"): Promise<ReporterViewModel> {
+  const query = filter ? `?filter=${encodeURIComponent(filter)}` : "";
+  return mapReporterResponse(await dashboardJSON<BackendDashboardReporterResponse>(`/api/dashboard/domains/${domainID}/reporter${query}`));
+}
+
+export async function getChangePlan(domainID: string): Promise<ChangePlanViewModel> {
+  return mapChangePlanResponse(await dashboardJSON<BackendDashboardChangePlanResponse>(`/api/dashboard/domains/${domainID}/change-plan`));
+}
+
+export async function getDashboardAlerts(): Promise<DashboardAlert[]> {
+  return mapAlertsResponse(await dashboardJSON<BackendDashboardAlertsResponse>("/api/dashboard/alerts"));
+}
+
+export async function getDashboardSettings(): Promise<SettingsState> {
+  return mapSettingsResponse(await dashboardJSON<BackendDashboardSettingsResponse>("/api/dashboard/settings"));
+}
+
+export async function recheckDashboardDomain(domainID: string): Promise<RecheckResult> {
+  const payload = await dashboardJSON<BackendDashboardRecheckResponse>(`/api/dashboard/domains/${domainID}/recheck`, {
+    method: "POST",
+  });
+  return {
+    jobID: payload.job_id,
+    domainID: payload.domain_id,
+    status: payload.status,
+    queuedAt: payload.queued_at,
+    nextAllowedAt: payload.next_allowed_at,
+  };
+}
+
+export async function acknowledgeDashboardAlert(alertID: string, reason?: string): Promise<void> {
+  await dashboardJSON(`/api/dashboard/alerts/${alertID}/ack`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ reason }),
+  });
+}
+
+export async function muteDashboardAlert(alertID: string, duration = "7d", reason?: string): Promise<void> {
+  await dashboardJSON(`/api/dashboard/alerts/${alertID}/mute`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ duration, reason }),
+  });
+}
+
+export async function saveDashboardSettings(settings: SettingsState): Promise<SettingsState> {
+  return mapSettingsResponse(
+    await dashboardJSON<BackendDashboardSettingsResponse>("/api/dashboard/settings", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(settingsToBackendPayload(settings)),
+    }),
+  );
+}
+
+export async function fetchReporterCSV(domainID: string, filter?: "unknown"): Promise<Blob> {
+  const query = new URLSearchParams({ format: "csv" });
+  if (filter) query.set("filter", filter);
+
+  const response = await fetch(`/api/dashboard/domains/${domainID}/reporter?${query.toString()}`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(await responseErrorMessage(response));
+  }
+
+  return response.blob();
+}
+
+export function emptyDashboardState(notice: string): DashboardInitialState {
+  return {
+    dashboard: dashboardViewModelFromDomains([], 0, new Date().toISOString()),
+    alerts: [],
+    settings: {
+      alignmentGate: false,
+      pauseOnUnknownSpike: false,
+      monthlyReports: false,
+      notificationChannels: [],
+    },
+    notice,
+  };
+}
+
+function dashboardViewModelFromDomains(
+  domains: ProtectedDomain[],
+  alertCount: number,
+  generatedAt?: string,
+  overrides?: { protectedDomainCount?: number; averageScore?: number; unknownSenderCount?: number },
+): DashboardViewModel {
+  const protectedCount = overrides?.protectedDomainCount ?? domains.length;
+  const averageScore =
+    overrides?.averageScore ?? (domains.length ? domains.reduce((total, domain) => total + domain.score, 0) / domains.length : 0);
+  const unknownSenderCount = overrides?.unknownSenderCount ?? domains.reduce((total, domain) => total + domain.unknownSenders, 0);
+  const alignmentRate = domains.length
+    ? domains.reduce((total, domain) => total + domain.alignmentRate, 0) / domains.length
+    : 0;
+  const readyForReject = domains.filter((domain) => domain.dmarcPolicy === "quarantine" && domain.score >= 90).length;
+
+  return {
+    generatedAt,
+    protectedDomains: domains,
+    metrics: [
+      {
+        label: "Protected domains",
+        value: `${protectedCount}`,
+        detail: `${readyForReject} ready for p=reject`,
+        trend: generatedAt ? `Updated ${formatRelativeTime(generatedAt)}` : "Live backend data",
+        tone: "blue",
+        icon: "shield-check",
+      },
+      {
+        label: "Alignment rate",
+        value: `${roundOne(alignmentRate)}%`,
+        detail: `Average score ${roundOne(averageScore)}`,
+        trend: domains.length ? "Across protected domains" : "No domains yet",
+        tone: "green",
+        icon: "gauge",
+      },
+      {
+        label: "Open alerts",
+        value: `${alertCount}`,
+        detail: alertCount === 1 ? "1 finding needs review" : `${alertCount} findings need review`,
+        trend: alertCount ? "Operator review required" : "No active alerts",
+        tone: alertCount ? "amber" : "green",
+        icon: "alert-triangle",
+      },
+      {
+        label: "Unknown senders",
+        value: `${unknownSenderCount}`,
+        detail: "From Reporter inventory",
+        trend: unknownSenderCount ? "Needs classification" : "No unknown senders",
+        tone: unknownSenderCount ? "red" : "green",
+        icon: "shield-alert",
+      },
+    ],
+    recommendations: domains
+      .filter((domain) => domain.nextAction)
+      .slice(0, 4)
+      .map((domain) => ({
+        id: domain.id,
+        title: domain.nextAction,
+        domain: domain.domain,
+        impact: `Current score ${domain.score} with ${domain.unknownSenders} unknown sender${domain.unknownSenders === 1 ? "" : "s"}.`,
+        effort: domain.score >= 90 ? "Low" : domain.score >= 70 ? "Medium" : "High",
+        due: domain.status === "needs-work" ? "Today" : "This week",
+      })),
+    activityEvents: [
+      {
+        title: "Dashboard data refreshed",
+        detail: `${protectedCount} protected domain${protectedCount === 1 ? "" : "s"} loaded from the dashboard API.`,
+        time: generatedAt ? formatRelativeTime(generatedAt) : "just now",
+        icon: "check-circle",
+      },
+      {
+        title: "Reporter inventory summarized",
+        detail: `${unknownSenderCount} unknown sender${unknownSenderCount === 1 ? "" : "s"} need review.`,
+        time: "live",
+        icon: "mail-check",
+      },
+      {
+        title: "Settings available",
+        detail: "Automation guardrails are managed through the backend dashboard contract.",
+        time: "live",
+        icon: "key",
+      },
+      {
+        title: "DNS changes backend-owned",
+        detail: "Change plans are generated by the backend recommendation engine.",
+        time: "live",
+        icon: "database-zap",
+      },
+    ],
+  };
+}
+
+async function dashboardJSON<T>(url: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, {
+    ...init,
+    headers: init?.headers,
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(await responseErrorMessage(response));
+  }
+
+  return (await response.json()) as T;
+}
+
+async function responseErrorMessage(response: Response): Promise<string> {
+  const payload = (await response.json().catch(() => ({}))) as { error?: string; message?: string };
+  return payload.error || payload.message || `Dashboard request failed with ${response.status}.`;
+}
+
+function mapDomainStatus(status: string): DomainStatus {
+  if (status === "protected" || status === "monitoring" || status === "needs-work") return status;
+  return "monitoring";
+}
+
+function mapDMARCPolicy(policy: string): ProtectedDomain["dmarcPolicy"] {
+  if (policy === "reject" || policy === "quarantine" || policy === "none") return policy;
+  return "none";
+}
+
+function mapDKIMCoverage(coverage: string): number {
+  if (coverage === "covered") return 100;
+  return 0;
+}
+
+function mapAlertSeverity(severity: string): AlertSeverity {
+  if (severity === "critical") return "critical";
+  if (severity === "high") return "high";
+  if (severity === "warn" || severity === "medium") return "medium";
+  return "low";
+}
+
+function formatRelativeTime(value?: string): string {
+  if (!value) return "not checked";
+
+  const timestamp = Date.parse(value);
+  if (Number.isNaN(timestamp)) return value;
+
+  const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hr ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} day${days === 1 ? "" : "s"} ago`;
+  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(new Date(timestamp));
+}
+
+function compactNumber(value: number): string {
+  const number = numberOrZero(value);
+  if (number >= 1000000) return `${roundOne(number / 1000000)}M`;
+  if (number >= 1000) return `${roundOne(number / 1000)}k`;
+  return `${number}`;
+}
+
+function numberOrZero(value: number | undefined): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function roundOne(value: number): number {
+  return Math.round(numberOrZero(value) * 10) / 10;
+}
