@@ -60,14 +60,14 @@ async function loadInitialDashboardState(): Promise<DashboardInitialState> {
       dashboard: mapDashboardResponse(dashboard),
       alerts: mapAlertsResponse(alerts),
       settings: mapSettingsResponse(settings),
-      notice: "Dashboard data loaded from backend.",
+      notice: "Dashboard data loaded.",
     };
   } catch (error) {
     if (error instanceof DashboardPageFetchError && (error.status === 401 || error.status === 403)) {
-      return emptyDashboardState("Dashboard backend token is unauthenticated or missing required scopes.");
+      return emptyDashboardState("Dashboard service credentials are unauthenticated or missing required scopes.");
     }
 
-    const message = error instanceof Error ? error.message : "Dashboard backend unavailable.";
+    const message = error instanceof Error ? error.message : "Dashboard service unavailable.";
     return emptyDashboardState(message);
   }
 }

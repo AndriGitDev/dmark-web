@@ -4,9 +4,12 @@ This plan is for completing the `dmark-web` frontend integration against the aut
 
 ## Current State
 
-- `dmark-web` is still using prototype dashboard fixtures from `lib/dashboard.ts`.
-- The dashboard UI is in `components/dmark-dashboard.tsx` and is currently client-state driven.
-- Existing server proxy patterns already exist for public backend calls:
+- `dmark-web` now has a backend-backed dashboard integration path.
+- Dashboard initial state is loaded server-side in `app/dashboard/page.tsx`.
+- Client interactions remain in `components/dmark-dashboard.tsx` for tabs, filters, recheck buttons, alert actions, settings toggles, notices, and exports.
+- Dashboard browser code calls `/api/dashboard/*`; the server route proxies authenticated requests to `dmark-app`.
+- Mock dashboard fixtures still exist in `lib/dashboard.ts`, but only behind explicit `DMARK_DASHBOARD_MOCK=1`.
+- Existing server proxy patterns also exist for public backend calls:
   - `app/api/scan/route.ts`
   - `app/api/upgrade/route.ts`
 - The backend now exposes frontend-ready authenticated dashboard contracts:
@@ -25,7 +28,21 @@ This plan is for completing the `dmark-web` frontend integration against the aut
 
 ## Goal
 
-Move `dmark-web` from a mock dashboard to a live backend-backed dashboard without exposing backend API tokens to browser JavaScript.
+Keep `dmark-web` live-backend ready without exposing backend API tokens to browser JavaScript.
+
+Completed:
+
+- Server-only dashboard backend client and types.
+- Catch-all Next dashboard proxy route.
+- Server-fetched initial dashboard state.
+- Client actions for recheck, Reporter filter/export, alert acknowledge/mute, and settings save.
+- Explicit mock mode only when `DMARK_DASHBOARD_MOCK=1`.
+
+Remaining:
+
+- Verify against a seeded `dmark-app` backend.
+- Keep UI states aligned with backend error and empty-state behavior as the API matures.
+- Add tests where dashboard interactions stabilize.
 
 ## Required Environment
 

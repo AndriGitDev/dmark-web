@@ -9,7 +9,7 @@ This plan is for completing the backend work in `/Users/andri/Documents/GitHub/d
   - `POST /api/public/scan`
   - `POST /api/public/audit-claims`
 - `dmark-app` owns backend product work and already documents authenticated `/api/v1` contracts in `docs/API.md`.
-- The frontend dashboard still uses mock data in `lib/dashboard.ts`.
+- The frontend dashboard now has server-side proxy routes and explicit mock mode; live behavior depends on the authenticated `dmark-app` dashboard API.
 - The backend has domain, reporter, alert, status, billing, API key, team, privacy, webhook, and audit foundations, but the frontend needs stable product-facing dashboard contracts and auth/token behavior.
 
 ## Goal
@@ -96,10 +96,16 @@ go test ./internal/domains ./internal/jobs ./internal/web
 
 Produce backend-owned remediation records instead of hardcoded frontend copy.
 
+SPF flattening has two layers:
+
+- The current dashboard contract should expose backend-owned remediation/change-plan rows from scanner evidence.
+- The actual dynamic SPF flattener is a separate Bunny.net-backed DNS engine documented in `docs/CODEX_SPF_FLATTENER_PLAN.md`.
+
 Work:
 
 - Add a recommendation/change-plan package if no suitable one exists.
 - Generate SPF flattening recommendations from scanner results.
+- Treat SPF recommendations as advisory until the dynamic DNS engine exists.
 - Generate DMARC journey recommendations using existing `internal/dmarcjourney`.
 - Include DKIM/BIMI follow-up records where scanner evidence supports it.
 - Mark each change as `ready`, `review`, `waiting`, or `blocked`.
@@ -117,6 +123,38 @@ Verification:
 ```sh
 go test ./internal/recommendations ./internal/dmarcjourney ./internal/scanner
 ```
+
+## Phase 3B: Dynamic SPF Flattener And Bunny DNS Engine
+
+Build the automated SPF flattening service described in `docs/CODEX_SPF_FLATTENER_PLAN.md`.
+
+Work:
+
+- Store per-domain flattener configuration and selected sender tools/includes.
+- Resolve SPF include chains recursively with max-depth and loop protection.
+- Generate deduplicated `ip4:` and `ip6:` SPF records.
+- Split long TXT record values into provider-safe chunks.
+- Publish `*.route.dmark.is` TXT records through Bunny.net's DNS API.
+- Require clients to CNAME `_spf.<client-domain>` to `<client>.route.dmark.is`.
+- Resync active flattened records every 12 to 24 hours and immediately after config changes.
+- Avoid Bunny API writes when the generated SPF output has not changed.
+- Surface failed, stale, or blocked flattener states in dashboard alerts and change plans.
+
+Acceptance:
+
+- A protected domain can enable a provider such as HubSpot and receive a concrete `_spf` CNAME instruction.
+- The backend publishes or updates the matching Bunny TXT record without exposing the Bunny API key.
+- Recursive includes are flattened deterministically and safely.
+- Circular includes, DNS failures, excessive depth, and overlarge output fail closed with operator-visible errors.
+- Scheduled sync keeps published records current.
+
+Verification:
+
+```sh
+go test ./internal/recommendations ./internal/domains ./internal/web
+```
+
+If the flattener worker is implemented in TypeScript instead of Go, add the equivalent Node test command here once the package exists.
 
 ## Phase 4: Reporter Dashboard Data
 

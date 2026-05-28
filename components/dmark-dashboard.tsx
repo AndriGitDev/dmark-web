@@ -387,7 +387,7 @@ export function DmarkDashboard({
               <button
                 type="button"
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-trust px-4 text-sm font-semibold text-white transition hover:bg-trust-hover"
-                onClick={() => announce("Domain onboarding is managed in the backend app.")}
+                onClick={() => announce("Add domains from the protected-domain workspace.")}
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 Add domain
@@ -534,9 +534,9 @@ function DashboardSidebar({ activeTab, onSelect }: { activeTab: TabID; onSelect:
       <div className="mt-auto border-t border-slate-200 p-4">
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
           <Sparkles className="h-5 w-5 text-trust" aria-hidden="true" />
-          <p className="mt-3 text-sm font-semibold text-navy">Backend-backed operations</p>
+          <p className="mt-3 text-sm font-semibold text-navy">Live trust operations</p>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Dashboard actions are proxied through server routes with no browser-visible backend token.
+            Review domain posture, sender evidence, and DNS changes from one workspace.
           </p>
         </div>
       </div>
@@ -566,7 +566,7 @@ function OverviewTab({
       <EmptyState
         icon={Globe2}
         title="No protected domains"
-        detail="Add domains in the backend app, then refresh this dashboard to load live posture and Reporter data."
+        detail="Add protected domains, then refresh this dashboard to load live posture and Reporter data."
       />
     );
   }
@@ -613,7 +613,7 @@ function OverviewTab({
               <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Fleet health
               </p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-navy">Live backend posture</h2>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-navy">Live domain posture</h2>
             </div>
             <button
               type="button"
@@ -873,7 +873,7 @@ function DomainsTab({
         <EmptyState
           icon={Globe2}
           title="No protected domains"
-          detail="No domains matched the current search or the backend returned an empty protected-domain list."
+          detail="No domains matched the current search or the protected-domain list is empty."
         />
       )}
 
@@ -911,11 +911,11 @@ function DNSChangePlan({
           {selectedDomain ? `DNS records for ${selectedDomain.domain}` : "DNS records"}
         </h3>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-          Backend-generated changes replace the former hardcoded recommendation queue.
+          Review staged DNS changes with evidence, risk notes, and rollback guidance before publishing.
         </p>
       </div>
 
-      {state === "loading" ? <PanelNotice text="Loading backend change plan..." /> : null}
+      {state === "loading" ? <PanelNotice text="Loading change plan..." /> : null}
       {state === "error" ? <PanelNotice tone="error" text={error || "Change plan unavailable."} /> : null}
       {state === "ready" && changePlan && changePlan.changes.length === 0 ? (
         <PanelNotice text={changePlan.nextAction || "No DNS changes are currently staged for this domain."} />
@@ -992,7 +992,7 @@ function ReporterTab({
       {reporter ? (
         <>
           <section className="grid gap-4 md:grid-cols-3">
-            <CompactStat label="Report volume" value={reporter.reportVolume} detail="Current backend window" />
+            <CompactStat label="Report volume" value={reporter.reportVolume} detail="Current reporting window" />
             <CompactStat label="Aligned messages" value={`${reporter.alignedPercentage}%`} detail="SPF or DKIM aligned" />
             <CompactStat label="Reporter orgs" value={`${reporter.reporterOrgCount}`} detail="Aggregate senders" />
           </section>
@@ -1202,7 +1202,7 @@ function SettingsTab({
               <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Notification channels
               </p>
-              <h3 className="mt-2 text-xl font-semibold text-navy">Backend channels</h3>
+              <h3 className="mt-2 text-xl font-semibold text-navy">Notification channels</h3>
             </div>
             <Bell className="h-5 w-5 text-trust" aria-hidden="true" />
           </div>
