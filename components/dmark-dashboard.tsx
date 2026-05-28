@@ -7,6 +7,7 @@ import {
   BarChart3,
   Bell,
   Check,
+  CheckCircle2,
   ChevronDown,
   Clock3,
   Copy,
@@ -49,6 +50,12 @@ const navItems = [
 ] as const;
 
 type TabID = (typeof navItems)[number]["id"];
+type SettingsState = {
+  alignmentGate: boolean;
+  pauseOnUnknownSpike: boolean;
+  monthlyReports: boolean;
+};
+type SettingsKey = keyof SettingsState;
 
 const scoreBands = [
   { label: "Mon", value: 76 },
@@ -139,21 +146,94 @@ export function DmarkDashboard() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedDomainID, setSelectedDomainID] = useState(protectedDomains[0]?.id ?? "");
+  const [domainLastChecked, setDomainLastChecked] = useState<Record<string, string>>({});
+  const [recheckingDomainID, setRecheckingDomainID] = useState<string | null>(null);
+  const [actionNotice, setActionNotice] = useState("Mock dashboard data loaded.");
+  const [activeAlerts, setActiveAlerts] = useState(dashboardAlerts);
+  const [settings, setSettings] = useState<SettingsState>({
+    alignmentGate: true,
+    pauseOnUnknownSpike: true,
+    monthlyReports: false,
+  });
+
+  const dashboardDomains = useMemo(() => {
+    return protectedDomains.map((domain) => ({
+      ...domain,
+      lastChecked: domainLastChecked[domain.id] || domain.lastChecked,
+    }));
+  }, [domainLastChecked]);
 
   const filteredDomains = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    if (!normalized) return protectedDomains;
-    return protectedDomains.filter((domain) => {
+    if (!normalized) return dashboardDomains;
+    return dashboardDomains.filter((domain) => {
       return (
         domain.domain.toLowerCase().includes(normalized) ||
         domain.owner.toLowerCase().includes(normalized) ||
         domain.nextAction.toLowerCase().includes(normalized)
       );
     });
-  }, [query]);
+  }, [dashboardDomains, query]);
 
   const selectedDomain =
-    protectedDomains.find((domain) => domain.id === selectedDomainID) ?? protectedDomains[0];
+    dashboardDomains.find((domain) => domain.id === selectedDomainID) ?? dashboardDomains[0];
+
+  function announce(message: string) {
+    setActionNotice(message);
+  }
+
+  async function copyText(value: string, label: string) {
+    try {
+      await navigator.clipboard.writeText(value);
+      announce(`${label} copied.`);
+    } catch {
+      announce(`Could not copy ${label.toLowerCase()}.`);
+    }
+  }
+
+  function downloadFile(filename: string, content: string, type = "text/plain") {
+    const url = URL.createObjectURL(new Blob([content], { type }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+    announce(`${filename} exported.`);
+  }
+
+  function exportDomains(domains: ProtectedDomain[]) {
+    const rows = [
+      ["domain", "owner", "status", "score", "dmarc_policy", "spf_lookups", "dkim_coverage", "unknown_senders", "last_checked"],
+      ...domains.map((domain) => [
+        domain.domain,
+        domain.owner,
+        domain.status,
+        `${domain.score}`,
+        domain.dmarcPolicy,
+        `${domain.spfLookups}`,
+        `${domain.dkimCoverage}`,
+        `${domain.unknownSenders}`,
+        domain.lastChecked,
+      ]),
+    ];
+    downloadFile("dmark-domains.csv", rows.map((row) => row.join(",")).join("\n"), "text/csv");
+  }
+
+  function recheckDomain(domain: ProtectedDomain) {
+    setRecheckingDomainID(domain.id);
+    announce(`Rechecking ${domain.domain}...`);
+    window.setTimeout(() => {
+      setDomainLastChecked((current) => ({ ...current, [domain.id]: "just now" }));
+      setRecheckingDomainID(null);
+      announce(`${domain.domain} recheck queued.`);
+    }, 700);
+  }
+
+  function resolveAlert(alertID: string, action: "acknowledged" | "muted") {
+    const alert = activeAlerts.find((item) => item.id === alertID);
+    setActiveAlerts((current) => current.filter((item) => item.id !== alertID));
+    announce(`${alert?.title || "Alert"} ${action}.`);
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-navy">
@@ -228,6 +308,8 @@ export function DmarkDashboard() {
               filteredDomains={filteredDomains}
               onSelectDomain={setSelectedDomainID}
               onOpenTab={setActiveTab}
+              onRecheckDomain={recheckDomain}
+              recheckingDomainID={recheckingDomainID}
             />
           ) : null}
           {activeTab === "domains" ? (
@@ -235,12 +317,38 @@ export function DmarkDashboard() {
               domains={filteredDomains}
               selectedDomainID={selectedDomain.id}
               onSelectDomain={setSelectedDomainID}
+              onRecheckDomain={recheckDomain}
+              onExportDomains={exportDomains}
+              onCopy={copyText}
+              recheckingDomainID={recheckingDomainID}
             />
           ) : null}
-          {activeTab === "reporter" ? <ReporterTab selectedDomain={selectedDomain} /> : null}
-          {activeTab === "alerts" ? <AlertsTab onOpenDomains={() => setActiveTab("domains")} /> : null}
-          {activeTab === "settings" ? <SettingsTab /> : null}
+          {activeTab === "reporter" ? <ReporterTab selectedDomain={selectedDomain} onExport={downloadFile} onNotice={announce} /> : null}
+          {activeTab === "alerts" ? (
+            <AlertsTab
+              alerts={activeAlerts}
+              onOpenDomains={() => setActiveTab("domains")}
+              onResolveAlert={resolveAlert}
+            />
+          ) : null}
+          {activeTab === "settings" ? (
+            <SettingsTab
+              settings={settings}
+              onToggle={(key) => {
+                setSettings((current) => ({ ...current, [key]: !current[key] }));
+                announce("Automation setting updated.");
+              }}
+            />
+          ) : null}
         </main>
+      </div>
+
+      <div
+        className="fixed bottom-4 right-4 z-50 max-w-[calc(100vw-2rem)] rounded-md border border-blue-200 bg-white px-4 py-3 text-sm font-semibold text-navy shadow-lg"
+        role="status"
+        aria-live="polite"
+      >
+        {actionNotice}
       </div>
 
       {mobileNavOpen ? (
@@ -327,15 +435,24 @@ function OverviewTab({
   filteredDomains,
   onSelectDomain,
   onOpenTab,
+  onRecheckDomain,
+  recheckingDomainID,
 }: {
   selectedDomain: ProtectedDomain;
   filteredDomains: ProtectedDomain[];
   onSelectDomain: (id: string) => void;
   onOpenTab: (tab: TabID) => void;
+  onRecheckDomain: (domain: ProtectedDomain) => void;
+  recheckingDomainID: string | null;
 }) {
   return (
     <div className="grid gap-6">
-      <CommandCenter selectedDomain={selectedDomain} onOpenReporter={() => onOpenTab("reporter")} />
+      <CommandCenter
+        selectedDomain={selectedDomain}
+        onOpenReporter={() => onOpenTab("reporter")}
+        onRecheckDomain={onRecheckDomain}
+        recheckingDomainID={recheckingDomainID}
+      />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {dashboardMetrics.map((metric) => {
@@ -452,10 +569,16 @@ function OverviewTab({
 function CommandCenter({
   selectedDomain,
   onOpenReporter,
+  onRecheckDomain,
+  recheckingDomainID,
 }: {
   selectedDomain: ProtectedDomain;
   onOpenReporter: () => void;
+  onRecheckDomain: (domain: ProtectedDomain) => void;
+  recheckingDomainID: string | null;
 }) {
+  const isRechecking = recheckingDomainID === selectedDomain.id;
+
   return (
     <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="grid gap-0 lg:grid-cols-[1fr_420px]">
@@ -477,10 +600,12 @@ function CommandCenter({
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
+                onClick={() => onRecheckDomain(selectedDomain)}
+                disabled={isRechecking}
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-trust px-4 text-sm font-semibold text-white transition hover:bg-trust-hover"
               >
-                <RefreshCw className="h-4 w-4" aria-hidden="true" />
-                Recheck DNS
+                <RefreshCw className={`h-4 w-4 ${isRechecking ? "animate-spin" : ""}`} aria-hidden="true" />
+                {isRechecking ? "Checking..." : "Recheck DNS"}
               </button>
               <button
                 type="button"
@@ -532,10 +657,18 @@ function DomainsTab({
   domains,
   selectedDomainID,
   onSelectDomain,
+  onRecheckDomain,
+  onExportDomains,
+  onCopy,
+  recheckingDomainID,
 }: {
   domains: ProtectedDomain[];
   selectedDomainID: string;
   onSelectDomain: (id: string) => void;
+  onRecheckDomain: (domain: ProtectedDomain) => void;
+  onExportDomains: (domains: ProtectedDomain[]) => void;
+  onCopy: (value: string, label: string) => void;
+  recheckingDomainID: string | null;
 }) {
   return (
     <div className="grid gap-6">
@@ -583,10 +716,16 @@ function DomainsTab({
                 </button>
                 <button
                   type="button"
+                  onClick={() => onRecheckDomain(domain)}
+                  disabled={recheckingDomainID === domain.id}
                   className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-navy px-3 text-sm font-semibold text-white transition hover:bg-navy-soft"
                 >
-                  <Zap className="h-4 w-4" aria-hidden="true" />
-                  Recheck
+                  {recheckingDomainID === domain.id ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Zap className="h-4 w-4" aria-hidden="true" />
+                  )}
+                  {recheckingDomainID === domain.id ? "Checking..." : "Recheck"}
                 </button>
               </div>
             </div>
@@ -604,12 +743,21 @@ function DomainsTab({
         ))}
       </div>
 
-      <DNSChangePlan />
+      <DNSChangePlan
+        onCopy={onCopy}
+        onExport={() => onExportDomains(domains)}
+      />
     </div>
   );
 }
 
-function DNSChangePlan() {
+function DNSChangePlan({
+  onCopy,
+  onExport,
+}: {
+  onCopy: (value: string, label: string) => void;
+  onExport: () => void;
+}) {
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
@@ -624,6 +772,7 @@ function DNSChangePlan() {
         </div>
         <button
           type="button"
+          onClick={onExport}
           className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:border-trust hover:text-trust"
         >
           <Download className="h-4 w-4" aria-hidden="true" />
@@ -644,6 +793,7 @@ function DNSChangePlan() {
             </code>
             <button
               type="button"
+              onClick={() => onCopy(change.record, `${change.label} record`)}
               className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-navy px-3 text-sm font-semibold text-white transition hover:bg-navy-soft"
             >
               <Copy className="h-4 w-4" aria-hidden="true" />
@@ -656,7 +806,32 @@ function DNSChangePlan() {
   );
 }
 
-function ReporterTab({ selectedDomain }: { selectedDomain: ProtectedDomain }) {
+function ReporterTab({
+  selectedDomain,
+  onExport,
+  onNotice,
+}: {
+  selectedDomain: ProtectedDomain;
+  onExport: (filename: string, content: string, type?: string) => void;
+  onNotice: (message: string) => void;
+}) {
+  const [sourceFilter, setSourceFilter] = useState<"all" | "unknown">("all");
+  const visibleSources = sourceFilter === "unknown" ? senderSources.filter((source) => source.unknown) : senderSources;
+
+  function exportSenderCSV() {
+    const rows = [
+      ["provider", "volume", "aligned", "classification", "trend"],
+      ...visibleSources.map((source) => [
+        source.provider,
+        source.volume,
+        `${source.aligned}`,
+        source.unknown ? "unknown" : "expected",
+        source.trend,
+      ]),
+    ];
+    onExport("dmark-sender-inventory.csv", rows.map((row) => row.join(",")).join("\n"), "text/csv");
+  }
+
   return (
     <div className="grid gap-6">
       <div>
@@ -685,8 +860,13 @@ function ReporterTab({ selectedDomain }: { selectedDomain: ProtectedDomain }) {
             </div>
             <button
               type="button"
+              onClick={() => {
+                const nextFilter = sourceFilter === "all" ? "unknown" : "all";
+                setSourceFilter(nextFilter);
+                onNotice(nextFilter === "unknown" ? "Showing unknown senders only." : "Showing all senders.");
+              }}
               className="grid h-10 w-10 place-items-center rounded-md border border-slate-200 text-slate-600 transition hover:border-trust hover:text-trust"
-              aria-label="Filter sources"
+              aria-label={sourceFilter === "all" ? "Filter unknown senders" : "Show all senders"}
             >
               <Filter className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -735,7 +915,11 @@ function ReporterTab({ selectedDomain }: { selectedDomain: ProtectedDomain }) {
             </p>
             <h3 className="mt-2 text-xl font-semibold text-navy">Top sources by message volume</h3>
           </div>
-          <button className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:border-trust hover:text-trust">
+          <button
+            type="button"
+            onClick={exportSenderCSV}
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:border-trust hover:text-trust"
+          >
             <FileText className="h-4 w-4" aria-hidden="true" />
             Export CSV
           </button>
@@ -752,7 +936,7 @@ function ReporterTab({ selectedDomain }: { selectedDomain: ProtectedDomain }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {senderSources.map((source) => (
+              {visibleSources.map((source) => (
                 <tr key={source.provider}>
                   <td className="px-5 py-4 font-semibold text-navy">{source.provider}</td>
                   <td className="px-5 py-4 text-slate-600">{source.volume}</td>
@@ -779,7 +963,15 @@ function ReporterTab({ selectedDomain }: { selectedDomain: ProtectedDomain }) {
   );
 }
 
-function AlertsTab({ onOpenDomains }: { onOpenDomains: () => void }) {
+function AlertsTab({
+  alerts,
+  onOpenDomains,
+  onResolveAlert,
+}: {
+  alerts: typeof dashboardAlerts;
+  onOpenDomains: () => void;
+  onResolveAlert: (alertID: string, action: "acknowledged" | "muted") => void;
+}) {
   return (
     <div className="grid gap-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
@@ -797,8 +989,9 @@ function AlertsTab({ onOpenDomains }: { onOpenDomains: () => void }) {
         </button>
       </div>
 
-      <div className="grid gap-4">
-        {dashboardAlerts.map((alert) => (
+      {alerts.length ? (
+        <div className="grid gap-4">
+          {alerts.map((alert) => (
           <article key={alert.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
               <div>
@@ -816,23 +1009,46 @@ function AlertsTab({ onOpenDomains }: { onOpenDomains: () => void }) {
                 <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">{alert.detail}</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-trust px-3 text-sm font-semibold text-white transition hover:bg-trust-hover">
+                <button
+                  type="button"
+                  onClick={() => onResolveAlert(alert.id, "acknowledged")}
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-trust px-3 text-sm font-semibold text-white transition hover:bg-trust-hover"
+                >
                   <Check className="h-4 w-4" aria-hidden="true" />
                   Acknowledge
                 </button>
-                <button className="inline-flex min-h-10 items-center justify-center rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-700 transition hover:border-trust hover:text-trust">
+                <button
+                  type="button"
+                  onClick={() => onResolveAlert(alert.id, "muted")}
+                  className="inline-flex min-h-10 items-center justify-center rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-700 transition hover:border-trust hover:text-trust"
+                >
                   Mute
                 </button>
               </div>
             </div>
           </article>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <article className="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <CheckCircle2 className="mx-auto h-8 w-8 text-emerald-600" aria-hidden="true" />
+          <h3 className="mt-4 text-xl font-semibold text-navy">No active alerts</h3>
+          <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">
+            Acknowledged and muted alerts stay in the audit trail. New DNS drift or sender findings will reappear here.
+          </p>
+        </article>
+      )}
     </div>
   );
 }
 
-function SettingsTab() {
+function SettingsTab({
+  settings,
+  onToggle,
+}: {
+  settings: SettingsState;
+  onToggle: (key: SettingsKey) => void;
+}) {
   return (
     <div className="grid gap-6">
       <div>
@@ -852,9 +1068,21 @@ function SettingsTab() {
             <Gauge className="h-5 w-5 text-trust" aria-hidden="true" />
           </div>
           <div className="mt-6 grid gap-4">
-            <SettingRow title="Require 95% alignment before p=reject" enabled />
-            <SettingRow title="Pause automation when unknown senders spike" enabled />
-            <SettingRow title="Auto-generate monthly executive reports" enabled={false} />
+            <SettingRow
+              title="Require 95% alignment before p=reject"
+              enabled={settings.alignmentGate}
+              onToggle={() => onToggle("alignmentGate")}
+            />
+            <SettingRow
+              title="Pause automation when unknown senders spike"
+              enabled={settings.pauseOnUnknownSpike}
+              onToggle={() => onToggle("pauseOnUnknownSpike")}
+            />
+            <SettingRow
+              title="Auto-generate monthly executive reports"
+              enabled={settings.monthlyReports}
+              onToggle={() => onToggle("monthlyReports")}
+            />
           </div>
         </article>
 
@@ -967,13 +1195,18 @@ function ActivityPanel() {
   );
 }
 
-function SettingRow({ title, enabled }: { title: string; enabled: boolean }) {
+function SettingRow({ title, enabled, onToggle }: { title: string; enabled: boolean; onToggle: () => void }) {
   return (
-    <div className="flex min-h-14 items-center justify-between gap-4 rounded-md border border-slate-200 px-4">
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex min-h-14 w-full items-center justify-between gap-4 rounded-md border border-slate-200 px-4 text-left transition hover:border-trust"
+      aria-pressed={enabled}
+    >
       <p className="text-sm font-semibold text-navy">{title}</p>
       <span
         className={`relative h-7 w-12 rounded-full transition ${enabled ? "bg-trust" : "bg-slate-300"}`}
-        aria-label={enabled ? "Enabled" : "Disabled"}
+        aria-hidden="true"
       >
         <span
           className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${
@@ -981,7 +1214,7 @@ function SettingRow({ title, enabled }: { title: string; enabled: boolean }) {
           }`}
         />
       </span>
-    </div>
+    </button>
   );
 }
 
