@@ -537,6 +537,18 @@ export function DmarkMarketing() {
             <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
               DMARC/SPF diagnostics, flattening, reporting, and managed rollout for Icelandic businesses.
             </p>
+            <p className="mt-3 text-sm text-slate-400">
+              A{" "}
+              <a
+                href="https://kastro.is"
+                className="font-semibold text-white underline decoration-white/30 underline-offset-4 transition hover:decoration-white"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Kastro
+              </a>{" "}
+              made product.
+            </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <button
