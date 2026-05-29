@@ -1,10 +1,8 @@
 # Codex Frontend Milestone Handoff
 
-## Handoff - 2026-05-29
+## Completion Note - 2026-05-29
 
-This handoff is for the next frontend agent working in `/Users/andri/Documents/GitHub/dmark-web` after the dashboard live-backend QA pass. The current dashboard integration is backend-backed through server-side `/api/dashboard/*` proxy routes, with `DMARK_DASHBOARD_MOCK=1` retained only for explicit mock demos.
-
-Use this plan to move beyond integration QA into the next product milestone: make the dashboard more complete as an operator workspace while keeping backend secrets server-only.
+This milestone handoff is archived. The dashboard integration, backend proxying, live backend QA, and local visual QA are complete for the current product state. The remaining longer-term ideas below are future milestones, not blockers for the completed handoff.
 
 ## Current Baseline
 
@@ -38,9 +36,9 @@ git diff --check
 - Long DNS records, evidence text, and lookalike domains must wrap or scroll inside stable containers on mobile.
 - Do not introduce a browser test stack unless the repo preference is confirmed or the change clearly needs it.
 
-## Milestone Goal
+## Future Milestone Ideas
 
-Turn the current single-screen dashboard into a more complete Dmark operator experience:
+The following product ideas remain on the backlog for later work. They are not blockers for the completed handoff above:
 
 - Reliable visual and keyboard behavior across desktop, tablet, and mobile.
 - A protected-domain detail route for focused domain work.
@@ -51,7 +49,7 @@ Turn the current single-screen dashboard into a more complete Dmark operator exp
 
 ## Phase 1: Visual QA And Accessibility
 
-Complete the visual/browser QA that remains blocked until the Codex in-app browser is registered.
+Visual/browser QA for the dashboard has been completed in local mock mode.
 
 Viewports:
 
@@ -230,7 +228,7 @@ Acceptance:
 - Tests can run against mock mode by default.
 - Live-backend smoke remains a separate manual or environment-gated check.
 
-## Verification For Future Agents
+## Verification Reference
 
 Before handing off or pushing, run:
 
@@ -261,7 +259,7 @@ npm run dev
 
 Never commit or store the real seed token.
 
-## Suggested Next Prompt
+## Archived Next Prompt
 
 ```text
 Continue Dmark frontend milestone work in /Users/andri/Documents/GitHub/dmark-web using docs/CODEX_FRONTEND_MILESTONE_HANDOFF.md. Start with Phase 1 visual/accessibility QA if the in-app browser is available; otherwise implement Phase 2 protected-domain detail route. Preserve server-only dashboard token handling and run npm run lint, npm test, npm run build, and git diff --check before stopping.

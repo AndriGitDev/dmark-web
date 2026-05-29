@@ -1,16 +1,16 @@
 # Codex Backend Roadmap For Dmark
 
-This plan is for completing the backend work in `/Users/andri/Documents/GitHub/dmark-app` so `dmark-web` can move from a polished prototype to a live product surface.
+## Completion Note - 2026-05-29
+
+This backend roadmap is archived. The dashboard contract endpoints documented below are implemented in `dmark-app` and consumed by `dmark-web`, so the remaining sections are historical reference only.
 
 ## Current State
 
 - `dmark-web` is live as the frontend and marketing repo.
-- Public scan and audit claim flows are already connected through:
-  - `POST /api/public/scan`
-  - `POST /api/public/audit-claims`
-- `dmark-app` owns backend product work and already documents authenticated `/api/v1` contracts in `docs/API.md`.
-- The frontend dashboard now has server-side proxy routes and explicit mock mode; live behavior depends on the authenticated `dmark-app` dashboard API.
-- The backend has domain, reporter, alert, status, billing, API key, team, privacy, webhook, and audit foundations, but the frontend needs stable product-facing dashboard contracts and auth/token behavior.
+- The dashboard contract endpoints documented below are implemented in `dmark-app` and consumed by `dmark-web` through server-side proxy routes.
+- `dmark-app` still owns backend product work and documents authenticated `/api/v1` contracts in `docs/API.md`.
+- The backend has domain, reporter, alert, status, billing, API key, team, privacy, webhook, and audit foundations.
+- The SPF flattener remains future work and is tracked separately in `docs/CODEX_SPF_FLATTENER_PLAN.md`.
 
 ## Goal
 

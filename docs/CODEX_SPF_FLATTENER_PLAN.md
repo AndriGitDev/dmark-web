@@ -1,6 +1,6 @@
 # Dmark Dynamic SPF Flattener Plan
 
-This is the current implementation direction for Dmark's automated SPF flattening service.
+This is a future implementation plan for Dmark's automated SPF flattening service. No flattener code exists in the repository yet; the document is intentionally forward-looking.
 
 ## Founder Prep
 
