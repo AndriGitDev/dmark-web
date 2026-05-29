@@ -4,6 +4,37 @@
 
 This is the current handoff for the next frontend agent. The dashboard integration is now substantially implemented in `dmark-web`, including the new Brand Risk endpoint, but it still needs live-backend QA and visual/browser validation once the in-app browser connector is available.
 
+### Completion Update - 2026-05-29
+
+The next-agent live backend QA pass was completed against a local seeded `dmark-app` backend with `DMARK_DASHBOARD_MOCK=0`.
+
+Verified through the frontend-owned `/api/dashboard/*` proxy routes:
+
+- Dashboard summary and `/dashboard` render with seeded `example.com` backend data.
+- Domain list data includes status, score, DMARC policy, DKIM coverage, alignment, unknown senders, last checked, and next action.
+- Manual recheck returns `202` with a queued job payload.
+- Change Plan renders backend journey state, next action, DNS record, evidence, risk, and rollback note data.
+- Reporter returns populated inventory, `filter=unknown`, and CSV export with `text/csv` plus `Content-Disposition`.
+- Brand Risk returns email-auth findings and active-only lookalike results from `?tld=is&limit=25`.
+- Brand Risk `include_inactive=true` returns inactive `Info` candidates with no DNS/MX evidence, matching the inactive-candidate semantics.
+- Alerts list renders from the live API; acknowledge and mute both return successful action payloads.
+- Settings load and save work; backend validation errors such as an out-of-range `require_alignment_before_reject` return inline-ready `400` JSON.
+- Missing dashboard token returns controlled `503` JSON from the proxy route.
+- Security checks found no seeded local API token in source or built assets. Client-facing dashboard code calls `/api/dashboard/*`; backend dashboard token reads remain in the server-only dashboard API helper.
+
+Final checks passed after the live QA pass:
+
+```sh
+npm run lint
+npm test
+npm run build
+git diff --check
+```
+
+Visual QA remains blocked by the same host/session issue as the previous pass: the Browser plugin is available, but no `iab` browser instance is registered, so viewport screenshots and browser-driven keyboard checks could not be completed in this session. Complete the visual/accessibility pass when `agent.browsers.get("iab")` succeeds.
+
+For the next feature milestone beyond integration QA, use `docs/CODEX_FRONTEND_MILESTONE_HANDOFF.md`.
+
 ### Completed In Latest Pass
 
 - Added server-only dashboard API support for `GET /api/v1/dashboard/domains/{id}/brand-risk`.
