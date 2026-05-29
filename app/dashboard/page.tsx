@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import Link from "next/link";
+import { Lock, MailCheck, ShieldCheck } from "lucide-react";
 import { DmarkDashboard } from "@/components/dmark-dashboard";
+import { isDashboardAccessEnabled } from "@/lib/dashboard-access";
 import {
   shouldUseDashboardMock,
   type BackendDashboardAlertsResponse,
@@ -21,11 +24,19 @@ import {
 export const metadata: Metadata = {
   title: "Dashboard | dmark.is",
   description: "Dmark domain trust operations dashboard for DMARC, SPF, Reporter, alerts, and remediation.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  if (!isDashboardAccessEnabled()) {
+    return <DashboardLocked />;
+  }
+
   const initialState = await loadInitialDashboardState();
 
   return (
@@ -35,6 +46,46 @@ export default async function DashboardPage() {
       initialSettings={initialState.settings}
       initialNotice={initialState.notice}
     />
+  );
+}
+
+function DashboardLocked() {
+  return (
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#e0f2fe_0,#f8fafc_34%,#ffffff_70%)] px-5 py-10 text-navy sm:px-8">
+      <section className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-4xl place-items-center">
+        <div className="w-full rounded-2xl border border-slate-200 bg-white/90 p-8 shadow-[0_30px_90px_rgba(15,23,42,0.12)] backdrop-blur sm:p-12">
+          <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-trust">
+            <Lock className="h-4 w-4" aria-hidden="true" />
+            Private beta
+          </div>
+          <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">
+            The Dmark dashboard is locked until launch.
+          </h1>
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
+            Public scans remain open, but the operations dashboard is invite-only while Dmark is being hardened for early customers.
+          </p>
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
+            <Link
+              href="/#scanner"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-trust px-5 font-semibold text-white transition hover:bg-trust-hover"
+            >
+              <MailCheck className="h-4 w-4" aria-hidden="true" />
+              Run a public scan
+            </Link>
+            <Link
+              href="/#pricing"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-5 font-semibold text-navy transition hover:bg-slate-50"
+            >
+              <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+              Request early access
+            </Link>
+          </div>
+          <p className="mt-6 text-sm text-slate-500">
+            Internal access can be enabled server-side with <code className="rounded bg-slate-100 px-1.5 py-0.5">DMARK_DASHBOARD_ACCESS=open</code>.
+          </p>
+        </div>
+      </section>
+    </main>
   );
 }
 

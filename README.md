@@ -23,6 +23,7 @@ The marketing scanner lives at `/`. The product dashboard lives at `/dashboard`.
 - `DMARK_APP_API_BASE_URL`: legacy alias for `DMARK_API_BASE_URL`.
 - `DMARK_APP_API_TOKEN`: legacy alias for `DMARK_API_TOKEN`.
 - `DMARK_API_TIMEOUT_MS`: optional dashboard backend request timeout in milliseconds. Defaults to `10000`.
+- `DMARK_DASHBOARD_ACCESS`: keeps `/dashboard` and `/api/dashboard/*` closed unless set to `open`, `true`, `yes`, or `1`.
 - `DMARK_DASHBOARD_MOCK`: set to `1` to use explicit dashboard mock fixtures; set to `0` for live backend mode.
 - `NOCODB_WEBHOOK_URL`: optional upgrade-request webhook.
 
@@ -33,5 +34,6 @@ DMARK_SCAN_API_URL=https://dmark.kastro.is/api/public/scan
 DMARK_USE_MOCK=false
 DMARK_API_BASE_URL=https://dmark-backend.example
 DMARK_API_TOKEN=meil_production_dashboard_proxy_key
+DMARK_DASHBOARD_ACCESS=closed
 DMARK_DASHBOARD_MOCK=0
 ```

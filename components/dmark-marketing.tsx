@@ -201,9 +201,9 @@ export function DmarkMarketing() {
             <a className="transition hover:text-trust" href="#pricing">
               Pricing
             </a>
-            <a className="transition hover:text-trust" href="/dashboard">
-              Dashboard
-            </a>
+            <button className="transition hover:text-trust" onClick={() => setModalPlan("saas")} type="button">
+              Early access
+            </button>
             <button
               className="inline-flex min-h-10 items-center gap-2 rounded-md bg-trust px-4 text-sm font-semibold text-white transition hover:bg-trust-hover"
               onClick={scrollToScanner}
@@ -559,13 +559,14 @@ export function DmarkMarketing() {
               <MailCheck className="h-4 w-4" aria-hidden="true" />
               Scan Domain
             </button>
-            <a
-              href="/dashboard"
+            <button
+              type="button"
+              onClick={() => setModalPlan("saas")}
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/30 px-4 font-semibold text-white transition hover:bg-white/10"
             >
               <Gauge className="h-4 w-4" aria-hidden="true" />
-              Dashboard
-            </a>
+              Request early access
+            </button>
           </div>
         </div>
       </footer>
@@ -694,13 +695,14 @@ function ResultsDashboard({
               : "This domain has enforcing DMARC posture. Keep monitoring for sender and DNS drift.")}
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <a
-            href="/dashboard"
+          <button
+            type="button"
+            onClick={onUpgrade}
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-trust px-4 font-semibold text-white transition hover:bg-trust-hover"
           >
             <Gauge className="h-4 w-4" aria-hidden="true" />
-            Open dashboard
-          </a>
+            Request early access
+          </button>
           <button
             type="button"
             onClick={onUpgrade}

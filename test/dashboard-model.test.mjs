@@ -109,6 +109,34 @@ test("dashboard API client maps backend error JSON", async () => {
   }
 });
 
+test("dashboard access is closed by default and only opens by explicit server env", () => {
+  const previousAccess = process.env.DMARK_DASHBOARD_ACCESS;
+  const previousEnabled = process.env.DMARK_DASHBOARD_ENABLED;
+
+  try {
+    const access = loadTSModule("lib/dashboard-access.ts");
+
+    delete process.env.DMARK_DASHBOARD_ACCESS;
+    delete process.env.DMARK_DASHBOARD_ENABLED;
+    assert.equal(access.isDashboardAccessEnabled(), false);
+
+    process.env.DMARK_DASHBOARD_ACCESS = "closed";
+    assert.equal(access.isDashboardAccessEnabled(), false);
+
+    process.env.DMARK_DASHBOARD_ACCESS = "open";
+    assert.equal(access.isDashboardAccessEnabled(), true);
+
+    process.env.DMARK_DASHBOARD_ACCESS = "false";
+    process.env.DMARK_DASHBOARD_ENABLED = "1";
+    assert.equal(access.isDashboardAccessEnabled(), true);
+
+    assert.equal(access.dashboardLockedResponseBody().error, "Dashboard access is closed until the private beta is ready.");
+  } finally {
+    restoreEnv("DMARK_DASHBOARD_ACCESS", previousAccess);
+    restoreEnv("DMARK_DASHBOARD_ENABLED", previousEnabled);
+  }
+});
+
 test("dashboard response mapper renders summary metrics and domain next action", () => {
   const dashboard = loadTSModule("lib/dashboard.ts");
   const view = dashboard.mapDashboardResponse({

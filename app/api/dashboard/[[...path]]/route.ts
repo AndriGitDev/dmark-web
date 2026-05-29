@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { dashboardLockedResponseBody, isDashboardAccessEnabled } from "@/lib/dashboard-access";
 import {
   dashboardAPIErrorResponse,
   dashboardProxyFetch,
@@ -20,6 +21,10 @@ type DashboardRouteContext = {
 };
 
 export async function GET(request: Request, context: DashboardRouteContext) {
+  if (!isDashboardAccessEnabled()) {
+    return dashboardLockedResponse();
+  }
+
   const backendPath = await backendDashboardPath(request, context);
 
   if (shouldUseDashboardMock()) {
@@ -30,6 +35,10 @@ export async function GET(request: Request, context: DashboardRouteContext) {
 }
 
 export async function POST(request: Request, context: DashboardRouteContext) {
+  if (!isDashboardAccessEnabled()) {
+    return dashboardLockedResponse();
+  }
+
   const backendPath = await backendDashboardPath(request, context);
   const body = await request.text();
 
@@ -44,6 +53,10 @@ export async function POST(request: Request, context: DashboardRouteContext) {
     },
     body: body || undefined,
   });
+}
+
+function dashboardLockedResponse(): Response {
+  return NextResponse.json(dashboardLockedResponseBody(), { status: 403 });
 }
 
 async function backendDashboardPath(request: Request, context: DashboardRouteContext): Promise<string> {
