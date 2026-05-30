@@ -161,5 +161,5 @@ Backend tests should cover:
 - TXT segment chunking at 255 characters.
 - Bunny create/update paths with a fake HTTP client.
 - No Bunny API call when generated output is unchanged.
-- Provider detection from authoritative nameservers, including Icelandic providers, global providers, ambiguous matches, and unknown fallback.
+- Provider detection from authoritative nameservers, including Icelandic providers such as ISNIC, 1984, Opin Kerfi, Origo, and Advania; global providers; ambiguous matches; and unknown fallback.
 - Provider-specific instruction and deep-link rendering for SPF route CNAME, SPF TXT, and DMARC TXT records.

@@ -83,7 +83,7 @@ const rolloutSteps = [
   },
 ];
 
-const providerCards = ["ISNIC", "1984", "Premis", "Microsoft 365", "Google Workspace", "Sendgrid"];
+const providerCards = ["ISNIC", "1984", "Opin Kerfi", "Origo", "Microsoft 365", "Google Workspace", "Sendgrid"];
 
 const pricing = [
   {
