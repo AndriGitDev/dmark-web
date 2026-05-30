@@ -129,7 +129,8 @@ Potential schedulers:
 2. Backend saves the selected include domains for that protected domain.
 3. Backend triggers the flattener worker immediately.
 4. Worker publishes `acme.route.dmark.is` to Bunny.
-5. Dashboard shows the required client DNS delegation:
+5. Backend resolves the protected domain's authoritative nameservers and detects the DNS provider when possible.
+6. Dashboard shows the required client DNS delegation plus provider-specific instructions and a DNS-dashboard deep link where the provider offers a stable management URL:
 
 ```txt
 _spf.yourdomain.com CNAME acme.route.dmark.is
@@ -142,8 +143,9 @@ _spf.yourdomain.com CNAME acme.route.dmark.is
 3. Implement SPF string generation and TXT chunking tests.
 4. Implement Bunny DNS client behind a server-only interface.
 5. Add sync worker and scheduled resync.
-6. Wire dashboard toggles and onboarding copy.
-7. Add alert/change-plan integration for stale, failed, or blocked flattener states.
+6. Add backend nameserver/provider detection with fixture-backed mappings for Icelandic providers, global providers, ambiguous matches, and unknown fallback.
+7. Wire dashboard toggles, onboarding copy, provider-specific DNS steps, and deep links through server-side proxy routes.
+8. Add alert/change-plan integration for stale, failed, or blocked flattener states.
 
 ## Verification
 
@@ -159,3 +161,5 @@ Backend tests should cover:
 - TXT segment chunking at 255 characters.
 - Bunny create/update paths with a fake HTTP client.
 - No Bunny API call when generated output is unchanged.
+- Provider detection from authoritative nameservers, including Icelandic providers, global providers, ambiguous matches, and unknown fallback.
+- Provider-specific instruction and deep-link rendering for SPF route CNAME, SPF TXT, and DMARC TXT records.
