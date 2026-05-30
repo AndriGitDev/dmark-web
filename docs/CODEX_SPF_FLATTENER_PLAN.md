@@ -1,6 +1,6 @@
 # Dmark Dynamic SPF Flattener Plan
 
-This is a future implementation plan for Dmark's automated SPF flattening service. No flattener code exists in the repository yet; the document is intentionally forward-looking.
+This frontend-facing plan is superseded for backend implementation details by `dmark-app/docs/SPF_FLATTENER_BUNNY_PLAN.md`. SPF flattening is now GA scope, not a future/nice-to-have. This document remains as the `dmark-web` UI handoff: the frontend should render SPF route status and onboarding instructions through server-side dashboard proxy routes, while all resolver, worker, Bunny.net DNS, secrets, and publication logic lives in `dmark-app`.
 
 ## Founder Prep
 
@@ -40,7 +40,7 @@ The app stores each protected domain's enabled sender tools or raw SPF include d
 
 ## Flattener Worker
 
-Build a server-side TypeScript worker utility using `dns.promises.resolveTxt`.
+Build a server-side Go resolver/sync service in `dmark-app` (canonical plan: `docs/SPF_FLATTENER_BUNNY_PLAN.md`). `dmark-web` should only consume the resulting dashboard API/proxy contract.
 
 Input:
 
