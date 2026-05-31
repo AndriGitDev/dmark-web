@@ -4,25 +4,26 @@ This frontend-facing plan is superseded for backend implementation details by `d
 
 ## Founder Prep
 
-Before implementation starts, provision the DNS control plane in Bunny.net:
+The DNS control plane uses the existing Bunny parent zone for `dmark.is`.
 
-- Create a dedicated Bunny DNS zone for `route.dmark.is`.
-- Do not use the primary `dmark.is` zone for client routing.
-- If `dmark.is` DNS is hosted elsewhere, delegate `route.dmark.is` to Bunny with NS records at the current DNS host.
-- Generate a Bunny account API key and store it only in server-side environment variables.
-- Capture the Bunny DNS zone ID for `route.dmark.is`.
+- Use Bunny zone ID `801471` for the parent `dmark.is` zone.
+- Publish route records as relative names in the parent zone, for example `customer-example.route`, resolving publicly as `customer-example.route.dmark.is`.
+- Do not delegate `route.dmark.is` to the same Bunny nameservers while `dmark.is` is also on Bunny; previous testing produced lame delegation/SERVFAIL.
+- Generate a Bunny account API key with the minimum DNS permissions available and store it only in server-side backend environment variables.
 
 Expected backend environment variables:
 
 ```env
 BUNNY_DNS_API_KEY=...
-BUNNY_DNS_ZONE_ID=...
+BUNNY_DNS_ZONE_ID=801471
+DMARK_SPF_DNS_ZONE=dmark.is
 DMARK_SPF_ROUTE_ZONE=route.dmark.is
+DMARK_SPF_ROUTE_TTL=300
 ```
 
 ## Architecture
 
-Dmark will use CNAME delegation plus Bunny.net DNS API updates instead of running custom authoritative DNS.
+Dmark will use customer-side CNAME records plus Bunny.net DNS API updates in the parent `dmark.is` zone instead of running custom authoritative DNS or relying on a same-provider child-zone delegation.
 
 Client DNS shape:
 
