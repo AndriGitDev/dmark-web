@@ -202,6 +202,20 @@ export type SPFRouteViewModel = {
   evidenceSummary: SPFRouteEvidence[];
 };
 
+export type SPFRoutePanelModel = {
+  heading: string;
+  statusLabel: string;
+  statusTone: "green" | "amber" | "red" | "blue";
+  cnameInstruction: string;
+  routeTarget: string;
+  generatedSPFPreview: string;
+  lastPublishedSPF: string;
+  lastSyncLabel: string;
+  errorSummary?: string;
+  sourceLabels: string[];
+  evidenceLabels: string[];
+};
+
 export type DashboardInitialState = {
   dashboard: DashboardViewModel;
   alerts: DashboardAlert[];
@@ -577,6 +591,27 @@ export function mapSPFRouteEvidence(payload: BackendDashboardSPFRouteEvidence): 
   };
 }
 
+export function buildSPFRoutePanelModel(route: SPFRouteViewModel): SPFRoutePanelModel {
+  return {
+    heading: `SPF route for ${route.domain}`,
+    statusLabel: titleCaseStatus(route.status),
+    statusTone: spfRouteStatusTone(route.status),
+    cnameInstruction:
+      route.customerCNAMEName && route.customerCNAMETarget
+        ? `${route.customerCNAMEName} CNAME ${route.customerCNAMETarget}`
+        : "CNAME delegation not returned yet.",
+    routeTarget: route.customerCNAMETarget || route.routeFQDN || "Route target not returned yet.",
+    generatedSPFPreview: route.generatedSPFPreview || "Generated SPF preview is not available yet.",
+    lastPublishedSPF: route.lastPublishedSPF || "No SPF value has been published yet.",
+    lastSyncLabel: route.lastSyncedAt ? formatRelativeTime(route.lastSyncedAt) : "not synced yet",
+    errorSummary: route.lastSyncError,
+    sourceLabels: route.enabledSources.map((source) => `${source.label} · ${source.kind}:${source.value}`),
+    evidenceLabels: route.evidenceSummary.map((evidence) =>
+      [evidence.mechanism || evidence.kind || evidence.sourceValue, evidence.message].filter(Boolean).join(" · "),
+    ),
+  };
+}
+
 export async function getDashboardData(): Promise<DashboardViewModel> {
   return mapDashboardResponse(await dashboardJSON<BackendDashboardResponse>("/api/dashboard"));
 }
@@ -828,6 +863,20 @@ function mapBrandRiskSeverity(severity: string): BrandRiskSeverity {
   if (normalized === "medium" || normalized === "warn") return "Medium";
   if (normalized === "low") return "Low";
   return "Info";
+}
+
+function spfRouteStatusTone(status: string): SPFRoutePanelModel["statusTone"] {
+  const normalized = (status || "").toLowerCase();
+  if (normalized === "ready" || normalized === "synced" || normalized === "published" || normalized === "ok") return "green";
+  if (normalized === "failed" || normalized === "blocked" || normalized === "error") return "red";
+  if (normalized === "syncing" || normalized === "pending" || normalized === "stale") return "amber";
+  return "blue";
+}
+
+function titleCaseStatus(status: string): string {
+  return (status || "unknown")
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
 function formatRelativeTime(value?: string): string {

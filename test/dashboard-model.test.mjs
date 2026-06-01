@@ -388,6 +388,49 @@ test("SPF route client uses the dashboard proxy path without backend credentials
   assert.equal(observed.cache, "no-store");
 });
 
+test("SPF route panel model renders CNAME instructions, sync state, and safe operator evidence", () => {
+  const dashboard = loadTSModule("lib/dashboard.ts");
+  const model = dashboard.buildSPFRoutePanelModel({
+    id: "route-1",
+    domainID: "domain-1",
+    domain: "example.is",
+    status: "failed",
+    routeFQDN: "example-is.route.dmark.is",
+    customerCNAMEName: "_spf.example.is",
+    customerCNAMETarget: "example-is.route.dmark.is",
+    generatedSPFPreview: "v=spf1 include:_spf.mailgun.org ip4:203.0.113.10 ~all",
+    lastPublishedSPF: "v=spf1 include:_spf.mailgun.org ~all",
+    lastSyncedAt: "2026-06-01T12:00:00Z",
+    lastSyncError: "SPF route sync failed; see operational events for operator details",
+    enabledSources: [
+      { kind: "include", value: "_spf.mailgun.org", label: "Mailgun" },
+      { kind: "ip4", value: "203.0.113.10", label: "Office gateway" },
+    ],
+    evidenceSummary: [{ kind: "include", message: "resolved include:_spf.mailgun.org", mechanism: "include:_spf.mailgun.org" }],
+  });
+
+  assert.equal(model.heading, "SPF route for example.is");
+  assert.equal(model.statusLabel, "Failed");
+  assert.equal(model.statusTone, "red");
+  assert.equal(model.cnameInstruction, "_spf.example.is CNAME example-is.route.dmark.is");
+  assert.equal(model.routeTarget, "example-is.route.dmark.is");
+  assert.match(model.lastSyncLabel, /ago|2026|not synced/);
+  assert.deepEqual(Array.from(model.sourceLabels), ["Mailgun · include:_spf.mailgun.org", "Office gateway · ip4:203.0.113.10"]);
+  assert.match(model.evidenceLabels[0], /resolved/);
+  assert.match(model.errorSummary, /operational events/);
+  assert.equal(JSON.stringify(model).includes("DMARK_API_TOKEN"), false);
+  assert.equal(JSON.stringify(model).includes("BUNNY"), false);
+});
+
+test("dashboard component wires the read-only SPF route panel through client dashboard data", () => {
+  const source = readFileSync(join(root, "components/dmark-dashboard.tsx"), "utf8");
+
+  assert.match(source, /getSPFRouteData/);
+  assert.match(source, /SPFRoutePanel/);
+  assert.match(source, /setSpfRouteState\("loading"\)/);
+  assert.match(source, /Manual sync is intentionally separate/);
+});
+
 test("public scan remediation plan prioritises SPF flattening before DMARC enforcement", () => {
   const scan = loadTSModule("lib/scan.ts");
   const plan = scan.buildScanRemediationPlan({

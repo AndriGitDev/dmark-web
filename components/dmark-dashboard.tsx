@@ -38,9 +38,11 @@ import {
   getChangePlan,
   getDashboardData,
   getReporterData,
+  getSPFRouteData,
   muteDashboardAlert,
   recheckDashboardDomain,
   saveDashboardSettings,
+  buildSPFRoutePanelModel,
   type AlertSeverity,
   type BrandRiskSeverity,
   type BrandRiskViewModel,
@@ -53,6 +55,7 @@ import {
   type ProtectedDomain,
   type ReporterViewModel,
   type SettingsState,
+  type SPFRouteViewModel,
 } from "@/lib/dashboard";
 
 const navItems = [
@@ -195,6 +198,9 @@ export function DmarkDashboard({
   const [changePlan, setChangePlan] = useState<ChangePlanViewModel | null>(null);
   const [changePlanState, setChangePlanState] = useState<LoadState>("idle");
   const [changePlanError, setChangePlanError] = useState("");
+  const [spfRoute, setSpfRoute] = useState<SPFRouteViewModel | null>(null);
+  const [spfRouteState, setSpfRouteState] = useState<LoadState>("idle");
+  const [spfRouteError, setSpfRouteError] = useState("");
   const [brandRisk, setBrandRisk] = useState<BrandRiskViewModel | null>(null);
   const [brandRiskState, setBrandRiskState] = useState<LoadState>("idle");
   const [brandRiskError, setBrandRiskError] = useState("");
@@ -270,6 +276,35 @@ export function DmarkDashboard({
     }
 
     void loadChangePlan();
+
+    return () => {
+      ignore = true;
+    };
+  }, [activeTab, selectedDomain]);
+
+  useEffect(() => {
+    if (!selectedDomain || (activeTab !== "domains" && activeTab !== "overview")) return;
+
+    let ignore = false;
+
+    async function loadSPFRoute() {
+      setSpfRouteState("loading");
+      setSpfRouteError("");
+
+      try {
+        const payload = await getSPFRouteData(selectedDomain!.id);
+        if (ignore) return;
+        setSpfRoute(payload);
+        setSpfRouteState("ready");
+      } catch (error) {
+        if (ignore) return;
+        setSpfRoute(null);
+        setSpfRouteState("error");
+        setSpfRouteError(errorMessage(error, "SPF route data could not be loaded."));
+      }
+    }
+
+    void loadSPFRoute();
 
     return () => {
       ignore = true;
@@ -537,6 +572,9 @@ export function DmarkDashboard({
               changePlan={changePlan}
               changePlanState={changePlanState}
               changePlanError={changePlanError}
+              spfRoute={spfRoute}
+              spfRouteState={spfRouteState}
+              spfRouteError={spfRouteError}
               onSelectDomain={setSelectedDomainID}
               onRecheckDomain={recheckDomain}
               onExportDomains={exportDomains}
@@ -921,6 +959,9 @@ function DomainsTab({
   changePlan,
   changePlanState,
   changePlanError,
+  spfRoute,
+  spfRouteState,
+  spfRouteError,
   onSelectDomain,
   onRecheckDomain,
   onExportDomains,
@@ -933,6 +974,9 @@ function DomainsTab({
   changePlan: ChangePlanViewModel | null;
   changePlanState: LoadState;
   changePlanError: string;
+  spfRoute: SPFRouteViewModel | null;
+  spfRouteState: LoadState;
+  spfRouteError: string;
   onSelectDomain: (id: string) => void;
   onRecheckDomain: (domain: ProtectedDomain) => void;
   onExportDomains: (domains: ProtectedDomain[]) => void;
@@ -1021,6 +1065,8 @@ function DomainsTab({
         />
       )}
 
+      <SPFRoutePanel spfRoute={spfRoute} state={spfRouteState} error={spfRouteError} onCopy={onCopy} />
+
       <DNSChangePlan
         selectedDomain={selectedDomain}
         changePlan={changePlan}
@@ -1029,6 +1075,115 @@ function DomainsTab({
         onCopy={onCopy}
       />
     </div>
+  );
+}
+
+function SPFRoutePanel({
+  spfRoute,
+  state,
+  error,
+  onCopy,
+}: {
+  spfRoute: SPFRouteViewModel | null;
+  state: LoadState;
+  error: string;
+  onCopy: (value: string, label: string) => void;
+}) {
+  const panel = spfRoute ? buildSPFRoutePanelModel(spfRoute) : null;
+
+  return (
+    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+        <div>
+          <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            SPF route
+          </p>
+          <h3 className="mt-2 text-xl font-semibold text-navy">{panel?.heading || "SPF route"}</h3>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            Read-only view of route publication state. Manual sync is intentionally separate so operators do not mutate DNS from this panel.
+          </p>
+        </div>
+        {panel ? (
+          <span className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${spfRouteToneClass(panel.statusTone)}`}>
+            {panel.statusLabel}
+          </span>
+        ) : null}
+      </div>
+
+      {state === "loading" ? <PanelNotice text="Loading SPF route state..." /> : null}
+      {state === "error" ? <PanelNotice tone="error" text={error || "SPF route state unavailable."} /> : null}
+      {state === "ready" && !panel ? <PanelNotice text="No SPF route has been configured for this domain yet." /> : null}
+
+      {panel ? (
+        <div className="mt-5 grid gap-4">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <CompactStat label="Route target" value={panel.routeTarget} />
+            <CompactStat label="Last sync" value={panel.lastSyncLabel} />
+            <CompactStat label="Sources" value={`${panel.sourceLabels.length}`} />
+            <CompactStat label="Evidence" value={`${panel.evidenceLabels.length}`} />
+          </div>
+
+          <div className="grid gap-3 lg:grid-cols-2">
+            <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-navy">Customer CNAME delegation</p>
+              <code className="mt-3 block overflow-x-auto rounded-md border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-700">
+                {panel.cnameInstruction}
+              </code>
+              <button
+                type="button"
+                onClick={() => onCopy(panel.cnameInstruction, "SPF route CNAME")}
+                className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-navy px-3 text-sm font-semibold text-white transition hover:bg-navy-soft"
+              >
+                <Copy className="h-4 w-4" aria-hidden="true" />
+                Copy CNAME
+              </button>
+            </div>
+
+            <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-navy">Generated SPF preview</p>
+              <code className="mt-3 block overflow-x-auto rounded-md border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-700">
+                {panel.generatedSPFPreview}
+              </code>
+              <p className="mt-3 text-xs leading-5 text-slate-500">Last published: {panel.lastPublishedSPF}</p>
+            </div>
+          </div>
+
+          {panel.errorSummary ? <PanelNotice tone="error" text={panel.errorSummary} /> : null}
+
+          <div className="grid gap-3 lg:grid-cols-2">
+            <div className="rounded-md border border-slate-200 p-4">
+              <p className="text-sm font-semibold text-navy">Enabled sources</p>
+              {panel.sourceLabels.length ? (
+                <ul className="mt-3 grid gap-2 text-sm text-slate-600">
+                  {panel.sourceLabels.map((source) => (
+                    <li key={source} className="rounded-md bg-slate-50 px-3 py-2">
+                      {source}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-sm text-slate-500">No enabled SPF sources were returned.</p>
+              )}
+            </div>
+
+            <div className="rounded-md border border-slate-200 p-4">
+              <p className="text-sm font-semibold text-navy">Evidence summary</p>
+              {panel.evidenceLabels.length ? (
+                <ul className="mt-3 grid gap-2 text-sm text-slate-600">
+                  {panel.evidenceLabels.map((evidence) => (
+                    <li key={evidence} className="rounded-md bg-slate-50 px-3 py-2">
+                      {evidence}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-sm text-slate-500">No SPF evidence was returned yet.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </article>
   );
 }
 
@@ -1704,6 +1859,19 @@ function SettingRow({
       </span>
     </button>
   );
+}
+
+function spfRouteToneClass(tone: "green" | "amber" | "red" | "blue") {
+  switch (tone) {
+    case "green":
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    case "red":
+      return "border-red-200 bg-red-50 text-red-700";
+    case "amber":
+      return "border-amber-200 bg-amber-50 text-amber-700";
+    default:
+      return "border-blue-200 bg-blue-50 text-blue-700";
+  }
 }
 
 function CompactStat({ label, value, detail }: { label: string; value: string; detail?: string }) {
