@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
-import { Activity, Building2, ClipboardList, HeartPulse, Lock, ShieldAlert } from "lucide-react";
+import { Activity, Building2, ClipboardList, HeartPulse, Lock, Route, ShieldAlert } from "lucide-react";
 import { isAdminOwnerSessionAllowed } from "@/lib/admin-access";
 import { buildAdminShellModel, type AdminShellSection } from "@/lib/admin-shell";
 
@@ -18,6 +18,7 @@ export const dynamic = "force-dynamic";
 
 const sectionIcons: Record<AdminShellSection["id"], typeof ClipboardList> = {
   cases: ClipboardList,
+  "spf-route-audit": Route,
   "abuse-decisions": ShieldAlert,
   "provider-health": HeartPulse,
   "operational-events": Activity,

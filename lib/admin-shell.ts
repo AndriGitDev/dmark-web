@@ -1,7 +1,7 @@
 export type AdminShellStatus = "allowed" | "locked";
 
 export type AdminShellSection = {
-  id: "cases" | "abuse-decisions" | "provider-health" | "operational-events" | "company-onboarding";
+  id: "cases" | "spf-route-audit" | "abuse-decisions" | "provider-health" | "operational-events" | "company-onboarding";
   title: string;
   description: string;
   status: string;
@@ -28,6 +28,14 @@ const ADMIN_SECTIONS: AdminShellSection[] = [
     description: "Triage global support, remediation, and incident cases from the private backend admin surface.",
     status: "Shell only",
     affordance: "Use the server-side /api/admin proxy when backend case endpoints are ready.",
+    scope: "global-owner",
+  },
+  {
+    id: "spf-route-audit",
+    title: "SPF route publication audit",
+    description: "Inspect expected SPF route DNS records, persisted Bunny state, live recursive evidence, and DNS publication drift for a route.",
+    status: "Backend endpoint ready",
+    affordance: "Fetch through /api/admin/spf-routes/{routeID}/publication-audit only after the owner session gate passes.",
     scope: "global-owner",
   },
   {

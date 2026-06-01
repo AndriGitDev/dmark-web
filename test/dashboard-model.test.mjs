@@ -521,11 +521,14 @@ test("admin shell model is owner-only, proxy-aware, and separated from org dashb
   assert.equal(model.status, "allowed");
   assert.equal(model.eyebrow, "Owner-only control plane");
   assert.match(model.description, /global Dmark operations/);
-  assert.equal(model.sections.length, 5);
+  assert.equal(model.sections.length, 6);
   assert.deepEqual(
     Array.from(model.sections.map((section) => section.id)),
-    ["cases", "abuse-decisions", "provider-health", "operational-events", "company-onboarding"],
+    ["cases", "spf-route-audit", "abuse-decisions", "provider-health", "operational-events", "company-onboarding"],
   );
+  const auditSection = model.sections.find((section) => section.id === "spf-route-audit");
+  assert.match(auditSection.description, /DNS publication drift/i);
+  assert.match(auditSection.affordance, /\/api\/admin\/spf-routes\/\{routeID\}\/publication-audit/);
   assert.equal(model.sections.every((section) => section.scope === "global-owner"), true);
   assert.equal(model.sections.some((section) => /subscription|signup|self-serve/i.test(section.title + section.description)), false);
   assert.equal(JSON.stringify(model).includes("DMARK_ADMIN_API_TOKEN"), false);
