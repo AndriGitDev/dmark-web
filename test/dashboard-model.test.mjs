@@ -456,15 +456,64 @@ test("SPF route sync client uses the dashboard proxy POST path and maps queue st
   assert.equal(result.queuedAt, "2026-06-01T18:30:00Z");
 });
 
-test("dashboard component wires SPF route manual sync with loading and refresh states", () => {
+test("SPF route source update client uses dashboard proxy PUT with only source payload", async () => {
+  const previousFetch = globalThis.fetch;
+  let observed;
+  globalThis.fetch = async (url, init) => {
+    observed = { url: String(url), method: init.method, cache: init.cache, headers: init.headers, body: init.body };
+    return new Response(
+      JSON.stringify({
+        id: "route-1",
+        domain_id: "domain-1",
+        domain: "example.is",
+        status: "pending",
+        route_fqdn: "example-is.route.dmark.is",
+        enabled_sources: [{ kind: "include", value: "_spf.mailgun.org", label: "Mailgun" }],
+        evidence_summary: [],
+      }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+  };
+
+  let result;
+  try {
+    const dashboard = loadTSModule("lib/dashboard.ts");
+    result = await dashboard.saveSPFRouteSources("domain-1", [
+      { kind: "include", value: "_spf.mailgun.org", label: "Mailgun" },
+      { kind: "ip4", value: "203.0.113.10", label: "Office gateway" },
+    ]);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+
+  assert.equal(observed.url, "/api/dashboard/domains/domain-1/spf-route");
+  assert.equal(observed.method, "PUT");
+  assert.equal(observed.cache, "no-store");
+  assert.equal(observed.headers["content-type"], "application/json");
+  const body = JSON.parse(observed.body);
+  assert.deepEqual(body.sources, [
+    { kind: "include", value: "_spf.mailgun.org", label: "Mailgun", enabled: true },
+    { kind: "ip4", value: "203.0.113.10", label: "Office gateway", enabled: true },
+  ]);
+  assert.equal(body.enabled, true);
+  assert.equal(JSON.stringify(body).includes("BUNNY"), false);
+  assert.equal(result.status, "pending");
+});
+
+test("dashboard component wires SPF route source management without browser credentials", () => {
   const source = readFileSync(join(root, "components/dmark-dashboard.tsx"), "utf8");
 
   assert.match(source, /getSPFRouteData/);
   assert.match(source, /syncSPFRoute/);
+  assert.match(source, /saveSPFRouteSources/);
   assert.match(source, /SPFRoutePanel/);
   assert.match(source, /setSpfRouteState\("loading"\)/);
   assert.match(source, /setSyncingSPFRoute\(true\)/);
   assert.match(source, /Manual sync queues a backend job/);
+  assert.match(source, /SPF source management/);
+  assert.match(source, /include, ip4, and ip6 sources/);
+  assert.equal(source.includes("DMARK_API_TOKEN"), false);
+  assert.equal(source.includes("BUNNY"), false);
 });
 
 test("public scan remediation plan prioritises SPF flattening before DMARC enforcement", () => {

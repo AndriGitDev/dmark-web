@@ -649,6 +649,29 @@ export async function syncSPFRoute(domainID: string): Promise<SPFRouteSyncResult
   };
 }
 
+export async function saveSPFRouteSources(domainID: string, sources: SPFRouteSource[]): Promise<SPFRouteViewModel> {
+  const payload = {
+    enabled: sources.some((source) => source.value.trim()),
+    mechanism_policy: "softfail",
+    sources: sources
+      .map((source) => ({
+        kind: source.kind,
+        value: source.value.trim(),
+        label: source.label.trim(),
+        enabled: true,
+      }))
+      .filter((source) => source.value),
+  };
+
+  return mapSPFRouteResponse(
+    await dashboardJSON<BackendDashboardSPFRouteResponse>(`/api/dashboard/domains/${domainID}/spf-route`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    }),
+  );
+}
+
 export async function getBrandRiskData(
   domainID: string,
   options: { tld?: string; limit?: number; includeInactive?: boolean } = {},

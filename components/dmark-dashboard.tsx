@@ -42,6 +42,7 @@ import {
   muteDashboardAlert,
   recheckDashboardDomain,
   saveDashboardSettings,
+  saveSPFRouteSources,
   syncSPFRoute,
   buildSPFRoutePanelModel,
   type AlertSeverity,
@@ -56,6 +57,7 @@ import {
   type ProtectedDomain,
   type ReporterViewModel,
   type SettingsState,
+  type SPFRouteSource,
   type SPFRouteViewModel,
 } from "@/lib/dashboard";
 
@@ -203,6 +205,7 @@ export function DmarkDashboard({
   const [spfRouteState, setSpfRouteState] = useState<LoadState>("idle");
   const [spfRouteError, setSpfRouteError] = useState("");
   const [syncingSPFRoute, setSyncingSPFRoute] = useState(false);
+  const [savingSPFRouteSources, setSavingSPFRouteSources] = useState(false);
   const [brandRisk, setBrandRisk] = useState<BrandRiskViewModel | null>(null);
   const [brandRiskState, setBrandRiskState] = useState<LoadState>("idle");
   const [brandRiskError, setBrandRiskError] = useState("");
@@ -423,6 +426,27 @@ export function DmarkDashboard({
     }
   }
 
+  async function saveSelectedSPFRouteSources(sources: SPFRouteSource[]) {
+    if (!selectedDomain) return;
+
+    setSavingSPFRouteSources(true);
+    setSpfRouteError("");
+    announce(`Saving SPF source management for ${selectedDomain.domain}...`);
+
+    try {
+      const refreshed = await saveSPFRouteSources(selectedDomain.id, sources);
+      setSpfRoute(refreshed);
+      setSpfRouteState("ready");
+      announce(`SPF source management saved for ${selectedDomain.domain}; sync queued by backend.`);
+    } catch (error) {
+      const message = errorMessage(error, `${selectedDomain.domain} SPF sources could not be saved.`);
+      setSpfRouteError(message);
+      announce(message);
+    } finally {
+      setSavingSPFRouteSources(false);
+    }
+  }
+
   async function resolveAlert(alertID: string, action: "acknowledged" | "muted") {
     const alert = activeAlerts.find((item) => item.id === alertID);
 
@@ -600,7 +624,9 @@ export function DmarkDashboard({
               spfRouteState={spfRouteState}
               spfRouteError={spfRouteError}
               syncingSPFRoute={syncingSPFRoute}
+              savingSPFRouteSources={savingSPFRouteSources}
               onSyncSPFRoute={syncSelectedSPFRoute}
+              onSaveSPFRouteSources={saveSelectedSPFRouteSources}
               onSelectDomain={setSelectedDomainID}
               onRecheckDomain={recheckDomain}
               onExportDomains={exportDomains}
@@ -989,7 +1015,9 @@ function DomainsTab({
   spfRouteState,
   spfRouteError,
   syncingSPFRoute,
+  savingSPFRouteSources,
   onSyncSPFRoute,
+  onSaveSPFRouteSources,
   onSelectDomain,
   onRecheckDomain,
   onExportDomains,
@@ -1006,7 +1034,9 @@ function DomainsTab({
   spfRouteState: LoadState;
   spfRouteError: string;
   syncingSPFRoute: boolean;
+  savingSPFRouteSources: boolean;
   onSyncSPFRoute: () => void;
+  onSaveSPFRouteSources: (sources: SPFRouteSource[]) => void;
   onSelectDomain: (id: string) => void;
   onRecheckDomain: (domain: ProtectedDomain) => void;
   onExportDomains: (domains: ProtectedDomain[]) => void;
@@ -1096,11 +1126,14 @@ function DomainsTab({
       )}
 
       <SPFRoutePanel
+        key={spfRoute?.id || selectedDomain?.id || "spf-route"}
         spfRoute={spfRoute}
         state={spfRouteState}
         error={spfRouteError}
         syncing={syncingSPFRoute}
+        savingSources={savingSPFRouteSources}
         onSync={onSyncSPFRoute}
+        onSaveSources={onSaveSPFRouteSources}
         onCopy={onCopy}
       />
 
@@ -1120,17 +1153,40 @@ function SPFRoutePanel({
   state,
   error,
   syncing,
+  savingSources,
   onSync,
+  onSaveSources,
   onCopy,
 }: {
   spfRoute: SPFRouteViewModel | null;
   state: LoadState;
   error: string;
   syncing: boolean;
+  savingSources: boolean;
   onSync: () => void;
+  onSaveSources: (sources: SPFRouteSource[]) => void;
   onCopy: (value: string, label: string) => void;
 }) {
   const panel = spfRoute ? buildSPFRoutePanelModel(spfRoute) : null;
+  const [sourceDrafts, setSourceDrafts] = useState<SPFRouteSource[]>(() =>
+    spfRoute?.enabledSources.length ? spfRoute.enabledSources : [{ kind: "include", value: "", label: "" }],
+  );
+
+  function updateSourceDraft(index: number, patch: Partial<SPFRouteSource>) {
+    setSourceDrafts((current) => current.map((source, sourceIndex) => (sourceIndex === index ? { ...source, ...patch } : source)));
+  }
+
+  function addSourceDraft() {
+    setSourceDrafts((current) => [...current, { kind: "include", value: "", label: "" }]);
+  }
+
+  function removeSourceDraft(index: number) {
+    setSourceDrafts((current) => current.filter((_, sourceIndex) => sourceIndex !== index));
+  }
+
+  function saveSourceDrafts() {
+    onSaveSources(sourceDrafts.filter((source) => source.value.trim()));
+  }
 
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
@@ -1204,18 +1260,72 @@ function SPFRoutePanel({
 
           <div className="grid gap-3 lg:grid-cols-2">
             <div className="rounded-md border border-slate-200 p-4">
-              <p className="text-sm font-semibold text-navy">Enabled sources</p>
-              {panel.sourceLabels.length ? (
-                <ul className="mt-3 grid gap-2 text-sm text-slate-600">
-                  {panel.sourceLabels.map((source) => (
-                    <li key={source} className="rounded-md bg-slate-50 px-3 py-2">
-                      {source}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-3 text-sm text-slate-500">No enabled SPF sources were returned.</p>
-              )}
+              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                <div>
+                  <p className="text-sm font-semibold text-navy">SPF source management</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">Manage include, ip4, and ip6 sources; credentials stay behind the dashboard proxy.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={addSourceDraft}
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-700 transition hover:border-trust hover:text-trust"
+                >
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  Add source
+                </button>
+              </div>
+              <div className="mt-3 grid gap-3">
+                {sourceDrafts.map((source, index) => (
+                  <div key={`${source.kind}-${source.value}-${index}`} className="grid gap-2 rounded-md bg-slate-50 p-3 md:grid-cols-[8rem_1fr_1fr_auto]">
+                    <label className="grid gap-1 text-xs font-semibold text-slate-600">
+                      Kind
+                      <select
+                        value={source.kind}
+                        onChange={(event) => updateSourceDraft(index, { kind: event.target.value })}
+                        className="min-h-10 rounded-md border border-slate-300 bg-white px-2 text-sm font-semibold text-navy"
+                      >
+                        <option value="include">include</option>
+                        <option value="ip4">ip4</option>
+                        <option value="ip6">ip6</option>
+                      </select>
+                    </label>
+                    <label className="grid gap-1 text-xs font-semibold text-slate-600">
+                      Value
+                      <input
+                        value={source.value}
+                        onChange={(event) => updateSourceDraft(index, { value: event.target.value })}
+                        placeholder="_spf.provider.example or 203.0.113.10"
+                        className="min-h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-navy"
+                      />
+                    </label>
+                    <label className="grid gap-1 text-xs font-semibold text-slate-600">
+                      Label
+                      <input
+                        value={source.label}
+                        onChange={(event) => updateSourceDraft(index, { label: event.target.value })}
+                        placeholder="Provider name"
+                        className="min-h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-navy"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => removeSourceDraft(index)}
+                      disabled={sourceDrafts.length === 1}
+                      className="self-end rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-red-300 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={saveSourceDrafts}
+                disabled={savingSources || !spfRoute || !sourceDrafts.some((source) => source.value.trim())}
+                className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-trust px-4 text-sm font-semibold text-white transition hover:bg-trust-hover disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {savingSources ? "Saving sources..." : "Save sources"}
+              </button>
             </div>
 
             <div className="rounded-md border border-slate-200 p-4">

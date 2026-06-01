@@ -55,6 +55,27 @@ export async function POST(request: Request, context: DashboardRouteContext) {
   });
 }
 
+export async function PUT(request: Request, context: DashboardRouteContext) {
+  if (!isDashboardAccessEnabled()) {
+    return dashboardLockedResponse();
+  }
+
+  const backendPath = await backendDashboardPath(request, context);
+  const body = await request.text();
+
+  if (shouldUseDashboardMock()) {
+    return mockPUT(backendPath, body);
+  }
+
+  return proxyDashboard(backendPath, {
+    method: "PUT",
+    headers: {
+      "content-type": request.headers.get("content-type") || "application/json",
+    },
+    body: body || undefined,
+  });
+}
+
 function dashboardLockedResponse(): Response {
   return NextResponse.json(dashboardLockedResponseBody(), { status: 403 });
 }
@@ -346,6 +367,39 @@ function mockPOST(path: string, body: string): Response {
   if (tail[0] === "settings") {
     const payload = JSON.parse(body || "{}");
     return NextResponse.json({ ...settingsToBackendPayload(mockSettings), ...payload, updated_at: new Date().toISOString() });
+  }
+
+  return NextResponse.json({ error: "Mock dashboard route not found." }, { status: 404 });
+}
+
+function mockPUT(path: string, body: string): Response {
+  const url = new URL(path, "http://mock.local");
+  const parts = url.pathname.split("/").filter(Boolean);
+  const tail = parts.slice(3);
+
+  if (tail[0] === "domains" && tail[2] === "spf-route") {
+    const payload = JSON.parse(body || "{}");
+    const domain = mockDashboardViewModel.protectedDomains.find((item) => item.id === tail[1]);
+    const domainName = domain?.domain || "example.is";
+    const dnsSafeName = domainName.replaceAll(".", "-");
+    const sources = (Array.isArray(payload.sources) ? payload.sources : []) as Array<{
+      kind: string;
+      value: string;
+      label?: string;
+      enabled?: boolean;
+    }>;
+    return NextResponse.json({
+      id: `mock-spf-route-${tail[1]}`,
+      domain_id: tail[1],
+      domain: domainName,
+      status: "pending",
+      route_fqdn: `${dnsSafeName}.route.dmark.is`,
+      customer_cname_name: `_spf.${domainName}`,
+      customer_cname_target: `${dnsSafeName}.route.dmark.is`,
+      generated_spf_preview: `v=spf1 ${sources.map((source) => `${source.kind}:${source.value}`).join(" ")} ~all`,
+      enabled_sources: sources.filter((source) => source.enabled !== false),
+      evidence_summary: [],
+    });
   }
 
   return NextResponse.json({ error: "Mock dashboard route not found." }, { status: 404 });
