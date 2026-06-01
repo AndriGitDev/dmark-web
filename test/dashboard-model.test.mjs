@@ -514,6 +514,35 @@ test("admin API client uses dedicated admin backend path and bearer token", asyn
   assert.equal(observed.accept, "application/json");
 });
 
+test("admin shell model is owner-only, proxy-aware, and separated from org dashboard", () => {
+  const adminShell = loadTSModule("lib/admin-shell.ts");
+  const model = adminShell.buildAdminShellModel({ allowed: true });
+
+  assert.equal(model.status, "allowed");
+  assert.equal(model.eyebrow, "Owner-only control plane");
+  assert.match(model.description, /global Dmark operations/);
+  assert.equal(model.sections.length, 5);
+  assert.deepEqual(
+    Array.from(model.sections.map((section) => section.id)),
+    ["cases", "abuse-decisions", "provider-health", "operational-events", "company-onboarding"],
+  );
+  assert.equal(model.sections.every((section) => section.scope === "global-owner"), true);
+  assert.equal(model.sections.some((section) => /subscription|signup|self-serve/i.test(section.title + section.description)), false);
+  assert.equal(JSON.stringify(model).includes("DMARK_ADMIN_API_TOKEN"), false);
+  assert.equal(JSON.stringify(model).includes("DMARK_ADMIN_OWNER_SESSION_SECRET"), false);
+});
+
+test("admin shell locked model is fail-closed without backend affordances", () => {
+  const adminShell = loadTSModule("lib/admin-shell.ts");
+  const model = adminShell.buildAdminShellModel({ allowed: false });
+
+  assert.equal(model.status, "locked");
+  assert.equal(model.sections.length, 0);
+  assert.match(model.title, /locked/i);
+  assert.match(model.description, /owner session/i);
+  assert.equal(JSON.stringify(model).includes("/api/v1/admin"), false);
+});
+
 function restoreEnv(key, value) {
   if (value === undefined) {
     delete process.env[key];
