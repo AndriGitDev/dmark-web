@@ -456,6 +456,115 @@ test("SPF route sync client uses the dashboard proxy POST path and maps queue st
   assert.equal(result.queuedAt, "2026-06-01T18:30:00Z");
 });
 
+test("DNS guidance mapper preserves provider detection, fallback certainty, and record instructions", () => {
+  const dashboard = loadTSModule("lib/dashboard.ts");
+  const view = dashboard.mapDNSGuidanceResponse({
+    domain_id: "domain-1",
+    domain: "example.is",
+    generated_at: "2026-06-01T19:00:00Z",
+    detection: {
+      status: "detected",
+      provider_id: "cloudflare",
+      provider_name: "Cloudflare",
+      confidence: "high",
+      evidence_nameservers: ["alice.ns.cloudflare.com.", "bob.ns.cloudflare.com."],
+      dns_dashboard_url: "https://dash.cloudflare.com",
+    },
+    instructions: [
+      {
+        kind: "dmarc_txt",
+        record_name: "_dmarc.example.is",
+        record_type: "TXT",
+        record_value: "v=DMARC1; p=none; rua=mailto:dmarc@example.is",
+        ttl: 3600,
+        provider_id: "cloudflare",
+        provider_name: "Cloudflare",
+        dashboard_url: "https://dash.cloudflare.com",
+        steps: ["Open Cloudflare DNS.", "Add the TXT record."],
+      },
+      {
+        kind: "spf_route_cname",
+        record_name: "_spf.example.is",
+        record_type: "CNAME",
+        record_value: "example-is.route.dmark.is",
+        ttl: 300,
+        provider_name: "Cloudflare",
+        steps: ["Create the CNAME delegation."],
+      },
+    ],
+  });
+
+  assert.equal(view.domainID, "domain-1");
+  assert.equal(view.statusLabel, "Detected: Cloudflare");
+  assert.equal(view.statusTone, "green");
+  assert.equal(view.confidenceLabel, "high confidence");
+  assert.deepEqual(Array.from(view.evidenceNameservers), ["alice.ns.cloudflare.com.", "bob.ns.cloudflare.com."]);
+  assert.equal(view.instructions[0].record, "_dmarc.example.is TXT v=DMARC1; p=none; rua=mailto:dmarc@example.is");
+  assert.equal(view.instructions[1].recordType, "CNAME");
+  assert.equal(JSON.stringify(view).includes("api_key"), false);
+  assert.equal(JSON.stringify(view).includes("BUNNY"), false);
+});
+
+test("DNS guidance client uses dashboard proxy path and maps unknown fallback", async () => {
+  const previousFetch = globalThis.fetch;
+  let observed;
+  globalThis.fetch = async (url, init) => {
+    observed = { url: String(url), cache: init.cache };
+    return new Response(
+      JSON.stringify({
+        domain_id: "domain-1",
+        domain: "example.is",
+        generated_at: "2026-06-01T19:00:00Z",
+        detection: {
+          status: "unknown",
+          confidence: "unknown",
+          evidence_nameservers: [],
+        },
+        resolver_error: "dns_lookup_failed",
+        instructions: [
+          {
+            kind: "spf_txt",
+            record_name: "example.is",
+            record_type: "TXT",
+            record_value: "v=spf1 ~all",
+            ttl: 3600,
+            provider_name: "Generic DNS",
+            steps: ["Open your DNS provider."],
+          },
+        ],
+      }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+  };
+
+  let result;
+  try {
+    const dashboard = loadTSModule("lib/dashboard.ts");
+    result = await dashboard.getDNSGuidanceData("domain-1");
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+
+  assert.equal(observed.url, "/api/dashboard/domains/domain-1/dns-guidance");
+  assert.equal(observed.cache, "no-store");
+  assert.equal(result.statusLabel, "Provider unknown");
+  assert.equal(result.statusTone, "amber");
+  assert.equal(result.resolverError, "dns_lookup_failed");
+  assert.equal(result.instructions[0].providerName, "Generic DNS");
+});
+
+test("dashboard component wires DNS provider guidance without browser credentials or false certainty", () => {
+  const source = readFileSync(join(root, "components/dmark-dashboard.tsx"), "utf8");
+
+  assert.match(source, /getDNSGuidanceData/);
+  assert.match(source, /DNSGuidancePanel/);
+  assert.match(source, /Provider unknown/);
+  assert.match(source, /detected, ambiguous, or unknown/);
+  assert.match(source, /Copy DNS record/);
+  assert.equal(source.includes("DMARK_API_TOKEN"), false);
+  assert.equal(source.includes("BUNNY"), false);
+});
+
 test("SPF route source update client uses dashboard proxy PUT with only source payload", async () => {
   const previousFetch = globalThis.fetch;
   let observed;

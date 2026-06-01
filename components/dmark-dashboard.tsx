@@ -37,6 +37,7 @@ import {
   getBrandRiskData,
   getChangePlan,
   getDashboardData,
+  getDNSGuidanceData,
   getReporterData,
   getSPFRouteData,
   muteDashboardAlert,
@@ -53,6 +54,7 @@ import {
   type DashboardIconName,
   type DashboardMetric,
   type DashboardViewModel,
+  type DNSGuidanceViewModel,
   type DomainStatus,
   type ProtectedDomain,
   type ReporterViewModel,
@@ -204,6 +206,9 @@ export function DmarkDashboard({
   const [spfRoute, setSpfRoute] = useState<SPFRouteViewModel | null>(null);
   const [spfRouteState, setSpfRouteState] = useState<LoadState>("idle");
   const [spfRouteError, setSpfRouteError] = useState("");
+  const [dnsGuidance, setDNSGuidance] = useState<DNSGuidanceViewModel | null>(null);
+  const [dnsGuidanceState, setDNSGuidanceState] = useState<LoadState>("idle");
+  const [dnsGuidanceError, setDNSGuidanceError] = useState("");
   const [syncingSPFRoute, setSyncingSPFRoute] = useState(false);
   const [savingSPFRouteSources, setSavingSPFRouteSources] = useState(false);
   const [brandRisk, setBrandRisk] = useState<BrandRiskViewModel | null>(null);
@@ -310,6 +315,35 @@ export function DmarkDashboard({
     }
 
     void loadSPFRoute();
+
+    return () => {
+      ignore = true;
+    };
+  }, [activeTab, selectedDomain]);
+
+  useEffect(() => {
+    if (!selectedDomain || (activeTab !== "domains" && activeTab !== "overview")) return;
+
+    let ignore = false;
+
+    async function loadDNSGuidance() {
+      setDNSGuidanceState("loading");
+      setDNSGuidanceError("");
+
+      try {
+        const payload = await getDNSGuidanceData(selectedDomain!.id);
+        if (ignore) return;
+        setDNSGuidance(payload);
+        setDNSGuidanceState("ready");
+      } catch (error) {
+        if (ignore) return;
+        setDNSGuidance(null);
+        setDNSGuidanceState("error");
+        setDNSGuidanceError(errorMessage(error, "DNS provider guidance could not be loaded."));
+      }
+    }
+
+    void loadDNSGuidance();
 
     return () => {
       ignore = true;
@@ -623,6 +657,9 @@ export function DmarkDashboard({
               spfRoute={spfRoute}
               spfRouteState={spfRouteState}
               spfRouteError={spfRouteError}
+              dnsGuidance={dnsGuidance}
+              dnsGuidanceState={dnsGuidanceState}
+              dnsGuidanceError={dnsGuidanceError}
               syncingSPFRoute={syncingSPFRoute}
               savingSPFRouteSources={savingSPFRouteSources}
               onSyncSPFRoute={syncSelectedSPFRoute}
@@ -1014,6 +1051,9 @@ function DomainsTab({
   spfRoute,
   spfRouteState,
   spfRouteError,
+  dnsGuidance,
+  dnsGuidanceState,
+  dnsGuidanceError,
   syncingSPFRoute,
   savingSPFRouteSources,
   onSyncSPFRoute,
@@ -1033,6 +1073,9 @@ function DomainsTab({
   spfRoute: SPFRouteViewModel | null;
   spfRouteState: LoadState;
   spfRouteError: string;
+  dnsGuidance: DNSGuidanceViewModel | null;
+  dnsGuidanceState: LoadState;
+  dnsGuidanceError: string;
   syncingSPFRoute: boolean;
   savingSPFRouteSources: boolean;
   onSyncSPFRoute: () => void;
@@ -1125,6 +1168,8 @@ function DomainsTab({
         />
       )}
 
+      <DNSGuidancePanel dnsGuidance={dnsGuidance} state={dnsGuidanceState} error={dnsGuidanceError} onCopy={onCopy} />
+
       <SPFRoutePanel
         key={spfRoute?.id || selectedDomain?.id || "spf-route"}
         spfRoute={spfRoute}
@@ -1145,6 +1190,98 @@ function DomainsTab({
         onCopy={onCopy}
       />
     </div>
+  );
+}
+
+function DNSGuidancePanel({
+  dnsGuidance,
+  state,
+  error,
+  onCopy,
+}: {
+  dnsGuidance: DNSGuidanceViewModel | null;
+  state: LoadState;
+  error: string;
+  onCopy: (value: string, label: string) => void;
+}) {
+  return (
+    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+        <div>
+          <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            DNS provider guidance
+          </p>
+          <h3 className="mt-2 text-xl font-semibold text-navy">
+            {dnsGuidance ? `Provider steps for ${dnsGuidance.domain}` : "Provider-specific DNS steps"}
+          </h3>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            DNS provider detection is shown as detected, ambiguous, or unknown before instructions are presented so operators do not get false certainty.
+          </p>
+        </div>
+        {dnsGuidance ? (
+          <span className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${spfRouteToneClass(dnsGuidance.statusTone)}`}>
+            {dnsGuidance.statusLabel}
+          </span>
+        ) : null}
+      </div>
+
+      {state === "loading" ? <PanelNotice text="Loading DNS provider guidance..." /> : null}
+      {state === "error" ? <PanelNotice tone="error" text={error || "DNS provider guidance unavailable."} /> : null}
+      {state === "ready" && !dnsGuidance ? <PanelNotice text="DNS provider guidance was not returned for this domain." /> : null}
+
+      {dnsGuidance ? (
+        <div className="mt-5 grid gap-4">
+          <div className="grid gap-3 md:grid-cols-3">
+            <CompactStat label="Provider" value={dnsGuidance.providerName || "Provider unknown"} />
+            <CompactStat label="Detection" value={dnsGuidance.statusLabel} />
+            <CompactStat label="Confidence" value={dnsGuidance.confidenceLabel} />
+          </div>
+
+          {dnsGuidance.resolverError ? <PanelNotice text={`Resolver fallback: ${dnsGuidance.resolverError}`} /> : null}
+
+          {dnsGuidance.evidenceNameservers.length ? (
+            <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-navy">Nameserver evidence</p>
+              <p className="mt-2 font-mono text-xs text-slate-600">{dnsGuidance.evidenceNameservers.join(", ")}</p>
+            </div>
+          ) : null}
+
+          <div className="grid gap-3">
+            {dnsGuidance.instructions.map((instruction) => (
+              <div key={`${instruction.kind}-${instruction.record}`} className="rounded-md border border-slate-200 p-4">
+                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                  <div>
+                    <p className="text-sm font-semibold text-navy">
+                      {instruction.providerName} · {instruction.recordType} · TTL {instruction.ttl || "default"}
+                    </p>
+                    <code className="mt-3 block overflow-x-auto rounded-md border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700">
+                      {instruction.record}
+                    </code>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onCopy(instruction.record, "DNS record")}
+                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-navy px-3 text-sm font-semibold text-white transition hover:bg-navy-soft"
+                  >
+                    <Copy className="h-4 w-4" aria-hidden="true" />
+                    Copy DNS record
+                  </button>
+                </div>
+                {instruction.steps.length ? (
+                  <ol className="mt-4 grid gap-2 text-sm text-slate-600">
+                    {instruction.steps.map((step) => (
+                      <li key={step} className="rounded-md bg-slate-50 px-3 py-2">
+                        {step}
+                      </li>
+                    ))}
+                  </ol>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </article>
   );
 }
 

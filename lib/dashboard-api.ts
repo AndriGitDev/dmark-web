@@ -183,6 +183,36 @@ export type BackendDashboardSPFRouteSyncResponse = {
   queued_at?: string;
 };
 
+export type BackendDashboardDNSProviderDetection = {
+  status: string;
+  provider_id?: string;
+  provider_name?: string;
+  confidence: string;
+  evidence_nameservers: string[];
+  dns_dashboard_url?: string;
+};
+
+export type BackendDashboardDNSInstruction = {
+  kind: string;
+  record_name: string;
+  record_type: string;
+  record_value: string;
+  ttl: number;
+  provider_id?: string;
+  provider_name: string;
+  dashboard_url?: string;
+  steps: string[];
+};
+
+export type BackendDashboardDNSGuidanceResponse = {
+  domain_id: string;
+  domain: string;
+  generated_at: string;
+  detection: BackendDashboardDNSProviderDetection;
+  resolver_error?: string;
+  instructions: BackendDashboardDNSInstruction[];
+};
+
 type BackendErrorPayload = {
   error?: string;
   message?: string;

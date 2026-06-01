@@ -207,6 +207,42 @@ function mockGET(path: string): Response {
     });
   }
 
+  if (tail[0] === "domains" && tail[2] === "dns-guidance") {
+    const domain = mockDashboardViewModel.protectedDomains.find((item) => item.id === tail[1]);
+    const domainName = domain?.domain || "example.is";
+    const dnsSafeName = domainName.replaceAll(".", "-");
+    return NextResponse.json({
+      domain_id: tail[1],
+      domain: domainName,
+      generated_at: new Date().toISOString(),
+      detection: {
+        status: "unknown",
+        confidence: "unknown",
+        evidence_nameservers: [],
+      },
+      instructions: [
+        {
+          kind: "dmarc_txt",
+          record_name: `_dmarc.${domainName}`,
+          record_type: "TXT",
+          record_value: `v=DMARC1; p=none; rua=mailto:dmarc@${domainName}`,
+          ttl: 3600,
+          provider_name: "Generic DNS",
+          steps: ["Open your DNS provider.", "Create or update this TXT record.", "Save, then recheck from the dashboard."],
+        },
+        {
+          kind: "spf_route_cname",
+          record_name: `_spf.${domainName}`,
+          record_type: "CNAME",
+          record_value: `${dnsSafeName}.route.dmark.is`,
+          ttl: 300,
+          provider_name: "Generic DNS",
+          steps: ["Open your DNS provider.", "Create this SPF route CNAME delegation.", "Queue a SPF route sync after propagation."],
+        },
+      ],
+    });
+  }
+
   if (tail[0] === "domains" && tail[2] === "spf-route") {
     const domain = mockDashboardViewModel.protectedDomains.find((item) => item.id === tail[1]);
     const domainName = domain?.domain || "example.is";

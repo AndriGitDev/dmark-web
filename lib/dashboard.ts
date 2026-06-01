@@ -5,6 +5,9 @@ import type {
   BackendDashboardBrandRiskResponse,
   BackendDashboardChangePlanResponse,
   BackendDashboardDNSChange,
+  BackendDashboardDNSGuidanceResponse,
+  BackendDashboardDNSInstruction,
+  BackendDashboardDNSProviderDetection,
   BackendDashboardDomain,
   BackendDashboardLookalikeRiskSignal,
   BackendDashboardReporterResponse,
@@ -215,6 +218,36 @@ export type SPFRoutePanelModel = {
   errorSummary?: string;
   sourceLabels: string[];
   evidenceLabels: string[];
+};
+
+export type DNSGuidanceInstruction = {
+  kind: string;
+  recordName: string;
+  recordType: string;
+  recordValue: string;
+  ttl: number;
+  providerID?: string;
+  providerName: string;
+  dashboardURL?: string;
+  steps: string[];
+  record: string;
+};
+
+export type DNSGuidanceViewModel = {
+  domainID: string;
+  domain: string;
+  generatedAt?: string;
+  status: string;
+  providerID?: string;
+  providerName?: string;
+  confidence: string;
+  evidenceNameservers: string[];
+  dnsDashboardURL?: string;
+  resolverError?: string;
+  instructions: DNSGuidanceInstruction[];
+  statusLabel: string;
+  statusTone: "green" | "amber" | "red" | "blue";
+  confidenceLabel: string;
 };
 
 export type DashboardInitialState = {
@@ -620,6 +653,55 @@ export function buildSPFRoutePanelModel(route: SPFRouteViewModel): SPFRoutePanel
   };
 }
 
+export function mapDNSGuidanceResponse(payload: BackendDashboardDNSGuidanceResponse): DNSGuidanceViewModel {
+  const detection = mapDNSProviderDetection(payload.detection);
+  return {
+    domainID: payload.domain_id,
+    domain: payload.domain,
+    generatedAt: payload.generated_at,
+    status: detection.status,
+    providerID: detection.providerID,
+    providerName: detection.providerName,
+    confidence: detection.confidence,
+    evidenceNameservers: detection.evidenceNameservers,
+    dnsDashboardURL: detection.dnsDashboardURL,
+    resolverError: payload.resolver_error,
+    instructions: (payload.instructions || []).map(mapDNSGuidanceInstruction),
+    statusLabel: dnsGuidanceStatusLabel(detection.status, detection.providerName),
+    statusTone: dnsGuidanceStatusTone(detection.status),
+    confidenceLabel: `${detection.confidence || "unknown"} confidence`,
+  };
+}
+
+function mapDNSProviderDetection(payload: BackendDashboardDNSProviderDetection) {
+  return {
+    status: payload.status || "unknown",
+    providerID: payload.provider_id,
+    providerName: payload.provider_name,
+    confidence: payload.confidence || "unknown",
+    evidenceNameservers: payload.evidence_nameservers || [],
+    dnsDashboardURL: payload.dns_dashboard_url,
+  };
+}
+
+export function mapDNSGuidanceInstruction(payload: BackendDashboardDNSInstruction): DNSGuidanceInstruction {
+  const recordName = payload.record_name || "@";
+  const recordType = payload.record_type || "TXT";
+  const recordValue = payload.record_value || "";
+  return {
+    kind: payload.kind || "record",
+    recordName,
+    recordType,
+    recordValue,
+    ttl: numberOrZero(payload.ttl),
+    providerID: payload.provider_id,
+    providerName: payload.provider_name || "Generic DNS",
+    dashboardURL: payload.dashboard_url,
+    steps: payload.steps || [],
+    record: [recordName, recordType, recordValue].filter(Boolean).join(" "),
+  };
+}
+
 export async function getDashboardData(): Promise<DashboardViewModel> {
   return mapDashboardResponse(await dashboardJSON<BackendDashboardResponse>("/api/dashboard"));
 }
@@ -635,6 +717,10 @@ export async function getChangePlan(domainID: string): Promise<ChangePlanViewMod
 
 export async function getSPFRouteData(domainID: string): Promise<SPFRouteViewModel> {
   return mapSPFRouteResponse(await dashboardJSON<BackendDashboardSPFRouteResponse>(`/api/dashboard/domains/${domainID}/spf-route`));
+}
+
+export async function getDNSGuidanceData(domainID: string): Promise<DNSGuidanceViewModel> {
+  return mapDNSGuidanceResponse(await dashboardJSON<BackendDashboardDNSGuidanceResponse>(`/api/dashboard/domains/${domainID}/dns-guidance`));
 }
 
 export async function syncSPFRoute(domainID: string): Promise<SPFRouteSyncResult> {
@@ -914,6 +1000,22 @@ function spfRouteStatusTone(status: string): SPFRoutePanelModel["statusTone"] {
   if (normalized === "failed" || normalized === "blocked" || normalized === "error") return "red";
   if (normalized === "syncing" || normalized === "pending" || normalized === "stale") return "amber";
   return "blue";
+}
+
+function dnsGuidanceStatusTone(status: string): DNSGuidanceViewModel["statusTone"] {
+  const normalized = (status || "").toLowerCase();
+  if (normalized === "detected") return "green";
+  if (normalized === "ambiguous") return "amber";
+  if (normalized === "error" || normalized === "failed") return "red";
+  return "amber";
+}
+
+function dnsGuidanceStatusLabel(status: string, providerName?: string): string {
+  const normalized = (status || "").toLowerCase();
+  if (normalized === "detected" && providerName) return `Detected: ${providerName}`;
+  if (normalized === "ambiguous") return providerName ? `Ambiguous: ${providerName}` : "Provider ambiguous";
+  if (normalized === "unknown") return "Provider unknown";
+  return titleCaseStatus(status || "unknown");
 }
 
 function titleCaseStatus(status: string): string {
