@@ -30,6 +30,7 @@ import {
   X,
 } from "lucide-react";
 import type { ScanPayload, UpgradePayload, UpgradeResponse } from "@/lib/scan";
+import { buildScanRemediationPlan } from "@/lib/scan";
 
 const loadingSteps = [
   "Querying DNS authority...",
@@ -671,6 +672,7 @@ function ResultsDashboard({
   const dmarcFail = !result.dmarc.valid || result.dmarc.policy === "none";
   const grade = result.audit?.grade || (result.status === "PASS" ? "A" : result.status === "WARNING" ? "C" : "F");
   const risk = result.audit?.risk || (result.spoofable ? "critical" : "low");
+  const remediationPlan = buildScanRemediationPlan(result);
 
   return (
     <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
@@ -743,6 +745,7 @@ function ResultsDashboard({
           }
           record={result.dmarc.record}
         />
+        <RemediationPlanCard summary={remediationPlan.summary} steps={remediationPlan.steps} />
         <PaywallPreview failed={result.spoofable || spfFail || dmarcFail} onUpgrade={onUpgrade} />
       </div>
     </div>
@@ -785,6 +788,49 @@ function TechnicalFinding({
       <pre className="mt-4 overflow-x-auto whitespace-pre-wrap break-words rounded-md border border-slate-200 bg-slate-950 p-4 font-mono text-xs leading-6 text-slate-100">
         {record}
       </pre>
+    </article>
+  );
+}
+
+function RemediationPlanCard({
+  summary,
+  steps,
+}: {
+  summary: string;
+  steps: Array<{ title: string; detail: string; tone: "critical" | "warning" | "stable" }>;
+}) {
+  return (
+    <article className="rounded-lg border border-blue-100 bg-blue-50/60 p-5 shadow-sm">
+      <div className="flex items-start gap-3">
+        <Route className="mt-1 h-5 w-5 shrink-0 text-trust" aria-hidden="true" />
+        <div>
+          <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-trust">Recommended sequence</p>
+          <h3 className="mt-3 text-xl font-semibold tracking-tight text-navy">{summary}</h3>
+        </div>
+      </div>
+      <ol className="mt-5 grid gap-3">
+        {steps.map((step, index) => (
+          <li key={step.title} className="rounded-md border border-white bg-white/82 p-4 shadow-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+              <span
+                className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md font-mono text-xs font-semibold ${
+                  step.tone === "critical"
+                    ? "bg-red-100 text-red-700"
+                    : step.tone === "warning"
+                      ? "bg-amber-100 text-amber-700"
+                      : "bg-emerald-100 text-emerald-700"
+                }`}
+              >
+                {index + 1}
+              </span>
+              <div>
+                <h4 className="font-semibold text-navy">{step.title}</h4>
+                <p className="mt-1 text-sm leading-6 text-slate-600">{step.detail}</p>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ol>
     </article>
   );
 }

@@ -239,6 +239,59 @@ test("settings mapper and payload clamp threshold to 1..100", () => {
   );
 });
 
+test("public scan remediation plan prioritises SPF flattening before DMARC enforcement", () => {
+  const scan = loadTSModule("lib/scan.ts");
+  const plan = scan.buildScanRemediationPlan({
+    domain: "example.is",
+    status: "FAIL",
+    spf: {
+      valid: false,
+      lookups: 14,
+      record: "v=spf1 include:_spf.google.com include:spf.protection.outlook.com include:sendgrid.net -all",
+    },
+    dmarc: {
+      valid: false,
+      policy: "none",
+      record: "v=DMARC1; p=none; rua=mailto:dmarc@example.is",
+    },
+    spoofable: true,
+  });
+
+  assert.equal(plan.summary, "Fix SPF lookup pressure before moving DMARC to enforcement.");
+  assert.deepEqual(
+    Array.from(plan.steps.map((step) => step.title)),
+    ["Flatten SPF includes", "Keep monitoring DMARC reports", "Move toward p=reject"],
+  );
+  assert.equal(plan.steps[0].tone, "critical");
+  assert.match(plan.steps[0].detail, /14 DNS lookups/);
+});
+
+test("public scan remediation plan keeps enforcing domains in monitoring mode", () => {
+  const scan = loadTSModule("lib/scan.ts");
+  const plan = scan.buildScanRemediationPlan({
+    domain: "kastro.is",
+    status: "PASS",
+    spf: {
+      valid: true,
+      lookups: 5,
+      record: "v=spf1 include:_spf.google.com include:spf.protection.outlook.com -all",
+    },
+    dmarc: {
+      valid: true,
+      policy: "reject",
+      record: "v=DMARC1; p=reject; rua=mailto:dmarc@kastro.is",
+    },
+    spoofable: false,
+  });
+
+  assert.equal(plan.summary, "Domain is enforcing; keep watching for sender and DNS drift.");
+  assert.deepEqual(
+    Array.from(plan.steps.map((step) => step.title)),
+    ["Keep SPF below the limit", "Keep DMARC at p=reject", "Watch new senders"],
+  );
+  assert.equal(plan.steps.every((step) => step.tone === "stable"), true);
+});
+
 function restoreEnv(key, value) {
   if (value === undefined) {
     delete process.env[key];
