@@ -28,6 +28,8 @@ type OperationalEventsPayload = {
   events?: unknown;
 };
 
+type SPFRoutePublicationAuditPayload = Record<string, unknown>;
+
 type LabelValue = {
   label: string;
   value: string;
@@ -60,6 +62,34 @@ export type OperationalEventsPanelModel = {
   title: string;
   description: string;
   events: OperationalEventSummary[];
+  notice?: string;
+};
+
+export type DNSAuditRecord = {
+  label: string;
+  value: string;
+  meta?: string;
+};
+
+export type DNSAuditEvidence = {
+  label: string;
+  status: string;
+  values: string[];
+};
+
+export type SPFRoutePublicationAuditPanelModel = {
+  status: "available" | "unavailable";
+  title: string;
+  description: string;
+  routeID: string;
+  routeFQDN: string;
+  statusLabel: string;
+  driftStatus: string;
+  propagationStatus: string;
+  expectedTXT: DNSAuditRecord[];
+  expectedCNAME: DNSAuditRecord[];
+  liveDNS: DNSAuditEvidence[];
+  publishMetadata: LabelValue[];
   notice?: string;
 };
 
@@ -149,6 +179,15 @@ export async function fetchAdminOperationalEvents(): Promise<OperationalEventsPa
   return fetchAdminJson("/api/admin/operational-events?severity=error&limit=20");
 }
 
+export async function fetchAdminSPFRoutePublicationAudit(routeID: string): Promise<SPFRoutePublicationAuditPayload> {
+  const normalizedRouteID = routeID.trim();
+  if (!normalizedRouteID) {
+    throw new Error("SPF route ID is required.");
+  }
+
+  return fetchAdminJson(`/api/admin/spf-routes/${encodeURIComponent(normalizedRouteID)}/publication-audit`);
+}
+
 export function buildProviderHealthPanelModel(payload?: ProviderHealthPayload | null): ProviderHealthPanelModel {
   if (!payload) return unavailableProviderHealthPanel();
 
@@ -189,6 +228,35 @@ export function buildOperationalEventsPanelModel(payload?: OperationalEventsPayl
   };
 }
 
+export function buildSPFRoutePublicationAuditPanelModel(payload?: SPFRoutePublicationAuditPayload | null): SPFRoutePublicationAuditPanelModel {
+  if (!payload) return unavailableSPFRoutePublicationAuditPanel();
+
+  const expectedRecords = asRecord(payload.expected_records) ?? asRecord(payload.expected) ?? payload;
+  const liveDNS = asRecord(payload.live_dns) ?? asRecord(payload.live) ?? {};
+  const lastPublish = asRecord(payload.last_publish) ?? asRecord(payload.last_published) ?? {};
+  const lastGood = asRecord(payload.last_good) ?? {};
+  const expectedTXT = mapExpectedRecords(expectedRecords.txt ?? expectedRecords.txt_records ?? payload.expected_txt_records, "value");
+  const expectedCNAME = mapExpectedRecords(expectedRecords.cname ?? expectedRecords.cname_records ?? payload.expected_cname_records, "target");
+
+  return {
+    status: "available",
+    title: "SPF route publication audit",
+    description: "Expected route records compared with live authoritative and recursive DNS evidence from the owner admin proxy.",
+    routeID: safeString(payload.route_id) || safeString(payload.id) || "Unknown",
+    routeFQDN: safeString(payload.route_fqdn) || safeString(payload.fqdn) || expectedTXT[0]?.label || "Unknown",
+    statusLabel: safeString(payload.status) || safeString(payload.last_sync_status) || "Unknown",
+    driftStatus: safeString(payload.drift_status) || safeString(payload.drift) || safeString(payload.propagation_status) || "Unknown",
+    propagationStatus: safeString(payload.propagation_status) || safeString(payload.propagation) || "Unknown",
+    expectedTXT,
+    expectedCNAME,
+    liveDNS: [
+      mapLiveDNS("Authoritative", liveDNS.authoritative ?? payload.authoritative),
+      mapLiveDNS("Recursive", liveDNS.recursive ?? payload.recursive),
+    ].filter((item): item is DNSAuditEvidence => item !== null),
+    publishMetadata: mapPublicationMetadata(payload, lastPublish, lastGood),
+  };
+}
+
 export function unavailableProviderHealthPanel(): ProviderHealthPanelModel {
   return {
     status: "unavailable",
@@ -209,6 +277,26 @@ export function unavailableOperationalEventsPanel(): OperationalEventsPanelModel
     description: "Latest error-severity operational summaries from the owner admin proxy with metadata defensively redacted.",
     events: [],
     notice: "Operational events are temporarily unavailable. No provider credentials or backend details were exposed.",
+  };
+}
+
+export function unavailableSPFRoutePublicationAuditPanel(routeID = ""): SPFRoutePublicationAuditPanelModel {
+  return {
+    status: "unavailable",
+    title: "SPF route publication audit",
+    description: "Expected route records compared with live authoritative and recursive DNS evidence from the owner admin proxy.",
+    routeID: routeID || "Not selected",
+    routeFQDN: "Unavailable",
+    statusLabel: "Unavailable",
+    driftStatus: "Unavailable",
+    propagationStatus: "Unavailable",
+    expectedTXT: [],
+    expectedCNAME: [],
+    liveDNS: [],
+    publishMetadata: [],
+    notice: routeID
+      ? "Publication audit is temporarily unavailable. No provider credentials or backend details were exposed."
+      : "Enter a route ID to fetch read-only publication audit evidence.",
   };
 }
 
@@ -253,6 +341,76 @@ function sanitizeMetadata(metadata: unknown): LabelValue[] {
   return rows;
 }
 
+function mapExpectedRecords(value: unknown, valueKey: "value" | "target"): DNSAuditRecord[] {
+  if (Array.isArray(value)) return value.map((item) => mapExpectedRecord(item, valueKey)).filter((item): item is DNSAuditRecord => item !== null);
+  const singleRecord = mapExpectedRecord(value, valueKey);
+  return singleRecord ? [singleRecord] : [];
+}
+
+function mapExpectedRecord(value: unknown, valueKey: "value" | "target"): DNSAuditRecord | null {
+  if (typeof value === "string") {
+    const rendered = safeDNSValue(value);
+    return rendered ? { label: "Record", value: rendered } : null;
+  }
+  const record = asRecord(value);
+  if (!record) return null;
+
+  const label = safeDNSValue(record.name) || safeDNSValue(record.record_name) || "Record";
+  const renderedValue = safeDNSValue(record[valueKey]) || safeDNSValue(record.record_value) || safeDNSValue(record.value);
+  if (!renderedValue) return null;
+
+  const ttl = safeString(record.ttl);
+  return {
+    label,
+    value: renderedValue,
+    ...(ttl ? { meta: `TTL ${ttl}` } : {}),
+  };
+}
+
+function mapLiveDNS(label: string, value: unknown): DNSAuditEvidence | null {
+  const evidence = asRecord(value);
+  if (!evidence) return null;
+  const txtRecord = asRecord(evidence.txt);
+  const cnameRecord = asRecord(evidence.cname);
+
+  const values = [
+    ...safeStringArray(txtRecord?.values ?? evidence.txt).map((item) => `TXT ${item}`),
+    ...safeStringArray(evidence.txt_records).map((item) => `TXT ${item}`),
+    ...safeStringArray(cnameRecord?.values ?? evidence.cname).map((item) => `CNAME ${item}`),
+    ...safeStringArray(evidence.cname_records).map((item) => `CNAME ${item}`),
+  ];
+  const status = [safeString(txtRecord?.status), safeString(cnameRecord?.status)].filter(Boolean).join(" / ") || safeString(evidence.status);
+
+  if (values.length === 0 && !status) return null;
+
+  return {
+    label,
+    status: status || "Unknown",
+    values,
+  };
+}
+
+function mapPublicationMetadata(payload: Record<string, unknown>, lastPublish: Record<string, unknown>, lastGood: Record<string, unknown>): LabelValue[] {
+  const rows: LabelValue[] = [];
+  addMetadataRow(rows, "Last sync status", payload.last_sync_status);
+  addMetadataRow(rows, "Last synced at", payload.last_synced_at);
+  addMetadataRow(rows, "Bunny record ID", payload.bunny_record_id);
+  addMetadataRow(rows, "Last generated SPF", payload.last_generated_spf);
+  addMetadataRow(rows, "Last published SPF", payload.last_published_spf);
+  addMetadataRow(rows, "Last known good SPF", payload.last_known_good_spf);
+  addMetadataRow(rows, "Last publish status", lastPublish.status);
+  addMetadataRow(rows, "Last published at", lastPublish.published_at ?? lastPublish.at);
+  addMetadataRow(rows, "Last publish job", lastPublish.job_id ?? lastPublish.id);
+  addMetadataRow(rows, "Last good check", lastGood.checked_at ?? lastGood.at);
+  addMetadataRow(rows, "Last good source", lastGood.source);
+  return rows;
+}
+
+function addMetadataRow(rows: LabelValue[], label: string, value: unknown) {
+  const rendered = safeDNSValue(value);
+  if (rendered) rows.push({ label, value: rendered });
+}
+
 function isSafeMetadataKey(key: string): boolean {
   return key.length > 0 && key.length <= 64 && !SECRET_KEY_PATTERN.test(key);
 }
@@ -267,6 +425,21 @@ function safeString(value: unknown): string {
   if (typeof value === "string") return value;
   if (typeof value === "number" || typeof value === "boolean") return String(value);
   return "";
+}
+
+function safeDNSValue(value: unknown): string {
+  const rendered = safeString(value);
+  if (!rendered) return "";
+  return SECRET_VALUE_PATTERN.test(rendered) ? "[REDACTED]" : rendered;
+}
+
+function safeStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => safeDNSValue(item)).filter(Boolean);
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
 }
 
 function configuredLabel(value: unknown): string {

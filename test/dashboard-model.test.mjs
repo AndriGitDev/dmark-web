@@ -888,6 +888,152 @@ test("admin provider health and operational event fetchers use relative owner pr
   assert.equal(JSON.stringify(observed).includes("backend.example"), false);
 });
 
+test("admin SPF route publication audit fetcher uses encoded relative owner proxy path and rejects blanks", async () => {
+  const previousFetch = globalThis.fetch;
+  const observed = [];
+
+  globalThis.fetch = async (url, init) => {
+    observed.push({ url: String(url), cache: init?.cache, accept: init?.headers?.accept ?? init?.headers?.get?.("accept") });
+    return new Response(JSON.stringify({ route_id: "route/1", route_fqdn: "example.route.dmark.is", status: "published" }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    const adminShell = loadTSModule("lib/admin-shell.ts");
+    await adminShell.fetchAdminSPFRoutePublicationAudit(" route/1 ");
+    await assert.rejects(() => adminShell.fetchAdminSPFRoutePublicationAudit("   "), /SPF route ID is required/);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+
+  assert.deepEqual(observed.map((request) => request.url), ["/api/admin/spf-routes/route%2F1/publication-audit"]);
+  assert.equal(observed[0].cache, "no-store");
+  assert.equal(JSON.stringify(observed).includes("DMARK_ADMIN_API_TOKEN"), false);
+  assert.equal(JSON.stringify(observed).includes("backend.example"), false);
+});
+
+test("admin SPF route publication audit mapper renders safe DNS drift evidence", () => {
+  const adminShell = loadTSModule("lib/admin-shell.ts");
+  const panel = adminShell.buildSPFRoutePublicationAuditPanelModel({
+    route_id: "route_123",
+    route_fqdn: "example-is.route.dmark.is",
+    status: "drift_detected",
+    expected_records: {
+      txt: [{ name: "example-is.route.dmark.is", value: "v=spf1 include:_spf.mailgun.org ~all", ttl: 300 }],
+      cname: [{ name: "_spf.example.is", target: "example-is.route.dmark.is", ttl: 300 }],
+    },
+    live_dns: {
+      authoritative: {
+        status: "mismatch",
+        txt: ["v=spf1 include:_spf.old.example ~all"],
+        cname: ["old.route.dmark.is"],
+      },
+      recursive: {
+        status: "propagating",
+        txt: ["v=spf1 include:_spf.mailgun.org ~all"],
+        cname: ["example-is.route.dmark.is"],
+      },
+    },
+    drift_status: "mismatch",
+    propagation_status: "propagating",
+    last_publish: { status: "published", published_at: "2026-06-01T12:00:00Z", job_id: "job_123" },
+    last_good: { checked_at: "2026-06-01T12:30:00Z", source: "authoritative" },
+    bunny_api_key: "should-not-render",
+    provider_response: "raw should-not-render",
+  });
+
+  assert.equal(panel.status, "available");
+  assert.equal(panel.routeID, "route_123");
+  assert.equal(panel.routeFQDN, "example-is.route.dmark.is");
+  assert.equal(panel.statusLabel, "drift_detected");
+  assert.equal(panel.driftStatus, "mismatch");
+  assert.equal(panel.propagationStatus, "propagating");
+  assert.deepEqual(JSON.parse(JSON.stringify(panel.expectedTXT)), [
+    { label: "example-is.route.dmark.is", value: "v=spf1 include:_spf.mailgun.org ~all", meta: "TTL 300" },
+  ]);
+  assert.deepEqual(JSON.parse(JSON.stringify(panel.expectedCNAME)), [
+    { label: "_spf.example.is", value: "example-is.route.dmark.is", meta: "TTL 300" },
+  ]);
+  assert.deepEqual(JSON.parse(JSON.stringify(panel.liveDNS)), [
+    { label: "Authoritative", status: "mismatch", values: ["TXT v=spf1 include:_spf.old.example ~all", "CNAME old.route.dmark.is"] },
+    { label: "Recursive", status: "propagating", values: ["TXT v=spf1 include:_spf.mailgun.org ~all", "CNAME example-is.route.dmark.is"] },
+  ]);
+  assert.deepEqual(JSON.parse(JSON.stringify(panel.publishMetadata)), [
+    { label: "Last publish status", value: "published" },
+    { label: "Last published at", value: "2026-06-01T12:00:00Z" },
+    { label: "Last publish job", value: "job_123" },
+    { label: "Last good check", value: "2026-06-01T12:30:00Z" },
+    { label: "Last good source", value: "authoritative" },
+  ]);
+  assert.equal(JSON.stringify(panel).includes("should-not-render"), false);
+  assert.equal(JSON.stringify(panel).includes("BUNNY"), false);
+});
+
+test("admin SPF route publication audit mapper supports backend audit contract", () => {
+  const adminShell = loadTSModule("lib/admin-shell.ts");
+  const panel = adminShell.buildSPFRoutePublicationAuditPanelModel({
+    route_id: "route-1",
+    domain_id: "domain-1",
+    domain: "example.com",
+    expected: {
+      txt: { name: "example-com.route.dmark.is", value: "v=spf1 include:_spf.mailgun.org ~all" },
+      cname: { name: "example.com", target: "example-com.route.dmark.is" },
+    },
+    bunny_record_id: 4242,
+    last_generated_spf: "v=spf1 include:_spf.mailgun.org ~all",
+    last_published_spf: "v=spf1 include:_spf.mailgun.org ~all",
+    last_known_good_spf: "v=spf1 include:_spf.mailgun.org ~all",
+    last_sync_status: "healthy",
+    last_synced_at: "2026-06-01T12:00:00Z",
+    recursive: {
+      txt: { values: ["v=spf1 include:_spf.mailgun.org ~all"], status: "match" },
+      cname: { values: ["stale.route.dmark.is."], status: "drift" },
+    },
+    authoritative: { status: "not_configured" },
+    propagation_status: "drift",
+  });
+
+  assert.equal(panel.status, "available");
+  assert.equal(panel.routeID, "route-1");
+  assert.equal(panel.routeFQDN, "example-com.route.dmark.is");
+  assert.equal(panel.statusLabel, "healthy");
+  assert.equal(panel.driftStatus, "drift");
+  assert.equal(panel.propagationStatus, "drift");
+  assert.deepEqual(JSON.parse(JSON.stringify(panel.expectedTXT)), [
+    { label: "example-com.route.dmark.is", value: "v=spf1 include:_spf.mailgun.org ~all" },
+  ]);
+  assert.deepEqual(JSON.parse(JSON.stringify(panel.expectedCNAME)), [
+    { label: "example.com", value: "example-com.route.dmark.is" },
+  ]);
+  assert.deepEqual(JSON.parse(JSON.stringify(panel.liveDNS)), [
+    { label: "Authoritative", status: "not_configured", values: [] },
+    { label: "Recursive", status: "match / drift", values: ["TXT v=spf1 include:_spf.mailgun.org ~all", "CNAME stale.route.dmark.is."] },
+  ]);
+  assert.deepEqual(JSON.parse(JSON.stringify(panel.publishMetadata)), [
+    { label: "Last sync status", value: "healthy" },
+    { label: "Last synced at", value: "2026-06-01T12:00:00Z" },
+    { label: "Bunny record ID", value: "4242" },
+    { label: "Last generated SPF", value: "v=spf1 include:_spf.mailgun.org ~all" },
+    { label: "Last published SPF", value: "v=spf1 include:_spf.mailgun.org ~all" },
+    { label: "Last known good SPF", value: "v=spf1 include:_spf.mailgun.org ~all" },
+  ]);
+});
+
+test("admin SPF route publication audit mapper tolerates absent optional fields", () => {
+  const adminShell = loadTSModule("lib/admin-shell.ts");
+  const panel = adminShell.buildSPFRoutePublicationAuditPanelModel({ route_id: "route_123" });
+
+  assert.equal(panel.status, "available");
+  assert.equal(panel.routeID, "route_123");
+  assert.equal(panel.routeFQDN, "Unknown");
+  assert.deepEqual(JSON.parse(JSON.stringify(panel.expectedTXT)), []);
+  assert.deepEqual(JSON.parse(JSON.stringify(panel.expectedCNAME)), []);
+  assert.deepEqual(JSON.parse(JSON.stringify(panel.liveDNS)), []);
+  assert.deepEqual(JSON.parse(JSON.stringify(panel.publishMetadata)), []);
+});
+
 test("admin provider health mapper renders safe operator-friendly labels", () => {
   const adminShell = loadTSModule("lib/admin-shell.ts");
   const panel = adminShell.buildProviderHealthPanelModel({
@@ -973,13 +1119,16 @@ test("admin page source wires read-only provider panels and locked model exposes
   const pageSource = readFileSync(join(root, "app/admin/page.tsx"), "utf8");
   assert.match(pageSource, /fetchAdminProviderHealth/);
   assert.match(pageSource, /fetchAdminOperationalEvents/);
+  assert.match(pageSource, /fetchAdminSPFRoutePublicationAudit/);
   assert.match(pageSource, /ProviderHealthPanel/);
   assert.match(pageSource, /OperationalEventsPanel/);
+  assert.match(pageSource, /SPFRoutePublicationAuditPanel/);
 
   const adminShell = loadTSModule("lib/admin-shell.ts");
   const locked = adminShell.buildAdminShellModel({ allowed: false });
   assert.equal(JSON.stringify(locked).includes("/api/admin/provider-health"), false);
   assert.equal(JSON.stringify(locked).includes("/api/admin/operational-events"), false);
+  assert.equal(JSON.stringify(locked).includes("/api/admin/spf-routes"), false);
   assert.equal(JSON.stringify(locked).includes("DMARK_ADMIN_API_TOKEN"), false);
 });
 

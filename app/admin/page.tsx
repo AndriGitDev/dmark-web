@@ -7,13 +7,17 @@ import {
   buildAdminShellModel,
   buildOperationalEventsPanelModel,
   buildProviderHealthPanelModel,
+  buildSPFRoutePublicationAuditPanelModel,
   fetchAdminOperationalEvents,
   fetchAdminProviderHealth,
+  fetchAdminSPFRoutePublicationAudit,
   unavailableOperationalEventsPanel,
   unavailableProviderHealthPanel,
+  unavailableSPFRoutePublicationAuditPanel,
   type AdminShellSection,
   type OperationalEventsPanelModel,
   type ProviderHealthPanelModel,
+  type SPFRoutePublicationAuditPanelModel,
 } from "@/lib/admin-shell";
 
 export const metadata: Metadata = {
@@ -36,7 +40,13 @@ const sectionIcons: Record<AdminShellSection["id"], typeof ClipboardList> = {
   "company-onboarding": Building2,
 };
 
-export default async function AdminPage() {
+type AdminPageSearchParams = Record<string, string | string[] | undefined>;
+
+type AdminPageProps = {
+  searchParams?: Promise<AdminPageSearchParams>;
+};
+
+export default async function AdminPage({ searchParams }: AdminPageProps) {
   const requestHeaders = await headers();
   const model = buildAdminShellModel({ allowed: isAdminOwnerSessionAllowed(requestHeaders) });
 
@@ -44,13 +54,20 @@ export default async function AdminPage() {
     return <AdminLocked title={model.title} description={model.description} eyebrow={model.eyebrow} />;
   }
 
-  const [providerHealth, operationalEvents] = await Promise.all([
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const selectedRouteID = firstSearchParam(resolvedSearchParams.routeID ?? resolvedSearchParams.routeId ?? resolvedSearchParams.route_id).trim();
+  const [providerHealth, operationalEvents, publicationAudit] = await Promise.all([
     fetchAdminProviderHealth()
       .then((payload) => buildProviderHealthPanelModel(payload))
       .catch(() => unavailableProviderHealthPanel()),
     fetchAdminOperationalEvents()
       .then((payload) => buildOperationalEventsPanelModel(payload))
       .catch(() => unavailableOperationalEventsPanel()),
+    selectedRouteID
+      ? fetchAdminSPFRoutePublicationAudit(selectedRouteID)
+          .then((payload) => buildSPFRoutePublicationAuditPanelModel(payload))
+          .catch(() => unavailableSPFRoutePublicationAuditPanel(selectedRouteID))
+      : Promise.resolve(unavailableSPFRoutePublicationAuditPanel()),
   ]);
 
   return (
@@ -82,6 +99,7 @@ export default async function AdminPage() {
         </section>
 
         <section className="mt-8 grid gap-4 lg:grid-cols-2" aria-label="Read-only admin provider panels">
+          <SPFRoutePublicationAuditPanel panel={publicationAudit} selectedRouteID={selectedRouteID} />
           <ProviderHealthPanel panel={providerHealth} />
           <OperationalEventsPanel panel={operationalEvents} />
         </section>
@@ -140,6 +158,96 @@ function AdminSectionCard({ section }: { section: AdminShellSection }) {
   );
 }
 
+function SPFRoutePublicationAuditPanel({ panel, selectedRouteID }: { panel: SPFRoutePublicationAuditPanelModel; selectedRouteID: string }) {
+  return (
+    <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-[0_18px_50px_rgba(2,6,23,0.18)] lg:col-span-2">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-cyan-100">Read-only DNS audit</p>
+          <h2 className="mt-2 text-2xl font-semibold text-white">{panel.title}</h2>
+        </div>
+        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">{panel.status}</span>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-slate-300">{panel.description}</p>
+      <form className="mt-5 flex flex-col gap-3 rounded-xl border border-cyan-300/20 bg-cyan-300/10 p-4 sm:flex-row" action="/admin" method="get">
+        <label className="flex-1 text-sm font-semibold text-cyan-50">
+          Route ID
+          <input
+            className="mt-2 w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 font-mono text-sm text-white outline-none ring-cyan-300/40 focus:ring-2"
+            name="routeID"
+            defaultValue={selectedRouteID}
+            placeholder="spf-route-id"
+            autoComplete="off"
+          />
+        </label>
+        <button className="rounded-lg bg-cyan-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200 sm:self-end" type="submit">
+          Lookup audit
+        </button>
+      </form>
+      {panel.notice ? <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/10 p-3 text-sm text-amber-50">{panel.notice}</p> : null}
+      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <AuditMetric label="Route ID" value={panel.routeID} />
+        <AuditMetric label="Route FQDN" value={panel.routeFQDN} />
+        <AuditMetric label="Drift" value={panel.driftStatus} />
+        <AuditMetric label="Propagation" value={panel.propagationStatus} />
+      </div>
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        <DNSAuditRecordList title="Expected TXT" rows={panel.expectedTXT} empty="No expected TXT records returned." />
+        <DNSAuditRecordList title="Expected CNAME" rows={panel.expectedCNAME} empty="No expected CNAME records returned." />
+      </div>
+      {panel.liveDNS.length > 0 ? (
+        <div className="mt-5 grid gap-3 lg:grid-cols-2">
+          {panel.liveDNS.map((evidence) => (
+            <div key={evidence.label} className="rounded-xl border border-white/10 bg-slate-950/50 p-4 text-sm leading-6 text-slate-300">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="font-semibold text-white">{evidence.label} DNS</h3>
+                <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-xs text-slate-200">{evidence.status}</span>
+              </div>
+              <ul className="mt-3 space-y-2 font-mono text-xs text-cyan-100">
+                {evidence.values.map((value) => (
+                  <li key={`${evidence.label}-${value}`} className="break-all rounded-lg border border-cyan-300/10 bg-cyan-300/5 p-2">
+                    {value}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      <AdminLabelList title="Publication metadata" rows={panel.publishMetadata} />
+    </article>
+  );
+}
+
+function AuditMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-slate-950/50 p-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">{label}</p>
+      <p className="mt-2 break-all font-mono text-sm text-cyan-100">{value}</p>
+    </div>
+  );
+}
+
+function DNSAuditRecordList({ title, rows, empty }: { title: string; rows: Array<{ label: string; value: string; meta?: string }>; empty: string }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-slate-950/50 p-4 text-sm leading-6 text-slate-300">
+      <h3 className="font-semibold text-white">{title}</h3>
+      {rows.length > 0 ? (
+        <ul className="mt-3 space-y-2">
+          {rows.map((row) => (
+            <li key={`${title}-${row.label}-${row.value}`} className="rounded-lg border border-white/10 bg-slate-950/60 p-3">
+              <p className="font-mono text-xs text-slate-400">{row.label}{row.meta ? ` · ${row.meta}` : ""}</p>
+              <p className="mt-1 break-all font-mono text-xs text-cyan-100">{row.value}</p>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-3 text-slate-400">{empty}</p>
+      )}
+    </div>
+  );
+}
+
 function ProviderHealthPanel({ panel }: { panel: ProviderHealthPanelModel }) {
   return (
     <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-[0_18px_50px_rgba(2,6,23,0.18)]">
@@ -193,6 +301,10 @@ function OperationalEventsPanel({ panel }: { panel: OperationalEventsPanelModel 
       </div>
     </article>
   );
+}
+
+function firstSearchParam(value: string | string[] | undefined): string {
+  return Array.isArray(value) ? value[0] ?? "" : value ?? "";
 }
 
 function AdminLabelList({ title, rows }: { title: string; rows: Array<{ label: string; value: string }> }) {
