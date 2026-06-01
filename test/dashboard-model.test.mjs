@@ -528,7 +528,20 @@ test("admin shell model is owner-only, proxy-aware, and separated from org dashb
   );
   const auditSection = model.sections.find((section) => section.id === "spf-route-audit");
   assert.match(auditSection.description, /DNS publication drift/i);
-  assert.match(auditSection.affordance, /\/api\/admin\/spf-routes\/\{routeID\}\/publication-audit/);
+  assert.equal(auditSection.status, "Backend endpoint ready");
+  assert.equal(auditSection.endpoint, "/api/admin/spf-routes/{routeID}/publication-audit");
+
+  const providerHealth = model.sections.find((section) => section.id === "provider-health");
+  assert.equal(providerHealth.status, "Backend endpoint ready");
+  assert.equal(providerHealth.endpoint, "/api/admin/provider-health");
+  assert.match(providerHealth.affordance, /read-only/i);
+  assert.match(providerHealth.description, /scheduler|build metadata/i);
+
+  const operationalEvents = model.sections.find((section) => section.id === "operational-events");
+  assert.equal(operationalEvents.status, "Backend endpoint ready");
+  assert.equal(operationalEvents.endpoint, "/api/admin/operational-events?severity=error&limit=20");
+  assert.match(operationalEvents.affordance, /redacted/i);
+
   assert.equal(model.sections.every((section) => section.scope === "global-owner"), true);
   assert.equal(model.sections.some((section) => /subscription|signup|self-serve/i.test(section.title + section.description)), false);
   assert.equal(JSON.stringify(model).includes("DMARK_ADMIN_API_TOKEN"), false);

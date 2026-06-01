@@ -105,6 +105,11 @@ function AdminSectionCard({ section }: { section: AdminShellSection }) {
       </div>
       <h2 className="mt-5 text-xl font-semibold text-white">{section.title}</h2>
       <p className="mt-3 text-sm leading-6 text-slate-300">{section.description}</p>
+      {section.endpoint ? (
+        <p className="mt-4 rounded-xl border border-cyan-300/20 bg-cyan-300/10 p-3 font-mono text-xs leading-5 text-cyan-100">
+          {section.endpoint}
+        </p>
+      ) : null}
       <p className="mt-4 rounded-xl border border-white/10 bg-slate-950/50 p-3 text-sm leading-6 text-slate-300">{section.affordance}</p>
     </article>
   );

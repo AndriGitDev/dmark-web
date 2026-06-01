@@ -7,6 +7,7 @@ export type AdminShellSection = {
   status: string;
   affordance: string;
   scope: "global-owner";
+  endpoint?: string;
 };
 
 export type AdminShellModel = {
@@ -35,7 +36,8 @@ const ADMIN_SECTIONS: AdminShellSection[] = [
     title: "SPF route publication audit",
     description: "Inspect expected SPF route DNS records, persisted Bunny state, live recursive evidence, and DNS publication drift for a route.",
     status: "Backend endpoint ready",
-    affordance: "Fetch through /api/admin/spf-routes/{routeID}/publication-audit only after the owner session gate passes.",
+    affordance: "Fetch read-only audit evidence through the owner-gated admin proxy after selecting a route ID.",
+    endpoint: "/api/admin/spf-routes/{routeID}/publication-audit",
     scope: "global-owner",
   },
   {
@@ -49,17 +51,19 @@ const ADMIN_SECTIONS: AdminShellSection[] = [
   {
     id: "provider-health",
     title: "Provider and dependency health",
-    description: "Track upstream providers, backend dependencies, scanner health, and queue pressure for operator awareness.",
-    status: "Shell only",
-    affordance: "Wire read-only health calls through /api/admin after backend contracts exist.",
+    description: "Track Bunny DNS configuration, bootstrap state, SPF route scheduler cadence, and non-secret build metadata for operator awareness.",
+    status: "Backend endpoint ready",
+    affordance: "Fetch read-only provider/dependency health through the owner-gated admin proxy; render only booleans, cadence, and build metadata.",
+    endpoint: "/api/admin/provider-health",
     scope: "global-owner",
   },
   {
     id: "operational-events",
     title: "Recent operational events",
-    description: "Reserve space for global audit, incident, and operational event summaries.",
-    status: "Shell only",
-    affordance: "Prefer redacted summaries and avoid placing secrets in rendered payloads.",
+    description: "Review recent global audit, incident, and operational event summaries from the backend event store.",
+    status: "Backend endpoint ready",
+    affordance: "Fetch redacted event summaries through the owner-gated admin proxy and keep raw provider details out of browser logs.",
+    endpoint: "/api/admin/operational-events?severity=error&limit=20",
     scope: "global-owner",
   },
   {
