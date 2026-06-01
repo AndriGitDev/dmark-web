@@ -46,6 +46,73 @@ function loadTSModule(relativePath) {
   return cjsModule.exports;
 }
 
+function baseScanPayload(overrides = {}) {
+  return {
+    domain: "example.is",
+    status: "PASS",
+    checkedAt: "2026-06-01T12:00:00Z",
+    durationMs: 120,
+    source: "live",
+    spf: {
+      valid: true,
+      lookups: 5,
+      record: "v=spf1 include:_spf.google.com -all",
+    },
+    dmarc: {
+      valid: true,
+      policy: "reject",
+      record: "v=DMARC1; p=reject; rua=mailto:dmarc@example.is",
+    },
+    spoofable: false,
+    ...overrides,
+  };
+}
+
+test("public scan SPF finding separates invalid records from lookup pressure", () => {
+  const scan = loadTSModule("lib/scan.ts");
+
+  const invalid = scan.buildSpfFinding(
+    baseScanPayload({
+      status: "FAIL",
+      spf: {
+        valid: false,
+        lookups: 4,
+        record: "v=spf1 include:_spf.google.com ~all typo",
+      },
+    }),
+  );
+  assert.equal(invalid.tone, "fail");
+  assert.equal(invalid.headline, "FAIL - SPF record did not validate.");
+  assert.match(invalid.detail, /reports 4 DNS lookups/);
+
+  const pressure = scan.buildSpfFinding(
+    baseScanPayload({
+      status: "WARNING",
+      spf: {
+        valid: true,
+        lookups: 9,
+        record: "v=spf1 include:_spf.google.com include:spf.protection.outlook.com ~all",
+      },
+    }),
+  );
+  assert.equal(pressure.tone, "warning");
+  assert.equal(pressure.statusLabel, "PRESSURE");
+  assert.match(pressure.detail, /one more sender include/);
+
+  const overLimit = scan.buildSpfFinding(
+    baseScanPayload({
+      status: "FAIL",
+      spf: {
+        valid: true,
+        lookups: 12,
+        record: "v=spf1 include:_spf.google.com include:spf.protection.outlook.com -all",
+      },
+    }),
+  );
+  assert.equal(overLimit.tone, "fail");
+  assert.match(overLimit.headline, /above the receiver limit/);
+});
+
 test("dashboard API client attaches bearer token and uses DMARK_API aliases", async () => {
   const previousBase = process.env.DMARK_API_BASE_URL;
   const previousToken = process.env.DMARK_API_TOKEN;

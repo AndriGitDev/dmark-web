@@ -62,11 +62,61 @@ export type ScanEvidenceSummary = {
   detail: string;
 };
 
+export type FindingTone = "fail" | "warning" | "pass";
+
 export type DmarcFinding = {
-  tone: "fail" | "warning" | "pass";
+  tone: FindingTone;
   statusLabel: "FAIL" | "PARTIAL" | "PASS";
   headline: string;
 };
+
+export type SpfFinding = {
+  tone: FindingTone;
+  statusLabel: "FAIL" | "PRESSURE" | "PASS";
+  headline: string;
+  detail: string;
+};
+
+export function buildSpfFinding(result: ScanPayload): SpfFinding {
+  const lookups = result.spf.lookups;
+
+  if (!result.spf.valid) {
+    return {
+      tone: "fail",
+      statusLabel: "FAIL",
+      headline: "FAIL - SPF record did not validate.",
+      detail:
+        lookups > 10
+          ? `It also uses ${lookups} DNS lookups, beyond the 10-lookup receiver limit. Fix syntax and flatten includes before tightening DMARC.`
+          : `It reports ${lookups} DNS lookups. Fix syntax or authorised sender entries before tightening DMARC.`,
+    };
+  }
+
+  if (lookups > 10) {
+    return {
+      tone: "fail",
+      statusLabel: "FAIL",
+      headline: `FAIL - SPF uses ${lookups} DNS lookups, above the receiver limit.`,
+      detail: "Receivers can stop evaluation after 10 DNS lookups and return a permerror. Flatten SPF before enforcement changes.",
+    };
+  }
+
+  if (lookups >= 8) {
+    return {
+      tone: "warning",
+      statusLabel: "PRESSURE",
+      headline: `PRESSURE - SPF uses ${lookups}/10 DNS lookups.`,
+      detail: "The record still passes, but one more sender include could push it over the limit. Plan flattening before adding vendors.",
+    };
+  }
+
+  return {
+    tone: "pass",
+    statusLabel: "PASS",
+    headline: `PASS - SPF uses ${lookups}/10 DNS lookups.`,
+    detail: "The SPF lookup budget has room for normal provider drift. Keep reviewing it when senders change.",
+  };
+}
 
 export function buildDmarcFinding(result: ScanPayload): DmarcFinding {
   if (!result.dmarc.valid || result.dmarc.policy === "none") {

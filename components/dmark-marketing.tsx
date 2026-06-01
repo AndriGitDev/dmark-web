@@ -30,7 +30,13 @@ import {
   X,
 } from "lucide-react";
 import type { ScanPayload, UpgradePayload, UpgradeResponse } from "@/lib/scan";
-import { buildDmarcFinding, buildScanEvidenceSummary, buildScanRemediationPlan, validateScannableDomain } from "@/lib/scan";
+import {
+  buildDmarcFinding,
+  buildScanEvidenceSummary,
+  buildScanRemediationPlan,
+  buildSpfFinding,
+  validateScannableDomain,
+} from "@/lib/scan";
 
 const loadingSteps = [
   "Querying DNS authority...",
@@ -673,7 +679,8 @@ function ResultsDashboard({
   }, [result.status]);
   const GradeIcon = tone.icon;
 
-  const spfFail = !result.spf.valid || result.spf.lookups > 10;
+  const spfFinding = buildSpfFinding(result);
+  const spfFail = spfFinding.tone === "fail";
   const dmarcFinding = buildDmarcFinding(result);
   const dmarcFail = dmarcFinding.tone === "fail";
   const grade = result.audit?.grade || (result.status === "PASS" ? "A" : result.status === "WARNING" ? "C" : "F");
@@ -741,12 +748,9 @@ function ResultsDashboard({
       <div className="grid gap-5">
         <TechnicalFinding
           title="SPF Status"
-          failed={spfFail}
-          headline={
-            spfFail
-              ? `FAIL - Record uses ${result.spf.lookups} DNS lookups. Legitimate emails may go to spam.`
-              : `PASS - Record uses ${result.spf.lookups} DNS lookups.`
-          }
+          tone={spfFinding.tone}
+          headline={spfFinding.headline}
+          detail={spfFinding.detail}
           record={result.spf.record}
         />
         <TechnicalFinding
@@ -776,12 +780,14 @@ function TechnicalFinding({
   failed,
   tone,
   headline,
+  detail,
   record,
 }: {
   title: string;
   failed?: boolean;
   tone?: "fail" | "warning" | "pass";
   headline: string;
+  detail?: string;
   record: string;
 }) {
   const resolvedTone = tone ?? (failed ? "fail" : "pass");
@@ -797,6 +803,7 @@ function TechnicalFinding({
         <div>
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{title}</p>
           <h3 className={`mt-3 text-lg font-semibold ${headlineClass}`}>{headline}</h3>
+          {detail ? <p className="mt-2 text-sm leading-6 text-slate-600">{detail}</p> : null}
         </div>
         <Icon className={`h-5 w-5 shrink-0 ${iconClass}`} aria-hidden="true" />
       </div>
