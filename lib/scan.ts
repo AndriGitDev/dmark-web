@@ -62,6 +62,36 @@ export type ScanEvidenceSummary = {
   detail: string;
 };
 
+export type DmarcFinding = {
+  tone: "fail" | "warning" | "pass";
+  statusLabel: "FAIL" | "PARTIAL" | "PASS";
+  headline: string;
+};
+
+export function buildDmarcFinding(result: ScanPayload): DmarcFinding {
+  if (!result.dmarc.valid || result.dmarc.policy === "none") {
+    return {
+      tone: "fail",
+      statusLabel: "FAIL",
+      headline: "FAIL - Policy set to p=none. Domain is actively vulnerable to spoofing.",
+    };
+  }
+
+  if (result.dmarc.policy === "quarantine") {
+    return {
+      tone: "warning",
+      statusLabel: "PARTIAL",
+      headline: "PARTIAL - Policy set to p=quarantine. Suspicious mail is quarantined, but reject is not yet active.",
+    };
+  }
+
+  return {
+    tone: "pass",
+    statusLabel: "PASS",
+    headline: `PASS - Policy set to p=${result.dmarc.policy}.`,
+  };
+}
+
 export function buildScanEvidenceSummary(result: ScanPayload): ScanEvidenceSummary {
   const live = result.source !== "demo";
 

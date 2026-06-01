@@ -293,6 +293,29 @@ test("public scan remediation plan keeps enforcing domains in monitoring mode", 
   assert.equal(plan.steps.every((step) => step.tone === "stable"), true);
 });
 
+test("public scanner explains p=quarantine as partial DMARC enforcement", () => {
+  const scan = loadTSModule("lib/scan.ts");
+  const finding = scan.buildDmarcFinding({
+    domain: "kastro.is",
+    status: "PASS",
+    spf: {
+      valid: true,
+      lookups: 5,
+      record: "v=spf1 include:_spf.google.com include:spf.protection.outlook.com -all",
+    },
+    dmarc: {
+      valid: true,
+      policy: "quarantine",
+      record: "v=DMARC1; p=quarantine; rua=mailto:dmarc@kastro.is",
+    },
+    spoofable: false,
+  });
+
+  assert.equal(finding.tone, "warning");
+  assert.equal(finding.statusLabel, "PARTIAL");
+  assert.equal(finding.headline, "PARTIAL - Policy set to p=quarantine. Suspicious mail is quarantined, but reject is not yet active.");
+});
+
 test("public scanner normalises safe domain input before scanning", () => {
   const scan = loadTSModule("lib/scan.ts");
   const validation = scan.validateScannableDomain(" https://www.KASTRO.is/mail ");

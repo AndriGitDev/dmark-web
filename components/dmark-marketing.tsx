@@ -30,7 +30,7 @@ import {
   X,
 } from "lucide-react";
 import type { ScanPayload, UpgradePayload, UpgradeResponse } from "@/lib/scan";
-import { buildScanEvidenceSummary, buildScanRemediationPlan, validateScannableDomain } from "@/lib/scan";
+import { buildDmarcFinding, buildScanEvidenceSummary, buildScanRemediationPlan, validateScannableDomain } from "@/lib/scan";
 
 const loadingSteps = [
   "Querying DNS authority...",
@@ -674,7 +674,8 @@ function ResultsDashboard({
   const GradeIcon = tone.icon;
 
   const spfFail = !result.spf.valid || result.spf.lookups > 10;
-  const dmarcFail = !result.dmarc.valid || result.dmarc.policy === "none";
+  const dmarcFinding = buildDmarcFinding(result);
+  const dmarcFail = dmarcFinding.tone === "fail";
   const grade = result.audit?.grade || (result.status === "PASS" ? "A" : result.status === "WARNING" ? "C" : "F");
   const risk = result.audit?.risk || (result.spoofable ? "critical" : "low");
   const remediationPlan = buildScanRemediationPlan(result);
@@ -750,12 +751,8 @@ function ResultsDashboard({
         />
         <TechnicalFinding
           title="DMARC Status"
-          failed={dmarcFail}
-          headline={
-            dmarcFail
-              ? "FAIL - Policy set to p=none. Domain is actively vulnerable to spoofing."
-              : `PASS - Policy set to p=${result.dmarc.policy}.`
-          }
+          tone={dmarcFinding.tone}
+          headline={dmarcFinding.headline}
           record={result.dmarc.record}
         />
         <RemediationPlanCard summary={remediationPlan.summary} steps={remediationPlan.steps} />
@@ -777,26 +774,31 @@ function ResultStat({ label, value }: { label: string; value: string }) {
 function TechnicalFinding({
   title,
   failed,
+  tone,
   headline,
   record,
 }: {
   title: string;
-  failed: boolean;
+  failed?: boolean;
+  tone?: "fail" | "warning" | "pass";
   headline: string;
   record: string;
 }) {
+  const resolvedTone = tone ?? (failed ? "fail" : "pass");
+  const isFail = resolvedTone === "fail";
+  const isWarning = resolvedTone === "warning";
+  const headlineClass = isFail ? "text-red-700" : isWarning ? "text-amber-700" : "text-emerald-700";
+  const Icon = isFail ? ShieldAlert : isWarning ? AlertTriangle : CheckCircle2;
+  const iconClass = isFail ? "text-red-600" : isWarning ? "text-amber-600" : "text-emerald-600";
+
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{title}</p>
-          <h3 className={`mt-3 text-lg font-semibold ${failed ? "text-red-700" : "text-emerald-700"}`}>{headline}</h3>
+          <h3 className={`mt-3 text-lg font-semibold ${headlineClass}`}>{headline}</h3>
         </div>
-        {failed ? (
-          <ShieldAlert className="h-5 w-5 shrink-0 text-red-600" aria-hidden="true" />
-        ) : (
-          <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" aria-hidden="true" />
-        )}
+        <Icon className={`h-5 w-5 shrink-0 ${iconClass}`} aria-hidden="true" />
       </div>
       <pre className="mt-4 overflow-x-auto whitespace-pre-wrap break-words rounded-md border border-slate-200 bg-slate-950 p-4 font-mono text-xs leading-6 text-slate-100">
         {record}
