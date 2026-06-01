@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 import { backendErrorMessage, backendURL, mapScanResponse, shouldUseMockBackend } from "@/lib/backend";
-import { mockScan, normalizeDomain } from "@/lib/scan";
+import { mockScan, validateScannableDomain } from "@/lib/scan";
 
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as { domain?: string };
-  const domain = normalizeDomain(body.domain || "");
+  const validation = validateScannableDomain(body.domain || "");
 
-  if (!domain) {
-    return NextResponse.json({ error: "Domain is required." }, { status: 400 });
+  if (validation.error) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
   }
 
+  const domain = validation.domain;
   const url = backendURL(process.env.DMARK_SCAN_API_URL);
 
   if (!url || shouldUseMockBackend()) {

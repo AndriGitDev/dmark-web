@@ -30,7 +30,7 @@ import {
   X,
 } from "lucide-react";
 import type { ScanPayload, UpgradePayload, UpgradeResponse } from "@/lib/scan";
-import { buildScanRemediationPlan } from "@/lib/scan";
+import { buildScanRemediationPlan, validateScannableDomain } from "@/lib/scan";
 
 const loadingSteps = [
   "Querying DNS authority...",
@@ -136,15 +136,16 @@ export function DmarkMarketing() {
 
   async function handleScan(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
-    const trimmed = domain.trim();
+    const validation = validateScannableDomain(domain);
 
-    if (!trimmed) {
-      setError("Enter a domain before scanning.");
+    if (validation.error) {
+      setError(validation.error);
       setScanState("error");
       return;
     }
 
     setError("");
+    setDomain(validation.domain);
     setLoadingIndex(0);
     setScanState("scanning");
 
@@ -152,7 +153,7 @@ export function DmarkMarketing() {
       const response = await fetch("/api/scan", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ domain: trimmed }),
+        body: JSON.stringify({ domain: validation.domain }),
       });
 
       if (!response.ok) {
@@ -273,6 +274,8 @@ export function DmarkMarketing() {
                       placeholder="Enter your domain (e.g., yourcompany.is)"
                       autoComplete="off"
                       inputMode="url"
+                      aria-invalid={scanState === "error" ? "true" : undefined}
+                      aria-describedby={scanState === "error" ? "domain-error" : undefined}
                     />
                     <button
                       type="submit"
@@ -318,10 +321,12 @@ export function DmarkMarketing() {
                       ) : null}
                       {scanState === "error" ? (
                         <motion.p
+                          id="domain-error"
                           key="error"
                           initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -8 }}
+                          role="alert"
                           className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
                         >
                           {error}

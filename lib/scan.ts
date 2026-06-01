@@ -63,6 +63,55 @@ export function normalizeDomain(input: string) {
     .toLowerCase();
 }
 
+export function validateScannableDomain(input: string): { domain: string; error?: string } {
+  const domain = normalizeDomain(input);
+
+  if (!domain) {
+    return { domain: "", error: "Enter a domain before scanning." };
+  }
+
+  if (domain.includes("@")) {
+    return { domain, error: "Enter the domain only, not an email address." };
+  }
+
+  if (/\s/.test(domain)) {
+    return { domain, error: "Domain names cannot contain spaces." };
+  }
+
+  if (domain.length > 253) {
+    return { domain, error: "Domain name is too long to scan safely." };
+  }
+
+  if (domain.endsWith(".") || domain.startsWith(".")) {
+    return { domain, error: "Enter a domain without leading or trailing dots." };
+  }
+
+  const labels = domain.split(".");
+  if (labels.length < 2) {
+    return { domain, error: "Enter a full domain such as yourcompany.is." };
+  }
+
+  const invalidLabel = labels.find(
+    (label) =>
+      label.length === 0 ||
+      label.length > 63 ||
+      label.startsWith("-") ||
+      label.endsWith("-") ||
+      !/^[a-z0-9-]+$/i.test(label),
+  );
+
+  if (invalidLabel !== undefined) {
+    return { domain, error: "Enter a valid domain name using letters, numbers, dots, and hyphens." };
+  }
+
+  const topLevelDomain = labels[labels.length - 1];
+  if (!/[a-z]/i.test(topLevelDomain) && !topLevelDomain.startsWith("xn--")) {
+    return { domain, error: "Enter a public domain with a valid top-level domain." };
+  }
+
+  return { domain };
+}
+
 export function buildScanRemediationPlan(result: ScanPayload): ScanRemediationPlan {
   const spfOverLimit = result.spf.lookups > 10;
   const spfNeedsWork = !result.spf.valid || spfOverLimit;

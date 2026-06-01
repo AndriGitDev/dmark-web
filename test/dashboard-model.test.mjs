@@ -292,6 +292,25 @@ test("public scan remediation plan keeps enforcing domains in monitoring mode", 
   assert.equal(plan.steps.every((step) => step.tone === "stable"), true);
 });
 
+test("public scanner normalises safe domain input before scanning", () => {
+  const scan = loadTSModule("lib/scan.ts");
+  const validation = scan.validateScannableDomain(" https://www.KASTRO.is/mail ");
+
+  assert.equal(validation.domain, "kastro.is");
+  assert.equal(validation.error, undefined);
+});
+
+test("public scanner rejects likely mistakes before backend lookup", () => {
+  const scan = loadTSModule("lib/scan.ts");
+
+  assert.equal(scan.validateScannableDomain("andri@kastro.is").error, "Enter the domain only, not an email address.");
+  assert.equal(scan.validateScannableDomain("kastro").error, "Enter a full domain such as yourcompany.is.");
+  assert.equal(
+    scan.validateScannableDomain("bad_domain.is").error,
+    "Enter a valid domain name using letters, numbers, dots, and hyphens.",
+  );
+});
+
 function restoreEnv(key, value) {
   if (value === undefined) {
     delete process.env[key];
