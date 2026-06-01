@@ -15,6 +15,7 @@ export type ScanPayload = {
   status: ScanStatus;
   checkedAt?: string;
   durationMs?: number;
+  source?: "live" | "demo";
   audit?: AuditPayload;
   spf: {
     valid: boolean;
@@ -53,6 +54,39 @@ export type ScanRemediationPlan = {
   summary: string;
   steps: ScanRemediationStep[];
 };
+
+export type ScanEvidenceSummary = {
+  sourceLabel: string;
+  checkedLabel: string;
+  durationLabel: string;
+  detail: string;
+};
+
+export function buildScanEvidenceSummary(result: ScanPayload): ScanEvidenceSummary {
+  const live = result.source !== "demo";
+
+  return {
+    sourceLabel: live ? "Live DNS evidence" : "Demo fixture",
+    checkedLabel: formatCheckedAt(result.checkedAt),
+    durationLabel: typeof result.durationMs === "number" ? `${result.durationMs}ms` : "Not reported",
+    detail: live
+      ? "This result was mapped from the backend scanner response and should be treated as a point-in-time DNS observation."
+      : "This is a local demonstration result because the live scanner is not configured for this environment.",
+  };
+}
+
+function formatCheckedAt(value: string | undefined): string {
+  if (!value) return "Not reported";
+
+  const timestamp = Date.parse(value);
+  if (Number.isNaN(timestamp)) return value;
+
+  return new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "UTC",
+  }).format(new Date(timestamp));
+}
 
 export function normalizeDomain(input: string) {
   return input
@@ -226,6 +260,9 @@ export function mockScan(domain: string): ScanPayload {
     return {
       domain: normalized,
       status: "PASS",
+      checkedAt: new Date().toISOString(),
+      durationMs: 900,
+      source: "demo",
       spf: {
         valid: true,
         lookups: 5,
@@ -251,6 +288,9 @@ export function mockScan(domain: string): ScanPayload {
   return {
     domain: normalized,
     status: "FAIL",
+    checkedAt: new Date().toISOString(),
+    durationMs: 900,
+    source: "demo",
     spf: {
       valid: false,
       lookups: 14,

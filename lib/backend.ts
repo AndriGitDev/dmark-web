@@ -84,6 +84,7 @@ export function mapScanResponse(payload: BackendScanResponse, fallbackDomain: st
     status,
     checkedAt: payload.checked_at,
     durationMs: payload.duration_ms,
+    source: "live",
     audit,
     spf: {
       valid: statusFromBackend(spf?.status) !== "FAIL",

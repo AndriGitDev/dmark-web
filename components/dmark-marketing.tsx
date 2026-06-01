@@ -30,7 +30,7 @@ import {
   X,
 } from "lucide-react";
 import type { ScanPayload, UpgradePayload, UpgradeResponse } from "@/lib/scan";
-import { buildScanRemediationPlan, validateScannableDomain } from "@/lib/scan";
+import { buildScanEvidenceSummary, buildScanRemediationPlan, validateScannableDomain } from "@/lib/scan";
 
 const loadingSteps = [
   "Querying DNS authority...",
@@ -678,6 +678,7 @@ function ResultsDashboard({
   const grade = result.audit?.grade || (result.status === "PASS" ? "A" : result.status === "WARNING" ? "C" : "F");
   const risk = result.audit?.risk || (result.spoofable ? "critical" : "low");
   const remediationPlan = buildScanRemediationPlan(result);
+  const evidence = buildScanEvidenceSummary(result);
 
   return (
     <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
@@ -692,7 +693,14 @@ function ResultsDashboard({
         <div className="mt-6 grid grid-cols-3 gap-3">
           <ResultStat label="Grade" value={grade} />
           <ResultStat label="Risk" value={risk} />
-          <ResultStat label="Time" value={result.durationMs ? `${result.durationMs}ms` : "Live"} />
+          <ResultStat label="Time" value={evidence.durationLabel} />
+        </div>
+        <div className="mt-5 rounded-md border border-current/20 bg-white/45 p-4 text-sm leading-6">
+          <div className="flex flex-wrap items-center gap-2 font-semibold">
+            <span>{evidence.sourceLabel}</span>
+            <span className="font-mono text-xs opacity-70">Checked {evidence.checkedLabel}</span>
+          </div>
+          <p className="mt-2 opacity-80">{evidence.detail}</p>
         </div>
         <p className="mt-6 font-mono text-sm">{result.domain}</p>
         <p className="mt-4 text-sm leading-6">

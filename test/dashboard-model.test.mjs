@@ -26,6 +26,7 @@ function loadTSModule(relativePath) {
     DOMException,
     Error,
     Headers,
+    Intl,
     Response,
     URL,
     clearTimeout,
@@ -309,6 +310,52 @@ test("public scanner rejects likely mistakes before backend lookup", () => {
     scan.validateScannableDomain("bad_domain.is").error,
     "Enter a valid domain name using letters, numbers, dots, and hyphens.",
   );
+});
+
+test("public scan evidence summary labels live DNS and demo fixtures clearly", () => {
+  const scan = loadTSModule("lib/scan.ts");
+
+  const live = scan.buildScanEvidenceSummary({
+    domain: "kastro.is",
+    status: "PASS",
+    checkedAt: "2026-06-01T02:03:00Z",
+    durationMs: 184,
+    source: "live",
+    spf: { valid: true, lookups: 5, record: "v=spf1 include:_spf.google.com -all" },
+    dmarc: { valid: true, policy: "reject", record: "v=DMARC1; p=reject" },
+    spoofable: false,
+  });
+
+  assert.equal(live.sourceLabel, "Live DNS evidence");
+  assert.equal(live.durationLabel, "184ms");
+  assert.match(live.checkedLabel, /1 Jun 2026/);
+  assert.match(live.detail, /backend scanner response/);
+
+  const demo = scan.buildScanEvidenceSummary(scan.mockScan("example.is"));
+  assert.equal(demo.sourceLabel, "Demo fixture");
+  assert.equal(demo.durationLabel, "900ms");
+  assert.match(demo.detail, /local demonstration result/);
+});
+
+test("backend scan mapper marks public scan responses as live evidence", () => {
+  const backend = loadTSModule("lib/backend.ts");
+  const view = backend.mapScanResponse(
+    {
+      domain: "kastro.is",
+      checked_at: "2026-06-01T02:03:00Z",
+      duration_ms: 184,
+      summary: { status: "pass" },
+      checks: [
+        { name: "spf", status: "pass", record: "v=spf1 include:_spf.google.com -all", lookup_count: 1 },
+        { name: "dmarc", status: "pass", record: "v=DMARC1; p=reject" },
+      ],
+    },
+    "fallback.is",
+  );
+
+  assert.equal(view.source, "live");
+  assert.equal(view.checkedAt, "2026-06-01T02:03:00Z");
+  assert.equal(view.durationMs, 184);
 });
 
 function restoreEnv(key, value) {
