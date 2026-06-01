@@ -3,7 +3,18 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { Activity, Building2, ClipboardList, HeartPulse, Lock, Route, ShieldAlert } from "lucide-react";
 import { isAdminOwnerSessionAllowed } from "@/lib/admin-access";
-import { buildAdminShellModel, type AdminShellSection } from "@/lib/admin-shell";
+import {
+  buildAdminShellModel,
+  buildOperationalEventsPanelModel,
+  buildProviderHealthPanelModel,
+  fetchAdminOperationalEvents,
+  fetchAdminProviderHealth,
+  unavailableOperationalEventsPanel,
+  unavailableProviderHealthPanel,
+  type AdminShellSection,
+  type OperationalEventsPanelModel,
+  type ProviderHealthPanelModel,
+} from "@/lib/admin-shell";
 
 export const metadata: Metadata = {
   title: "Admin | dmark.is",
@@ -33,6 +44,15 @@ export default async function AdminPage() {
     return <AdminLocked title={model.title} description={model.description} eyebrow={model.eyebrow} />;
   }
 
+  const [providerHealth, operationalEvents] = await Promise.all([
+    fetchAdminProviderHealth()
+      .then((payload) => buildProviderHealthPanelModel(payload))
+      .catch(() => unavailableProviderHealthPanel()),
+    fetchAdminOperationalEvents()
+      .then((payload) => buildOperationalEventsPanelModel(payload))
+      .catch(() => unavailableOperationalEventsPanel()),
+  ]);
+
   return (
     <main className="min-h-screen bg-slate-950 px-5 py-10 text-white sm:px-8">
       <section className="mx-auto max-w-6xl">
@@ -59,6 +79,11 @@ export default async function AdminPage() {
           {model.sections.map((section) => (
             <AdminSectionCard key={section.id} section={section} />
           ))}
+        </section>
+
+        <section className="mt-8 grid gap-4 lg:grid-cols-2" aria-label="Read-only admin provider panels">
+          <ProviderHealthPanel panel={providerHealth} />
+          <OperationalEventsPanel panel={operationalEvents} />
         </section>
 
         <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-sm leading-6 text-slate-300">
@@ -112,5 +137,77 @@ function AdminSectionCard({ section }: { section: AdminShellSection }) {
       ) : null}
       <p className="mt-4 rounded-xl border border-white/10 bg-slate-950/50 p-3 text-sm leading-6 text-slate-300">{section.affordance}</p>
     </article>
+  );
+}
+
+function ProviderHealthPanel({ panel }: { panel: ProviderHealthPanelModel }) {
+  return (
+    <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-[0_18px_50px_rgba(2,6,23,0.18)]">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-cyan-100">Read-only health</p>
+          <h2 className="mt-2 text-2xl font-semibold text-white">{panel.title}</h2>
+        </div>
+        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">{panel.status}</span>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-slate-300">{panel.description}</p>
+      <p className="mt-4 rounded-xl border border-cyan-300/20 bg-cyan-300/10 p-3 font-mono text-xs text-cyan-100">Generated: {panel.generatedAtLabel}</p>
+      {panel.notice ? <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/10 p-3 text-sm text-amber-50">{panel.notice}</p> : null}
+      <AdminLabelList title="Configuration" rows={panel.checks} />
+      <AdminLabelList title="Cadence" rows={panel.cadence} />
+      <AdminLabelList title="Build metadata" rows={panel.build} />
+    </article>
+  );
+}
+
+function OperationalEventsPanel({ panel }: { panel: OperationalEventsPanelModel }) {
+  return (
+    <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-[0_18px_50px_rgba(2,6,23,0.18)]">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-cyan-100">Read-only events</p>
+          <h2 className="mt-2 text-2xl font-semibold text-white">{panel.title}</h2>
+        </div>
+        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">{panel.status}</span>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-slate-300">{panel.description}</p>
+      {panel.notice ? <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/10 p-3 text-sm text-amber-50">{panel.notice}</p> : null}
+      <div className="mt-5 space-y-3">
+        {panel.events.length > 0 ? (
+          panel.events.map((event) => (
+            <div key={event.id} className="rounded-xl border border-white/10 bg-slate-950/50 p-4 text-sm leading-6 text-slate-300">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full border border-red-300/20 bg-red-300/10 px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-red-100">{event.severity}</span>
+                <span className="font-mono text-xs text-cyan-100">{event.kind}</span>
+              </div>
+              <p className="mt-2 font-semibold text-white">{event.message}</p>
+              <p className="mt-1 font-mono text-xs text-slate-400">{event.occurredAt}</p>
+              {event.resource ? <p className="mt-2 text-slate-300">Resource: {event.resource}</p> : null}
+              {event.actor ? <p className="text-slate-300">Actor: {event.actor}</p> : null}
+              {event.metadata.length > 0 ? <AdminLabelList title="Safe metadata" rows={event.metadata} /> : null}
+            </div>
+          ))
+        ) : (
+          <p className="rounded-xl border border-white/10 bg-slate-950/50 p-4 text-sm text-slate-300">No error events returned by the admin proxy.</p>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function AdminLabelList({ title, rows }: { title: string; rows: Array<{ label: string; value: string }> }) {
+  if (rows.length === 0) return null;
+  return (
+    <div className="mt-5">
+      <h3 className="text-sm font-semibold text-white">{title}</h3>
+      <dl className="mt-3 grid gap-2">
+        {rows.map((row) => (
+          <div key={`${title}-${row.label}`} className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-slate-950/40 px-3 py-2 text-sm">
+            <dt className="text-slate-400">{row.label}</dt>
+            <dd className="text-right font-medium text-slate-100">{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
   );
 }

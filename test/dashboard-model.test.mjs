@@ -863,6 +863,126 @@ test("admin shell model is owner-only, proxy-aware, and separated from org dashb
   assert.equal(JSON.stringify(model).includes("DMARK_ADMIN_OWNER_SESSION_SECRET"), false);
 });
 
+test("admin provider health and operational event fetchers use relative owner proxy paths", async () => {
+  const previousFetch = globalThis.fetch;
+  const observed = [];
+
+  globalThis.fetch = async (url, init) => {
+    observed.push({ url: String(url), cache: init?.cache, accept: init?.headers?.accept ?? init?.headers?.get?.("accept") });
+    return new Response(JSON.stringify(String(url).includes("provider-health") ? { generated_at: "2026-06-01T12:00:00Z" } : { events: [] }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    const adminShell = loadTSModule("lib/admin-shell.ts");
+    await adminShell.fetchAdminProviderHealth();
+    await adminShell.fetchAdminOperationalEvents();
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+
+  assert.deepEqual(observed.map((request) => request.url), ["/api/admin/provider-health", "/api/admin/operational-events?severity=error&limit=20"]);
+  assert.equal(JSON.stringify(observed).includes("DMARK_ADMIN_API_TOKEN"), false);
+  assert.equal(JSON.stringify(observed).includes("backend.example"), false);
+});
+
+test("admin provider health mapper renders safe operator-friendly labels", () => {
+  const adminShell = loadTSModule("lib/admin-shell.ts");
+  const panel = adminShell.buildProviderHealthPanelModel({
+    generated_at: "2026-06-01T12:00:00Z",
+    public_base_url_configured: true,
+    bunny_dns_configured: false,
+    bunny_dns_zone_id_configured: true,
+    bootstrap_configured: true,
+    bootstrap_partially_configured: false,
+    bootstrap_skipped: false,
+    spf_route_scheduler_enabled: true,
+    spf_route_scheduler_interval: "15m",
+    spf_route_scheduled_sync_cadence: "hourly",
+    version: "1.2.3",
+    commit: "abcdef1234567890",
+    build_time: "2026-06-01T11:58:00Z",
+    bunny_api_key: "should-not-render",
+  });
+
+  assert.equal(panel.status, "available");
+  assert.equal(panel.generatedAtLabel, "2026-06-01T12:00:00Z");
+  assert.deepEqual(JSON.parse(JSON.stringify(panel.checks.map((check) => [check.label, check.value]))), [
+    ["Public base URL", "Configured"],
+    ["Bunny DNS", "Not configured"],
+    ["Bunny DNS zone ID", "Configured"],
+    ["Bootstrap", "Configured"],
+    ["Bootstrap partially configured", "No"],
+    ["Bootstrap skipped", "No"],
+    ["SPF route scheduler", "Enabled"],
+  ]);
+  assert.deepEqual(JSON.parse(JSON.stringify(panel.cadence.map((item) => [item.label, item.value]))), [
+    ["Scheduler interval", "15m"],
+    ["Scheduled sync cadence", "hourly"],
+  ]);
+  assert.deepEqual(JSON.parse(JSON.stringify(panel.build.map((item) => [item.label, item.value]))), [
+    ["Version", "1.2.3"],
+    ["Commit", "abcdef1"],
+    ["Build time", "2026-06-01T11:58:00Z"],
+  ]);
+  assert.equal(JSON.stringify(panel).includes("should-not-render"), false);
+});
+
+test("admin operational events mapper preserves summaries and defensively redacts secret-like metadata", () => {
+  const adminShell = loadTSModule("lib/admin-shell.ts");
+  const panel = adminShell.buildOperationalEventsPanelModel({
+    events: [
+      {
+        id: "evt_1",
+        kind: "provider.sync_failed",
+        severity: "error",
+        message: "Provider sync failed",
+        actor: "system",
+        resource: "route:123",
+        occurred_at: "2026-06-01T12:00:00Z",
+        metadata: {
+          route_id: "route_123",
+          token: "super-secret-token",
+          provider_response: "Bunny raw response with api key",
+          nested: { password: "hidden" },
+        },
+      },
+    ],
+  });
+
+  assert.equal(panel.status, "available");
+  assert.equal(panel.events.length, 1);
+  assert.deepEqual(JSON.parse(JSON.stringify(panel.events[0])), {
+    id: "evt_1",
+    kind: "provider.sync_failed",
+    severity: "error",
+    message: "Provider sync failed",
+    actor: "system",
+    resource: "route:123",
+    occurredAt: "2026-06-01T12:00:00Z",
+    metadata: [{ label: "route_id", value: "route_123" }],
+  });
+  assert.equal(JSON.stringify(panel).includes("super-secret-token"), false);
+  assert.equal(JSON.stringify(panel).includes("provider_response"), false);
+  assert.equal(JSON.stringify(panel).includes("password"), false);
+});
+
+test("admin page source wires read-only provider panels and locked model exposes no backend admin affordances", () => {
+  const pageSource = readFileSync(join(root, "app/admin/page.tsx"), "utf8");
+  assert.match(pageSource, /fetchAdminProviderHealth/);
+  assert.match(pageSource, /fetchAdminOperationalEvents/);
+  assert.match(pageSource, /ProviderHealthPanel/);
+  assert.match(pageSource, /OperationalEventsPanel/);
+
+  const adminShell = loadTSModule("lib/admin-shell.ts");
+  const locked = adminShell.buildAdminShellModel({ allowed: false });
+  assert.equal(JSON.stringify(locked).includes("/api/admin/provider-health"), false);
+  assert.equal(JSON.stringify(locked).includes("/api/admin/operational-events"), false);
+  assert.equal(JSON.stringify(locked).includes("DMARK_ADMIN_API_TOKEN"), false);
+});
+
 test("admin shell locked model is fail-closed without backend affordances", () => {
   const adminShell = loadTSModule("lib/admin-shell.ts");
   const model = adminShell.buildAdminShellModel({ allowed: false });
