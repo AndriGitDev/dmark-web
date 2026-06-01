@@ -422,13 +422,49 @@ test("SPF route panel model renders CNAME instructions, sync state, and safe ope
   assert.equal(JSON.stringify(model).includes("BUNNY"), false);
 });
 
-test("dashboard component wires the read-only SPF route panel through client dashboard data", () => {
+test("SPF route sync client uses the dashboard proxy POST path and maps queue state", async () => {
+  const previousFetch = globalThis.fetch;
+  let observed;
+  globalThis.fetch = async (url, init) => {
+    observed = { url: String(url), method: init.method, cache: init.cache, body: init.body };
+    return new Response(
+      JSON.stringify({
+        job_id: "spf-sync-job-1",
+        domain_id: "domain-1",
+        status: "queued",
+        queued_at: "2026-06-01T18:30:00Z",
+      }),
+      { status: 202, headers: { "content-type": "application/json" } },
+    );
+  };
+
+  let result;
+  try {
+    const dashboard = loadTSModule("lib/dashboard.ts");
+    result = await dashboard.syncSPFRoute("domain-1");
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+
+  assert.equal(observed.url, "/api/dashboard/domains/domain-1/spf-route/sync");
+  assert.equal(observed.method, "POST");
+  assert.equal(observed.cache, "no-store");
+  assert.equal(observed.body, undefined);
+  assert.equal(result.jobID, "spf-sync-job-1");
+  assert.equal(result.domainID, "domain-1");
+  assert.equal(result.status, "queued");
+  assert.equal(result.queuedAt, "2026-06-01T18:30:00Z");
+});
+
+test("dashboard component wires SPF route manual sync with loading and refresh states", () => {
   const source = readFileSync(join(root, "components/dmark-dashboard.tsx"), "utf8");
 
   assert.match(source, /getSPFRouteData/);
+  assert.match(source, /syncSPFRoute/);
   assert.match(source, /SPFRoutePanel/);
   assert.match(source, /setSpfRouteState\("loading"\)/);
-  assert.match(source, /Manual sync is intentionally separate/);
+  assert.match(source, /setSyncingSPFRoute\(true\)/);
+  assert.match(source, /Manual sync queues a backend job/);
 });
 
 test("public scan remediation plan prioritises SPF flattening before DMARC enforcement", () => {

@@ -42,6 +42,7 @@ import {
   muteDashboardAlert,
   recheckDashboardDomain,
   saveDashboardSettings,
+  syncSPFRoute,
   buildSPFRoutePanelModel,
   type AlertSeverity,
   type BrandRiskSeverity,
@@ -201,6 +202,7 @@ export function DmarkDashboard({
   const [spfRoute, setSpfRoute] = useState<SPFRouteViewModel | null>(null);
   const [spfRouteState, setSpfRouteState] = useState<LoadState>("idle");
   const [spfRouteError, setSpfRouteError] = useState("");
+  const [syncingSPFRoute, setSyncingSPFRoute] = useState(false);
   const [brandRisk, setBrandRisk] = useState<BrandRiskViewModel | null>(null);
   const [brandRiskState, setBrandRiskState] = useState<LoadState>("idle");
   const [brandRiskError, setBrandRiskError] = useState("");
@@ -399,6 +401,28 @@ export function DmarkDashboard({
     }
   }
 
+  async function syncSelectedSPFRoute() {
+    if (!selectedDomain) return;
+
+    setSyncingSPFRoute(true);
+    setSpfRouteError("");
+    announce(`Queueing SPF route sync for ${selectedDomain.domain}...`);
+
+    try {
+      const result = await syncSPFRoute(selectedDomain.id);
+      const refreshed = await getSPFRouteData(selectedDomain.id).catch(() => null);
+      if (refreshed) setSpfRoute(refreshed);
+      setSpfRouteState(refreshed ? "ready" : spfRouteState);
+      announce(`SPF route sync ${result.status} for ${selectedDomain.domain}.`);
+    } catch (error) {
+      const message = errorMessage(error, `${selectedDomain.domain} SPF route sync could not be queued.`);
+      setSpfRouteError(message);
+      announce(message);
+    } finally {
+      setSyncingSPFRoute(false);
+    }
+  }
+
   async function resolveAlert(alertID: string, action: "acknowledged" | "muted") {
     const alert = activeAlerts.find((item) => item.id === alertID);
 
@@ -575,6 +599,8 @@ export function DmarkDashboard({
               spfRoute={spfRoute}
               spfRouteState={spfRouteState}
               spfRouteError={spfRouteError}
+              syncingSPFRoute={syncingSPFRoute}
+              onSyncSPFRoute={syncSelectedSPFRoute}
               onSelectDomain={setSelectedDomainID}
               onRecheckDomain={recheckDomain}
               onExportDomains={exportDomains}
@@ -962,6 +988,8 @@ function DomainsTab({
   spfRoute,
   spfRouteState,
   spfRouteError,
+  syncingSPFRoute,
+  onSyncSPFRoute,
   onSelectDomain,
   onRecheckDomain,
   onExportDomains,
@@ -977,6 +1005,8 @@ function DomainsTab({
   spfRoute: SPFRouteViewModel | null;
   spfRouteState: LoadState;
   spfRouteError: string;
+  syncingSPFRoute: boolean;
+  onSyncSPFRoute: () => void;
   onSelectDomain: (id: string) => void;
   onRecheckDomain: (domain: ProtectedDomain) => void;
   onExportDomains: (domains: ProtectedDomain[]) => void;
@@ -1065,7 +1095,14 @@ function DomainsTab({
         />
       )}
 
-      <SPFRoutePanel spfRoute={spfRoute} state={spfRouteState} error={spfRouteError} onCopy={onCopy} />
+      <SPFRoutePanel
+        spfRoute={spfRoute}
+        state={spfRouteState}
+        error={spfRouteError}
+        syncing={syncingSPFRoute}
+        onSync={onSyncSPFRoute}
+        onCopy={onCopy}
+      />
 
       <DNSChangePlan
         selectedDomain={selectedDomain}
@@ -1082,11 +1119,15 @@ function SPFRoutePanel({
   spfRoute,
   state,
   error,
+  syncing,
+  onSync,
   onCopy,
 }: {
   spfRoute: SPFRouteViewModel | null;
   state: LoadState;
   error: string;
+  syncing: boolean;
+  onSync: () => void;
   onCopy: (value: string, label: string) => void;
 }) {
   const panel = spfRoute ? buildSPFRoutePanelModel(spfRoute) : null;
@@ -1100,14 +1141,25 @@ function SPFRoutePanel({
           </p>
           <h3 className="mt-2 text-xl font-semibold text-navy">{panel?.heading || "SPF route"}</h3>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-            Read-only view of route publication state. Manual sync is intentionally separate so operators do not mutate DNS from this panel.
+            Manual sync queues a backend job through the dashboard proxy; Bunny DNS credentials stay server-side.
           </p>
         </div>
-        {panel ? (
-          <span className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${spfRouteToneClass(panel.statusTone)}`}>
-            {panel.statusLabel}
-          </span>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {panel ? (
+            <span className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${spfRouteToneClass(panel.statusTone)}`}>
+              {panel.statusLabel}
+            </span>
+          ) : null}
+          <button
+            type="button"
+            onClick={onSync}
+            disabled={syncing || state === "loading" || !spfRoute}
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-trust px-4 text-sm font-semibold text-white transition hover:bg-trust-hover disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} aria-hidden="true" />
+            {syncing ? "Queueing sync..." : "Sync SPF route"}
+          </button>
+        </div>
       </div>
 
       {state === "loading" ? <PanelNotice text="Loading SPF route state..." /> : null}

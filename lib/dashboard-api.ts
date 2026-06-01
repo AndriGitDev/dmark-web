@@ -176,6 +176,13 @@ export type BackendDashboardSPFRouteResponse = {
   evidence_summary?: BackendDashboardSPFRouteEvidence[];
 };
 
+export type BackendDashboardSPFRouteSyncResponse = {
+  job_id?: string;
+  domain_id: string;
+  status: string;
+  queued_at?: string;
+};
+
 type BackendErrorPayload = {
   error?: string;
   message?: string;

@@ -186,6 +186,37 @@ function mockGET(path: string): Response {
     });
   }
 
+  if (tail[0] === "domains" && tail[2] === "spf-route") {
+    const domain = mockDashboardViewModel.protectedDomains.find((item) => item.id === tail[1]);
+    const domainName = domain?.domain || "example.is";
+    const dnsSafeName = domainName.replaceAll(".", "-");
+    return NextResponse.json({
+      id: `mock-spf-route-${tail[1]}`,
+      domain_id: tail[1],
+      domain: domainName,
+      status: domain?.spfLookups && domain.spfLookups > 10 ? "stale" : "ready",
+      route_fqdn: `${dnsSafeName}.route.dmark.is`,
+      customer_cname_name: `_spf.${domainName}`,
+      customer_cname_target: `${dnsSafeName}.route.dmark.is`,
+      generated_spf_preview: `v=spf1 include:${dnsSafeName}.route.dmark.is ~all`,
+      last_published_spf: `v=spf1 include:${dnsSafeName}.route.dmark.is ~all`,
+      last_synced_at: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
+      enabled_sources: [
+        { kind: "include", value: "spf.protection.outlook.com", label: "Microsoft 365" },
+        { kind: "include", value: "_spf.google.com", label: "Google Workspace" },
+      ],
+      evidence_summary: [
+        {
+          source_value: "spf.protection.outlook.com",
+          resolved_domain: "spf.protection.outlook.com",
+          mechanism: "include:spf.protection.outlook.com",
+          kind: "include",
+          message: "Mock evidence only; no Bunny DNS mutation performed.",
+        },
+      ],
+    });
+  }
+
   if (tail[0] === "domains" && tail[2] === "brand-risk") {
     const domain = mockDashboardViewModel.protectedDomains.find((item) => item.id === tail[1]);
     const includeInactive = url.searchParams.get("include_inactive") === "true";
@@ -287,6 +318,18 @@ function mockPOST(path: string, body: string): Response {
         status: "queued",
         queued_at: new Date().toISOString(),
         next_allowed_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+      },
+      { status: 202 },
+    );
+  }
+
+  if (tail[0] === "domains" && tail[2] === "spf-route" && tail[3] === "sync") {
+    return NextResponse.json(
+      {
+        job_id: "mock-spf-route-sync",
+        domain_id: tail[1],
+        status: "queued",
+        queued_at: new Date().toISOString(),
       },
       { status: 202 },
     );

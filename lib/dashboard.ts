@@ -15,6 +15,7 @@ import type {
   BackendDashboardSPFRouteEvidence,
   BackendDashboardSPFRouteResponse,
   BackendDashboardSPFRouteSource,
+  BackendDashboardSPFRouteSyncResponse,
 } from "@/lib/dashboard-api";
 
 export type DomainStatus = "protected" | "needs-work" | "monitoring";
@@ -230,6 +231,13 @@ export type RecheckResult = {
   status: string;
   queuedAt?: string;
   nextAllowedAt?: string;
+};
+
+export type SPFRouteSyncResult = {
+  jobID?: string;
+  domainID: string;
+  status: string;
+  queuedAt?: string;
 };
 
 export const mockProtectedDomains: ProtectedDomain[] = [
@@ -627,6 +635,18 @@ export async function getChangePlan(domainID: string): Promise<ChangePlanViewMod
 
 export async function getSPFRouteData(domainID: string): Promise<SPFRouteViewModel> {
   return mapSPFRouteResponse(await dashboardJSON<BackendDashboardSPFRouteResponse>(`/api/dashboard/domains/${domainID}/spf-route`));
+}
+
+export async function syncSPFRoute(domainID: string): Promise<SPFRouteSyncResult> {
+  const payload = await dashboardJSON<BackendDashboardSPFRouteSyncResponse>(`/api/dashboard/domains/${domainID}/spf-route/sync`, {
+    method: "POST",
+  });
+  return {
+    jobID: payload.job_id,
+    domainID: payload.domain_id,
+    status: payload.status,
+    queuedAt: payload.queued_at,
+  };
 }
 
 export async function getBrandRiskData(
