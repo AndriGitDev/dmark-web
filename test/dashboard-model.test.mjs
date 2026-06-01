@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { timingSafeEqual } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import test from "node:test";
@@ -23,6 +24,7 @@ function loadTSModule(relativePath) {
   const cjsModule = { exports: {} };
   const sandbox = {
     AbortController,
+    Buffer,
     DOMException,
     Error,
     Headers,
@@ -37,6 +39,7 @@ function loadTSModule(relativePath) {
     process,
     require: (specifier) => {
       if (specifier === "server-only") return {};
+      if (specifier === "node:crypto") return { timingSafeEqual };
       throw new Error(`Unexpected require: ${specifier}`);
     },
     setTimeout,
@@ -446,6 +449,69 @@ test("backend scan mapper marks public scan responses as live evidence", () => {
   assert.equal(view.source, "live");
   assert.equal(view.checkedAt, "2026-06-01T02:03:00Z");
   assert.equal(view.durationMs, 184);
+});
+
+test("admin control plane access is fail-closed and requires owner session secret", () => {
+  const previousAccess = process.env.DMARK_ADMIN_ACCESS;
+  const previousSecret = process.env.DMARK_ADMIN_OWNER_SESSION_SECRET;
+
+  try {
+    const adminAccess = loadTSModule("lib/admin-access.ts");
+
+    delete process.env.DMARK_ADMIN_ACCESS;
+    delete process.env.DMARK_ADMIN_OWNER_SESSION_SECRET;
+    assert.equal(adminAccess.isAdminAccessEnabled(), false);
+    assert.equal(adminAccess.adminLockedResponseBody().error, "Admin control plane access is closed.");
+
+    process.env.DMARK_ADMIN_ACCESS = "open";
+    assert.equal(adminAccess.isAdminAccessEnabled(), true);
+    assert.equal(adminAccess.isAdminOwnerSessionAllowed(new Headers()), false);
+
+    process.env.DMARK_ADMIN_OWNER_SESSION_SECRET = "owner-test-session";
+    assert.equal(adminAccess.isAdminOwnerSessionAllowed(new Headers({ "x-dmark-owner-session": "wrong" })), false);
+    assert.equal(adminAccess.isAdminOwnerSessionAllowed(new Headers({ "x-dmark-owner-session": "owner-test-session" })), true);
+  } finally {
+    restoreEnv("DMARK_ADMIN_ACCESS", previousAccess);
+    restoreEnv("DMARK_ADMIN_OWNER_SESSION_SECRET", previousSecret);
+  }
+});
+
+test("admin API client uses dedicated admin backend path and bearer token", async () => {
+  const previousBase = process.env.DMARK_API_BASE_URL;
+  const previousAdminToken = process.env.DMARK_ADMIN_API_TOKEN;
+  const previousDashboardToken = process.env.DMARK_API_TOKEN;
+  const previousTimeout = process.env.DMARK_API_TIMEOUT_MS;
+  const previousFetch = globalThis.fetch;
+
+  process.env.DMARK_API_BASE_URL = "https://backend.example";
+  process.env.DMARK_ADMIN_API_TOKEN = "test-admin-token";
+  process.env.DMARK_API_TOKEN = "dashboard-test-token";
+  process.env.DMARK_API_TIMEOUT_MS = "1000";
+
+  let observed;
+  globalThis.fetch = async (url, init) => {
+    observed = { url: String(url), authorization: init.headers.get("authorization"), accept: init.headers.get("accept") };
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "content-type": "application/json" } });
+  };
+
+  try {
+    const api = loadTSModule("lib/admin-api.ts");
+    await api.adminProxyFetch("/api/v1/admin/status");
+    assert.throws(() => api.adminBackendURL("/api/v1/dashboard/domains"), {
+      name: "AdminAPIError",
+      message: "Admin backend path is not allowed.",
+    });
+  } finally {
+    globalThis.fetch = previousFetch;
+    restoreEnv("DMARK_API_BASE_URL", previousBase);
+    restoreEnv("DMARK_ADMIN_API_TOKEN", previousAdminToken);
+    restoreEnv("DMARK_API_TOKEN", previousDashboardToken);
+    restoreEnv("DMARK_API_TIMEOUT_MS", previousTimeout);
+  }
+
+  assert.equal(observed.url, "https://backend.example/api/v1/admin/status");
+  assert.equal(observed.authorization, "Bearer test-admin-token");
+  assert.equal(observed.accept, "application/json");
 });
 
 function restoreEnv(key, value) {
