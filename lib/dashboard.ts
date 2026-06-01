@@ -12,6 +12,9 @@ import type {
   BackendDashboardRecheckResponse,
   BackendDashboardSender,
   BackendDashboardSettingsResponse,
+  BackendDashboardSPFRouteEvidence,
+  BackendDashboardSPFRouteResponse,
+  BackendDashboardSPFRouteSource,
 } from "@/lib/dashboard-api";
 
 export type DomainStatus = "protected" | "needs-work" | "monitoring";
@@ -167,6 +170,36 @@ export type SettingsState = {
   monthlyReports: boolean;
   notificationChannels: string[];
   updatedAt?: string;
+};
+
+export type SPFRouteSource = {
+  kind: string;
+  value: string;
+  label: string;
+};
+
+export type SPFRouteEvidence = {
+  sourceValue?: string;
+  resolvedDomain?: string;
+  mechanism?: string;
+  kind?: string;
+  message: string;
+};
+
+export type SPFRouteViewModel = {
+  id: string;
+  domainID: string;
+  domain: string;
+  status: string;
+  routeFQDN?: string;
+  customerCNAMEName?: string;
+  customerCNAMETarget?: string;
+  generatedSPFPreview?: string;
+  lastPublishedSPF?: string;
+  lastSyncedAt?: string;
+  lastSyncError?: string;
+  enabledSources: SPFRouteSource[];
+  evidenceSummary: SPFRouteEvidence[];
 };
 
 export type DashboardInitialState = {
@@ -508,6 +541,42 @@ export function settingsToBackendPayload(settings: SettingsState): BackendDashbo
   };
 }
 
+export function mapSPFRouteResponse(payload: BackendDashboardSPFRouteResponse): SPFRouteViewModel {
+  return {
+    id: payload.id,
+    domainID: payload.domain_id,
+    domain: payload.domain,
+    status: payload.status,
+    routeFQDN: payload.route_fqdn,
+    customerCNAMEName: payload.customer_cname_name,
+    customerCNAMETarget: payload.customer_cname_target,
+    generatedSPFPreview: payload.generated_spf_preview,
+    lastPublishedSPF: payload.last_published_spf,
+    lastSyncedAt: payload.last_synced_at,
+    lastSyncError: payload.last_sync_error,
+    enabledSources: (payload.enabled_sources || []).map(mapSPFRouteSource),
+    evidenceSummary: (payload.evidence_summary || []).map(mapSPFRouteEvidence),
+  };
+}
+
+export function mapSPFRouteSource(payload: BackendDashboardSPFRouteSource): SPFRouteSource {
+  return {
+    kind: payload.kind || "source",
+    value: payload.value || "",
+    label: payload.label || payload.value || payload.kind || "SPF source",
+  };
+}
+
+export function mapSPFRouteEvidence(payload: BackendDashboardSPFRouteEvidence): SPFRouteEvidence {
+  return {
+    sourceValue: payload.source_value,
+    resolvedDomain: payload.resolved_domain,
+    mechanism: payload.mechanism,
+    kind: payload.kind,
+    message: payload.message || "No evidence details were returned.",
+  };
+}
+
 export async function getDashboardData(): Promise<DashboardViewModel> {
   return mapDashboardResponse(await dashboardJSON<BackendDashboardResponse>("/api/dashboard"));
 }
@@ -519,6 +588,10 @@ export async function getReporterData(domainID: string, filter?: "unknown"): Pro
 
 export async function getChangePlan(domainID: string): Promise<ChangePlanViewModel> {
   return mapChangePlanResponse(await dashboardJSON<BackendDashboardChangePlanResponse>(`/api/dashboard/domains/${domainID}/change-plan`));
+}
+
+export async function getSPFRouteData(domainID: string): Promise<SPFRouteViewModel> {
+  return mapSPFRouteResponse(await dashboardJSON<BackendDashboardSPFRouteResponse>(`/api/dashboard/domains/${domainID}/spf-route`));
 }
 
 export async function getBrandRiskData(

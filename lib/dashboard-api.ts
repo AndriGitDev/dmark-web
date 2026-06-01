@@ -146,6 +146,36 @@ export type BackendDashboardSettingsResponse = {
   updated_at?: string;
 };
 
+export type BackendDashboardSPFRouteSource = {
+  kind: "include" | "ip4" | "ip6" | string;
+  value: string;
+  label?: string;
+};
+
+export type BackendDashboardSPFRouteEvidence = {
+  source_value?: string;
+  resolved_domain?: string;
+  mechanism?: string;
+  kind?: string;
+  message?: string;
+};
+
+export type BackendDashboardSPFRouteResponse = {
+  id: string;
+  domain_id: string;
+  domain: string;
+  status: string;
+  route_fqdn?: string;
+  customer_cname_name?: string;
+  customer_cname_target?: string;
+  generated_spf_preview?: string;
+  last_published_spf?: string;
+  last_synced_at?: string;
+  last_sync_error?: string;
+  enabled_sources?: BackendDashboardSPFRouteSource[];
+  evidence_summary?: BackendDashboardSPFRouteEvidence[];
+};
+
 type BackendErrorPayload = {
   error?: string;
   message?: string;

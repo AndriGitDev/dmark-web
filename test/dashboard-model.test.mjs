@@ -310,6 +310,84 @@ test("settings mapper and payload clamp threshold to 1..100", () => {
   );
 });
 
+test("SPF route mapper preserves route state, CNAME instructions, sources, and safe errors", () => {
+  const dashboard = loadTSModule("lib/dashboard.ts");
+  const view = dashboard.mapSPFRouteResponse({
+    id: "route-1",
+    domain_id: "domain-1",
+    domain: "example.is",
+    status: "failed",
+    route_fqdn: "example-is.route.dmark.is",
+    customer_cname_name: "_spf.example.is",
+    customer_cname_target: "example-is.route.dmark.is",
+    generated_spf_preview: "v=spf1 include:_spf.mailgun.org ~all",
+    last_published_spf: "v=spf1 include:_spf.mailgun.org ~all",
+    last_synced_at: "2026-05-31T12:00:00Z",
+    last_sync_error: "SPF route sync failed; see operational events for operator details",
+    enabled_sources: [
+      { kind: "include", value: "_spf.mailgun.org", label: "Mailgun" },
+      { kind: "ip4", value: "203.0.113.10", label: "Office gateway" },
+    ],
+    evidence_summary: [
+      {
+        source_value: "_spf.mailgun.org",
+        resolved_domain: "_spf.mailgun.org",
+        mechanism: "include:_spf.mailgun.org",
+        kind: "include",
+        message: "resolved",
+      },
+    ],
+  });
+
+  assert.equal(view.id, "route-1");
+  assert.equal(view.domainID, "domain-1");
+  assert.equal(view.domain, "example.is");
+  assert.equal(view.status, "failed");
+  assert.equal(view.routeFQDN, "example-is.route.dmark.is");
+  assert.equal(view.customerCNAMEName, "_spf.example.is");
+  assert.equal(view.customerCNAMETarget, "example-is.route.dmark.is");
+  assert.equal(view.generatedSPFPreview, "v=spf1 include:_spf.mailgun.org ~all");
+  assert.equal(view.lastPublishedSPF, "v=spf1 include:_spf.mailgun.org ~all");
+  assert.equal(view.lastSyncedAt, "2026-05-31T12:00:00Z");
+  assert.match(view.lastSyncError, /operational events/);
+  assert.deepEqual(
+    Array.from(view.enabledSources.map((source) => `${source.kind}:${source.value}:${source.label}`)),
+    ["include:_spf.mailgun.org:Mailgun", "ip4:203.0.113.10:Office gateway"],
+  );
+  assert.equal(view.evidenceSummary[0].message, "resolved");
+});
+
+test("SPF route client uses the dashboard proxy path without backend credentials", async () => {
+  const previousFetch = globalThis.fetch;
+  let observed;
+  globalThis.fetch = async (url, init) => {
+    observed = { url: String(url), cache: init.cache };
+    return new Response(
+      JSON.stringify({
+        id: "route-1",
+        domain_id: "domain-1",
+        domain: "example.is",
+        status: "ready",
+        route_fqdn: "example-is.route.dmark.is",
+        enabled_sources: [],
+        evidence_summary: [],
+      }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+  };
+
+  try {
+    const dashboard = loadTSModule("lib/dashboard.ts");
+    const view = await dashboard.getSPFRouteData("domain-1");
+    assert.equal(view.routeFQDN, "example-is.route.dmark.is");
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+
+  assert.equal(observed.url, "/api/dashboard/domains/domain-1/spf-route");
+  assert.equal(observed.cache, "no-store");
+});
+
 test("public scan remediation plan prioritises SPF flattening before DMARC enforcement", () => {
   const scan = loadTSModule("lib/scan.ts");
   const plan = scan.buildScanRemediationPlan({
