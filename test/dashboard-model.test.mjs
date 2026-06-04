@@ -49,6 +49,59 @@ function loadTSModule(relativePath) {
   return cjsModule.exports;
 }
 
+test("privacy analytics config is explicit, allowlisted, and secret-free", () => {
+  const previousProvider = process.env.DMARK_ANALYTICS_PROVIDER;
+  const previousDomain = process.env.DMARK_ANALYTICS_DOMAIN;
+  const previousScriptURL = process.env.DMARK_ANALYTICS_SCRIPT_URL;
+  const previousSiteID = process.env.DMARK_ANALYTICS_SITE_ID;
+  const previousApiKey = process.env.DMARK_ANALYTICS_API_KEY;
+
+  try {
+    const analytics = loadTSModule("lib/analytics.ts");
+
+    delete process.env.DMARK_ANALYTICS_PROVIDER;
+    delete process.env.DMARK_ANALYTICS_DOMAIN;
+    delete process.env.DMARK_ANALYTICS_SCRIPT_URL;
+    delete process.env.DMARK_ANALYTICS_SITE_ID;
+    delete process.env.DMARK_ANALYTICS_API_KEY;
+    assert.equal(analytics.getAnalyticsConfig(), null);
+
+    process.env.DMARK_ANALYTICS_PROVIDER = "google-analytics";
+    process.env.DMARK_ANALYTICS_DOMAIN = "dmark.is";
+    process.env.DMARK_ANALYTICS_SCRIPT_URL = "https://www.google-analytics.com/gtag/js?id=G-SECRET";
+    assert.equal(analytics.getAnalyticsConfig(), null);
+
+    process.env.DMARK_ANALYTICS_PROVIDER = "plausible";
+    process.env.DMARK_ANALYTICS_DOMAIN = "dmark.is";
+    process.env.DMARK_ANALYTICS_SCRIPT_URL = "https://www.google-analytics.com/gtag/js?id=G-SECRET";
+    assert.equal(analytics.getAnalyticsConfig(), null);
+
+    process.env.DMARK_ANALYTICS_SCRIPT_URL = "https://plausible.io/js/script.js";
+    process.env.DMARK_ANALYTICS_SITE_ID = "site-123";
+    process.env.DMARK_ANALYTICS_API_KEY = ["fixture", "analytics", "key"].join("-");
+
+    const config = analytics.getAnalyticsConfig();
+    assert.equal(config.provider, "plausible");
+    assert.equal(config.domain, "dmark.is");
+    assert.equal(config.scriptURL, "https://plausible.io/js/script.js");
+    assert.equal(config.siteID, null);
+    assert.equal(JSON.stringify(config).includes("fixture-analytics-key"), false);
+  } finally {
+    restoreEnv("DMARK_ANALYTICS_PROVIDER", previousProvider);
+    restoreEnv("DMARK_ANALYTICS_DOMAIN", previousDomain);
+    restoreEnv("DMARK_ANALYTICS_SCRIPT_URL", previousScriptURL);
+    restoreEnv("DMARK_ANALYTICS_SITE_ID", previousSiteID);
+    restoreEnv("DMARK_ANALYTICS_API_KEY", previousApiKey);
+  }
+});
+
+test("root layout wires only the privacy analytics component", () => {
+  const source = readFileSync(join(root, "app/layout.tsx"), "utf8");
+
+  assert.match(source, /PrivacyAnalytics/);
+  assert.doesNotMatch(source, /google-analytics|gtag|GTM|facebook|hotjar/i);
+});
+
 function baseScanPayload(overrides = {}) {
   return {
     domain: "example.is",
