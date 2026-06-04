@@ -133,30 +133,58 @@ test("privacy event tracking is no-op safe and dispatches only coarse scanner pr
   assert.deepEqual(JSON.parse(JSON.stringify(posthogCalls)), [["scan_complete", { status: "WARNING", source: "public_scanner" }]]);
 });
 
-test("privacy events reject unknown event names and unsafe properties", () => {
+test("privacy events reject unknown event names, unsafe properties, and unsafe sources", () => {
   const events = loadTSModule("lib/privacy-events.ts");
   const calls = [];
   const target = { plausible: (...args) => calls.push(args) };
 
   events.trackPrivacyEvent("signup", { status: "PASS" }, target);
   events.trackPrivacyEvent("scan_error", { status: "../../FAIL", source: "public_scanner", step: "backend" }, target);
+  events.trackPrivacyEvent("cta_click", { source: "https://tracker.invalid/?domain=customer.is" }, target);
   events.trackPrivacyEvent("scan_validation_error", { status: "ERROR", source: "public_scanner" }, target);
 
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [["scan_validation_error", { props: { status: "ERROR", source: "public_scanner" } }]]);
 });
 
-test("public scanner wires privacy events without passing raw identifiers", () => {
+test("privacy events allow claim, CTA, and recommendation lifecycle events with coarse properties only", () => {
+  const events = loadTSModule("lib/privacy-events.ts");
+  const calls = [];
+  const target = { plausible: (...args) => calls.push(args) };
+
+  events.trackPrivacyEvent("cta_click", { source: "pricing", plan: "managed", domain: "customer.is" }, target);
+  events.trackPrivacyEvent("recommendation_view", { status: "WARNING", source: "public_scanner", record: "v=spf1 include:vendor.example" }, target);
+  events.trackPrivacyEvent("claim_start", { source: "upgrade_modal", email: "person@example.is" }, target);
+  events.trackPrivacyEvent("claim_complete", { status: "PASS", source: "upgrade_modal", name: "Customer" }, target);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
+    ["cta_click", { props: { source: "pricing" } }],
+    ["recommendation_view", { props: { status: "WARNING", source: "public_scanner" } }],
+    ["claim_start", { props: { source: "upgrade_modal" } }],
+    ["claim_complete", { props: { status: "PASS", source: "upgrade_modal" } }],
+  ]);
+});
+
+test("public marketing wires privacy funnel events without passing raw identifiers", () => {
   const source = readFileSync(join(root, "components/dmark-marketing.tsx"), "utf8");
 
   assert.match(source, /trackPrivacyEvent/);
-  assert.match(source, /scan_start/);
-  assert.match(source, /scan_complete/);
-  assert.match(source, /scan_validation_error/);
-  assert.match(source, /scan_error/);
+  for (const eventName of [
+    "scan_start",
+    "scan_complete",
+    "scan_validation_error",
+    "scan_error",
+    "recommendation_view",
+    "cta_click",
+    "claim_start",
+    "claim_complete",
+    "claim_error",
+  ]) {
+    assert.match(source, new RegExp(eventName));
+  }
   const eventCalls = source.match(/trackPrivacyEvent\([^\n]+\);/g) || [];
-  assert.equal(eventCalls.length, 4);
+  assert.ok(eventCalls.length >= 9);
   for (const call of eventCalls) {
-    assert.doesNotMatch(call, /domain|email|name|record|response\.json/);
+    assert.doesNotMatch(call, /domain|email|name|record|response\.json|form\./);
   }
 });
 

@@ -182,7 +182,18 @@ export function DmarkMarketing() {
     }
   }
 
-  function scrollToScanner() {
+  useEffect(() => {
+    if (scanState !== "results" || !result) return;
+    trackPrivacyEvent("recommendation_view", { status: result.status, source: "public_scanner" });
+  }, [scanState, result]);
+
+  function openUpgradeModal(plan: NonNullable<ModalPlan>, source: "nav" | "pricing" | "footer" | "result_upsell") {
+    trackPrivacyEvent("cta_click", { source });
+    setModalPlan(plan);
+  }
+
+  function scrollToScanner(source?: "nav" | "pricing" | "footer") {
+    if (source) trackPrivacyEvent("cta_click", { source });
     document.getElementById("scanner")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -214,12 +225,12 @@ export function DmarkMarketing() {
             <a className="transition hover:text-trust" href="#pricing">
               Pricing
             </a>
-            <button className="transition hover:text-trust" onClick={() => setModalPlan("saas")} type="button">
+            <button className="transition hover:text-trust" onClick={() => openUpgradeModal("saas", "nav")} type="button">
               Early access
             </button>
             <button
               className="inline-flex min-h-10 items-center gap-2 rounded-md bg-trust px-4 text-sm font-semibold text-white transition hover:bg-trust-hover"
-              onClick={scrollToScanner}
+              onClick={() => scrollToScanner("nav")}
               type="button"
             >
               <MailCheck className="h-4 w-4" aria-hidden="true" />
@@ -258,7 +269,7 @@ export function DmarkMarketing() {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.35, ease: "easeOut" }}
               >
-                <ResultsDashboard result={result} onRescan={() => setScanState("idle")} onUpgrade={() => setModalPlan("saas")} />
+                <ResultsDashboard result={result} onRescan={() => setScanState("idle")} onUpgrade={() => openUpgradeModal("saas", "result_upsell")} />
               </motion.div>
             ) : (
               <motion.div
@@ -531,7 +542,7 @@ export function DmarkMarketing() {
                 </ul>
                 <button
                   type="button"
-                  onClick={() => (tier.mode === "scan" ? scrollToScanner() : setModalPlan(tier.mode))}
+                  onClick={() => (tier.mode === "scan" ? scrollToScanner("pricing") : openUpgradeModal(tier.mode, "pricing"))}
                   className={`mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md px-4 font-semibold transition ${
                     tier.featured
                       ? "bg-trust text-white hover:bg-trust-hover"
@@ -570,7 +581,7 @@ export function DmarkMarketing() {
           <div className="flex flex-col gap-2 sm:flex-row">
             <button
               type="button"
-              onClick={scrollToScanner}
+              onClick={() => scrollToScanner("footer")}
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-white px-4 font-semibold text-navy transition hover:bg-blue-50"
             >
               <MailCheck className="h-4 w-4" aria-hidden="true" />
@@ -578,7 +589,7 @@ export function DmarkMarketing() {
             </button>
             <button
               type="button"
-              onClick={() => setModalPlan("saas")}
+              onClick={() => openUpgradeModal("saas", "footer")}
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/30 px-4 font-semibold text-white transition hover:bg-white/10"
             >
               <Gauge className="h-4 w-4" aria-hidden="true" />
@@ -937,6 +948,7 @@ function CheckoutModal({ plan, domain, onClose }: { plan: ModalPlan; domain: str
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!plan) return;
+    trackPrivacyEvent("claim_start", { source: "upgrade_modal" });
     setStatus("submitting");
     setError("");
 
@@ -953,9 +965,11 @@ function CheckoutModal({ plan, domain, onClose }: { plan: ModalPlan; domain: str
       }
 
       const payload = (await response.json()) as UpgradeResponse;
+      trackPrivacyEvent("claim_complete", { status: "PASS", source: "upgrade_modal" });
       setClaim(payload);
       setStatus("success");
     } catch (submitError) {
+      trackPrivacyEvent("claim_error", { status: "ERROR", source: "upgrade_modal" });
       setError(submitError instanceof Error ? submitError.message : "Upgrade request failed.");
       setStatus("error");
     }

@@ -1,6 +1,15 @@
-type PrivacyEventName = "scan_start" | "scan_complete" | "scan_error" | "scan_validation_error";
+type PrivacyEventName =
+  | "scan_start"
+  | "scan_complete"
+  | "scan_error"
+  | "scan_validation_error"
+  | "recommendation_view"
+  | "cta_click"
+  | "claim_start"
+  | "claim_complete"
+  | "claim_error";
 type PrivacyEventStatus = "PASS" | "WARNING" | "FAIL" | "ERROR";
-type PrivacyEventSource = "public_scanner";
+type PrivacyEventSource = "public_scanner" | "nav" | "pricing" | "footer" | "result_upsell" | "upgrade_modal";
 
 type PrivacyEventProperties = {
   status?: string;
@@ -13,9 +22,26 @@ type AnalyticsTarget = {
   posthog?: { capture?: (eventName: string, properties?: Record<string, string>) => void };
 };
 
-const allowedEvents = new Set<PrivacyEventName>(["scan_start", "scan_complete", "scan_error", "scan_validation_error"]);
+const allowedEvents = new Set<PrivacyEventName>([
+  "scan_start",
+  "scan_complete",
+  "scan_error",
+  "scan_validation_error",
+  "recommendation_view",
+  "cta_click",
+  "claim_start",
+  "claim_complete",
+  "claim_error",
+]);
 const allowedStatuses = new Set<PrivacyEventStatus>(["PASS", "WARNING", "FAIL", "ERROR"]);
-const allowedSources = new Set<PrivacyEventSource>(["public_scanner"]);
+const allowedSources = new Set<PrivacyEventSource>([
+  "public_scanner",
+  "nav",
+  "pricing",
+  "footer",
+  "result_upsell",
+  "upgrade_modal",
+]);
 
 function sanitizePrivacyEventName(value: string): PrivacyEventName | null {
   return allowedEvents.has(value as PrivacyEventName) ? (value as PrivacyEventName) : null;
