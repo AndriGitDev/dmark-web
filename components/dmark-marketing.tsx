@@ -30,6 +30,7 @@ import {
   X,
 } from "lucide-react";
 import type { ScanPayload, UpgradePayload, UpgradeResponse } from "@/lib/scan";
+import { trackPrivacyEvent } from "@/lib/privacy-events";
 import {
   buildDmarcFinding,
   buildScanEvidenceSummary,
@@ -145,11 +146,13 @@ export function DmarkMarketing() {
     const validation = validateScannableDomain(domain);
 
     if (validation.error) {
+      trackPrivacyEvent("scan_validation_error", { status: "ERROR", source: "public_scanner" });
       setError(validation.error);
       setScanState("error");
       return;
     }
 
+    trackPrivacyEvent("scan_start", { source: "public_scanner" });
     setError("");
     setDomain(validation.domain);
     setLoadingIndex(0);
@@ -168,10 +171,12 @@ export function DmarkMarketing() {
       }
 
       const payload = (await response.json()) as ScanPayload;
+      trackPrivacyEvent("scan_complete", { status: payload.status, source: "public_scanner" });
       setResult(payload);
       setDomain(payload.domain);
       setScanState("results");
     } catch (scanError) {
+      trackPrivacyEvent("scan_error", { status: "ERROR", source: "public_scanner" });
       setError(scanError instanceof Error ? scanError.message : "Scan failed.");
       setScanState("error");
     }

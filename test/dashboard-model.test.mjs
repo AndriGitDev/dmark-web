@@ -102,6 +102,64 @@ test("root layout wires only the privacy analytics component", () => {
   assert.doesNotMatch(source, /google-analytics|gtag|GTM|facebook|hotjar/i);
 });
 
+test("privacy event tracking is no-op safe and dispatches only coarse scanner properties", () => {
+  const events = loadTSModule("lib/privacy-events.ts");
+  const plausibleCalls = [];
+  const umamiCalls = [];
+  const posthogCalls = [];
+  const target = {
+    plausible: (...args) => plausibleCalls.push(args),
+    umami: { track: (...args) => umamiCalls.push(args) },
+    posthog: { capture: (...args) => posthogCalls.push(args) },
+  };
+
+  assert.doesNotThrow(() => events.trackPrivacyEvent("scan_start", { status: "PASS" }, {}));
+
+  events.trackPrivacyEvent(
+    "scan_complete",
+    {
+      status: "WARNING",
+      source: "public_scanner",
+      domain: "customer.is",
+      email: "person@example.is",
+      error: "resolver returned token=fixture-secret",
+      url: "https://dmark.is/?domain=customer.is",
+    },
+    target,
+  );
+
+  assert.deepEqual(JSON.parse(JSON.stringify(plausibleCalls)), [["scan_complete", { props: { status: "WARNING", source: "public_scanner" } }]]);
+  assert.deepEqual(JSON.parse(JSON.stringify(umamiCalls)), [["scan_complete", { status: "WARNING", source: "public_scanner" }]]);
+  assert.deepEqual(JSON.parse(JSON.stringify(posthogCalls)), [["scan_complete", { status: "WARNING", source: "public_scanner" }]]);
+});
+
+test("privacy events reject unknown event names and unsafe properties", () => {
+  const events = loadTSModule("lib/privacy-events.ts");
+  const calls = [];
+  const target = { plausible: (...args) => calls.push(args) };
+
+  events.trackPrivacyEvent("signup", { status: "PASS" }, target);
+  events.trackPrivacyEvent("scan_error", { status: "../../FAIL", source: "public_scanner", step: "backend" }, target);
+  events.trackPrivacyEvent("scan_validation_error", { status: "ERROR", source: "public_scanner" }, target);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [["scan_validation_error", { props: { status: "ERROR", source: "public_scanner" } }]]);
+});
+
+test("public scanner wires privacy events without passing raw identifiers", () => {
+  const source = readFileSync(join(root, "components/dmark-marketing.tsx"), "utf8");
+
+  assert.match(source, /trackPrivacyEvent/);
+  assert.match(source, /scan_start/);
+  assert.match(source, /scan_complete/);
+  assert.match(source, /scan_validation_error/);
+  assert.match(source, /scan_error/);
+  const eventCalls = source.match(/trackPrivacyEvent\([^\n]+\);/g) || [];
+  assert.equal(eventCalls.length, 4);
+  for (const call of eventCalls) {
+    assert.doesNotMatch(call, /domain|email|name|record|response\.json/);
+  }
+});
+
 function baseScanPayload(overrides = {}) {
   return {
     domain: "example.is",
