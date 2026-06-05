@@ -363,6 +363,15 @@ test("admin temp login gives operator feedback when access guard stays closed", 
   assert.match(pageSource, /DMARK_ADMIN_ACCESS/);
 });
 
+test("Authentik callback avoids localhost admin redirects behind proxies", () => {
+  const source = readFileSync(join(root, "app/api/auth/callback/route.ts"), "utf8");
+
+  assert.match(source, /DMARK_PUBLIC_ORIGIN/);
+  assert.match(source, /x-forwarded-host/);
+  assert.match(source, /DEFAULT_PUBLIC_ORIGIN/);
+  assert.doesNotMatch(source, /request\.nextUrl\.origin/);
+});
+
 test("Authentik config derives OIDC endpoints and stays disabled until complete", () => {
   const previous = snapshotEnv([
     "DMARK_AUTHENTIK_CLIENT_ID",

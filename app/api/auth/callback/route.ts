@@ -10,6 +10,8 @@ import {
 
 export const dynamic = "force-dynamic";
 
+const DEFAULT_PUBLIC_ORIGIN = "https://dmark.is";
+
 type TokenPayload = {
   access_token?: string;
   token_type?: string;
@@ -94,5 +96,25 @@ function redirectWithStatus(url: URL, status: string): Response {
 }
 
 function adminRedirectURL(request: NextRequest): URL {
-  return new URL("/admin", request.nextUrl.origin);
+  const configuredOrigin = firstForwardedValue(process.env.DMARK_PUBLIC_ORIGIN || process.env.NEXT_PUBLIC_SITE_URL || "");
+  if (configuredOrigin) {
+    return new URL("/admin", configuredOrigin);
+  }
+
+  const forwardedHost = firstForwardedValue(request.headers.get("x-forwarded-host")) || firstForwardedValue(request.headers.get("host"));
+  const forwardedProto = firstForwardedValue(request.headers.get("x-forwarded-proto")) || "https";
+
+  if (forwardedHost && !isLocalhostHost(forwardedHost)) {
+    return new URL("/admin", `${forwardedProto}://${forwardedHost}`);
+  }
+
+  return new URL("/admin", DEFAULT_PUBLIC_ORIGIN);
+}
+
+function firstForwardedValue(value: string | null): string {
+  return String(value || "").split(",")[0]?.trim() || "";
+}
+
+function isLocalhostHost(host: string): boolean {
+  return host === "localhost" || host.startsWith("localhost:") || host === "127.0.0.1" || host.startsWith("127.0.0.1:");
 }
