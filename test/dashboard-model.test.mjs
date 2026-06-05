@@ -201,6 +201,25 @@ test("locked dashboard page wires privacy-safe beta-lock CTA analytics", () => {
   }
 });
 
+test("public marketing uses the approved editorial redesign tokens and sections", () => {
+  const marketingSource = readFileSync(join(root, "components/dmark-marketing.tsx"), "utf8");
+  const tailwindSource = readFileSync(join(root, "tailwind.config.js"), "utf8");
+  const globalsSource = readFileSync(join(root, "app/globals.css"), "utf8");
+  const layoutSource = readFileSync(join(root, "app/layout.tsx"), "utf8");
+
+  assert.match(tailwindSource, /paper:\s*"#F5F3EC"/);
+  assert.match(tailwindSource, /brand:\s*"#2826E6"/);
+  assert.match(tailwindSource, /midnight:\s*"#0E0F14"/);
+  assert.match(globalsSource, /#2826E6/);
+  assert.match(layoutSource, /Schibsted_Grotesk/);
+  assert.match(marketingSource, /Anyone can send email as your domain/);
+  assert.match(marketingSource, /With DMARK · p=reject/);
+  assert.match(marketingSource, /dmark · public scan/);
+  assert.match(marketingSource, /Request early access/);
+  assert.doesNotMatch(marketingSource, /Nothing is stored/);
+  assert.doesNotMatch(marketingSource, /14 reporting orgs/);
+});
+
 test("public marketing wires privacy funnel events without passing raw identifiers", () => {
   const source = readFileSync(join(root, "components/dmark-marketing.tsx"), "utf8");
 
