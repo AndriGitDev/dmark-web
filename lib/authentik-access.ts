@@ -49,13 +49,15 @@ export function getAuthentikConfig(): AuthentikConfig | null {
     return null;
   }
 
+  const endpointBase = new URL("/application/o/", issuer);
+
   return {
     issuer,
     clientID,
     redirectURI,
-    authorizationEndpoint: new URL("authorize/", issuer).toString(),
-    tokenEndpoint: new URL("token/", issuer).toString(),
-    userInfoEndpoint: new URL("userinfo/", issuer).toString(),
+    authorizationEndpoint: new URL("authorize/", endpointBase).toString(),
+    tokenEndpoint: new URL("token/", endpointBase).toString(),
+    userInfoEndpoint: new URL("userinfo/", endpointBase).toString(),
   };
 }
 

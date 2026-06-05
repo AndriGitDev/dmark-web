@@ -389,9 +389,9 @@ test("Authentik config derives OIDC endpoints and stays disabled until complete"
 
     const config = authentik.getAuthentikConfig();
     assert.equal(config.issuer, "https://auth.kastro.is/application/o/dmark/");
-    assert.equal(config.authorizationEndpoint, "https://auth.kastro.is/application/o/dmark/authorize/");
-    assert.equal(config.tokenEndpoint, "https://auth.kastro.is/application/o/dmark/token/");
-    assert.equal(config.userInfoEndpoint, "https://auth.kastro.is/application/o/dmark/userinfo/");
+    assert.equal(config.authorizationEndpoint, "https://auth.kastro.is/application/o/authorize/");
+    assert.equal(config.tokenEndpoint, "https://auth.kastro.is/application/o/token/");
+    assert.equal(config.userInfoEndpoint, "https://auth.kastro.is/application/o/userinfo/");
     assert.equal(JSON.stringify(config).includes("fixture-client-secret"), false);
   } finally {
     restoreEnvSnapshot(previous);
