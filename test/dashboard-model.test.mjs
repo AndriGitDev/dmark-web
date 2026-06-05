@@ -146,7 +146,7 @@ test("privacy events reject unknown event names, unsafe properties, and unsafe s
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [["scan_validation_error", { props: { status: "ERROR", source: "public_scanner" } }]]);
 });
 
-test("privacy events allow claim, CTA, and recommendation lifecycle events with coarse properties only", () => {
+test("privacy events allow claim, CTA, recommendation, and dashboard lifecycle events with coarse properties only", () => {
   const events = loadTSModule("lib/privacy-events.ts");
   const calls = [];
   const target = { plausible: (...args) => calls.push(args) };
@@ -155,12 +155,14 @@ test("privacy events allow claim, CTA, and recommendation lifecycle events with 
   events.trackPrivacyEvent("recommendation_view", { status: "WARNING", source: "public_scanner", record: "v=spf1 include:vendor.example" }, target);
   events.trackPrivacyEvent("claim_start", { source: "upgrade_modal", email: "person@example.is" }, target);
   events.trackPrivacyEvent("claim_complete", { status: "PASS", source: "upgrade_modal", name: "Customer" }, target);
+  events.trackPrivacyEvent("dashboard_interaction", { status: "PASS", source: "dashboard_spf_route", domain: "customer.is", action: "sync" }, target);
 
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
     ["cta_click", { props: { source: "pricing" } }],
     ["recommendation_view", { props: { status: "WARNING", source: "public_scanner" } }],
     ["claim_start", { props: { source: "upgrade_modal" } }],
     ["claim_complete", { props: { status: "PASS", source: "upgrade_modal" } }],
+    ["dashboard_interaction", { props: { status: "PASS", source: "dashboard_spf_route" } }],
   ]);
 });
 
@@ -185,6 +187,21 @@ test("public marketing wires privacy funnel events without passing raw identifie
   assert.ok(eventCalls.length >= 9);
   for (const call of eventCalls) {
     assert.doesNotMatch(call, /domain|email|name|record|response\.json|form\./);
+  }
+});
+
+test("dashboard wires privacy interactions without passing raw identifiers", () => {
+  const source = readFileSync(join(root, "components/dmark-dashboard.tsx"), "utf8");
+
+  assert.match(source, /trackPrivacyEvent/);
+  const eventCalls = source.match(/trackPrivacyEvent\([^\n]+\);/g) || [];
+  assert.ok(eventCalls.length >= 6);
+  for (const call of eventCalls) {
+    assert.match(call, /dashboard_interaction/);
+    assert.doesNotMatch(call, /domain:|owner:|alertID|selectedDomain|query:|settings:|sourceDrafts/);
+  }
+  for (const coarseSource of ["dashboard_nav", "dashboard_domain_recheck", "dashboard_spf_route", "dashboard_alerts", "dashboard_settings", "dashboard_export"]) {
+    assert.match(source, new RegExp(coarseSource));
   }
 });
 

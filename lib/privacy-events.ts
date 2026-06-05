@@ -7,9 +7,22 @@ type PrivacyEventName =
   | "cta_click"
   | "claim_start"
   | "claim_complete"
-  | "claim_error";
+  | "claim_error"
+  | "dashboard_interaction";
 type PrivacyEventStatus = "PASS" | "WARNING" | "FAIL" | "ERROR";
-type PrivacyEventSource = "public_scanner" | "nav" | "pricing" | "footer" | "result_upsell" | "upgrade_modal";
+type PrivacyEventSource =
+  | "public_scanner"
+  | "nav"
+  | "pricing"
+  | "footer"
+  | "result_upsell"
+  | "upgrade_modal"
+  | "dashboard_nav"
+  | "dashboard_domain_recheck"
+  | "dashboard_spf_route"
+  | "dashboard_alerts"
+  | "dashboard_settings"
+  | "dashboard_export";
 
 type PrivacyEventProperties = {
   status?: string;
@@ -32,6 +45,7 @@ const allowedEvents = new Set<PrivacyEventName>([
   "claim_start",
   "claim_complete",
   "claim_error",
+  "dashboard_interaction",
 ]);
 const allowedStatuses = new Set<PrivacyEventStatus>(["PASS", "WARNING", "FAIL", "ERROR"]);
 const allowedSources = new Set<PrivacyEventSource>([
@@ -41,6 +55,12 @@ const allowedSources = new Set<PrivacyEventSource>([
   "footer",
   "result_upsell",
   "upgrade_modal",
+  "dashboard_nav",
+  "dashboard_domain_recheck",
+  "dashboard_spf_route",
+  "dashboard_alerts",
+  "dashboard_settings",
+  "dashboard_export",
 ]);
 
 function sanitizePrivacyEventName(value: string): PrivacyEventName | null {

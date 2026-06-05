@@ -62,6 +62,7 @@ import {
   type SPFRouteSource,
   type SPFRouteViewModel,
 } from "@/lib/dashboard";
+import { trackPrivacyEvent } from "@/lib/privacy-events";
 
 const navItems = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -178,6 +179,12 @@ function dashboardIcon(icon: DashboardIconName): LucideIcon {
 
 function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
+}
+
+function privacyStatusForOutcome(outcome: "start" | "success" | "error") {
+  if (outcome === "success") return "PASS";
+  if (outcome === "error") return "ERROR";
+  return "WARNING";
 }
 
 export function DmarkDashboard({
@@ -383,6 +390,11 @@ export function DmarkDashboard({
     setActionNotice(message);
   }
 
+  function selectDashboardTab(tab: TabID) {
+    trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("start"), source: "dashboard_nav" });
+    setActiveTab(tab);
+  }
+
   async function copyText(value: string, label: string) {
     try {
       await navigator.clipboard.writeText(value);
@@ -403,6 +415,7 @@ export function DmarkDashboard({
   }
 
   function exportDomains(rows: ProtectedDomain[]) {
+    trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("start"), source: "dashboard_export" });
     const csv = [
       ["domain", "owner", "status", "score", "dmarc_policy", "spf_lookups", "dkim_coverage", "unknown_senders", "last_checked"],
       ...rows.map((domain) => [
@@ -423,6 +436,7 @@ export function DmarkDashboard({
   }
 
   async function recheckDomain(domain: ProtectedDomain) {
+    trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("start"), source: "dashboard_domain_recheck" });
     setRecheckingDomainID(domain.id);
     announce(`Rechecking ${domain.domain}...`);
 
@@ -430,8 +444,10 @@ export function DmarkDashboard({
       const result = await recheckDashboardDomain(domain.id);
       const refreshed = await getDashboardData().catch(() => null);
       if (refreshed) setDashboard(refreshed);
+      trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_domain_recheck" });
       announce(`${domain.domain} recheck ${result.status}.`);
     } catch (error) {
+      trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_domain_recheck" });
       announce(errorMessage(error, `${domain.domain} recheck failed.`));
     } finally {
       setRecheckingDomainID(null);
@@ -441,6 +457,7 @@ export function DmarkDashboard({
   async function syncSelectedSPFRoute() {
     if (!selectedDomain) return;
 
+    trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("start"), source: "dashboard_spf_route" });
     setSyncingSPFRoute(true);
     setSpfRouteError("");
     announce(`Queueing SPF route sync for ${selectedDomain.domain}...`);
@@ -450,8 +467,10 @@ export function DmarkDashboard({
       const refreshed = await getSPFRouteData(selectedDomain.id).catch(() => null);
       if (refreshed) setSpfRoute(refreshed);
       setSpfRouteState(refreshed ? "ready" : spfRouteState);
+      trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_spf_route" });
       announce(`SPF route sync ${result.status} for ${selectedDomain.domain}.`);
     } catch (error) {
+      trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_spf_route" });
       const message = errorMessage(error, `${selectedDomain.domain} SPF route sync could not be queued.`);
       setSpfRouteError(message);
       announce(message);
@@ -463,6 +482,7 @@ export function DmarkDashboard({
   async function saveSelectedSPFRouteSources(sources: SPFRouteSource[]) {
     if (!selectedDomain) return;
 
+    trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("start"), source: "dashboard_spf_route" });
     setSavingSPFRouteSources(true);
     setSpfRouteError("");
     announce(`Saving SPF source management for ${selectedDomain.domain}...`);
@@ -471,8 +491,10 @@ export function DmarkDashboard({
       const refreshed = await saveSPFRouteSources(selectedDomain.id, sources);
       setSpfRoute(refreshed);
       setSpfRouteState("ready");
+      trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_spf_route" });
       announce(`SPF source management saved for ${selectedDomain.domain}; sync queued by backend.`);
     } catch (error) {
+      trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_spf_route" });
       const message = errorMessage(error, `${selectedDomain.domain} SPF sources could not be saved.`);
       setSpfRouteError(message);
       announce(message);
@@ -484,6 +506,7 @@ export function DmarkDashboard({
   async function resolveAlert(alertID: string, action: "acknowledged" | "muted") {
     const alert = activeAlerts.find((item) => item.id === alertID);
 
+    trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("start"), source: "dashboard_alerts" });
     try {
       if (action === "acknowledged") {
         await acknowledgeDashboardAlert(alertID, "Acknowledged from dashboard.");
@@ -491,8 +514,10 @@ export function DmarkDashboard({
         await muteDashboardAlert(alertID, "7d", "Muted from dashboard.");
       }
       setActiveAlerts((current) => current.filter((item) => item.id !== alertID));
+      trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_alerts" });
       announce(`${alert?.title || "Alert"} ${action}.`);
     } catch (error) {
+      trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_alerts" });
       announce(errorMessage(error, `${alert?.title || "Alert"} could not be ${action}.`));
     }
   }
@@ -504,12 +529,15 @@ export function DmarkDashboard({
     setSavingSetting(key);
     setSettingsError("");
 
+    trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("start"), source: "dashboard_settings" });
     try {
       const saved = await saveDashboardSettings(next);
       setSettings(saved);
+      trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_settings" });
       announce("Automation setting saved.");
     } catch (error) {
       setSettings(previous);
+      trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_settings" });
       const message = errorMessage(error, "Settings could not be saved.");
       setSettingsError(message);
       announce(message);
@@ -532,13 +560,16 @@ export function DmarkDashboard({
     setSavingSettingsForm(true);
     setSettingsError("");
 
+    trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("start"), source: "dashboard_settings" });
     try {
       const saved = await saveDashboardSettings(normalized);
       setSettings(saved);
+      trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_settings" });
       announce("Dashboard settings saved.");
     } catch (error) {
       const message = errorMessage(error, "Settings could not be saved.");
       setSettings(previous);
+      trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_settings" });
       setSettingsError(message);
       announce(message);
     } finally {
@@ -561,10 +592,13 @@ export function DmarkDashboard({
   async function exportReporterCSV() {
     if (!selectedDomain) return;
 
+    trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("start"), source: "dashboard_export" });
     try {
       const blob = await fetchReporterCSV(selectedDomain.id, reporterFilter === "unknown" ? "unknown" : undefined);
       downloadBlob("dmark-reporter-senders.csv", blob);
+      trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_export" });
     } catch (error) {
+      trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_export" });
       announce(errorMessage(error, "Reporter CSV could not be exported."));
     }
   }
@@ -572,7 +606,7 @@ export function DmarkDashboard({
   return (
     <div className="min-h-screen bg-slate-50 text-navy">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-slate-200 bg-white lg:block">
-        <DashboardSidebar activeTab={activeTab} onSelect={setActiveTab} />
+        <DashboardSidebar activeTab={activeTab} onSelect={selectDashboardTab} />
       </aside>
 
       <div className="lg:pl-72">
@@ -641,7 +675,7 @@ export function DmarkDashboard({
               selectedDomain={selectedDomain}
               filteredDomains={filteredDomains}
               onSelectDomain={setSelectedDomainID}
-              onOpenTab={setActiveTab}
+              onOpenTab={selectDashboardTab}
               onRecheckDomain={recheckDomain}
               recheckingDomainID={recheckingDomainID}
             />
@@ -700,7 +734,7 @@ export function DmarkDashboard({
             />
           ) : null}
           {activeTab === "alerts" ? (
-            <AlertsTab alerts={activeAlerts} onOpenDomains={() => setActiveTab("domains")} onResolveAlert={resolveAlert} />
+            <AlertsTab alerts={activeAlerts} onOpenDomains={() => selectDashboardTab("domains")} onResolveAlert={resolveAlert} />
           ) : null}
           {activeTab === "settings" ? (
             <SettingsTab
@@ -745,7 +779,7 @@ export function DmarkDashboard({
             <DashboardSidebar
               activeTab={activeTab}
               onSelect={(tab) => {
-                setActiveTab(tab);
+                selectDashboardTab(tab);
                 setMobileNavOpen(false);
               }}
             />
