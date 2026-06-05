@@ -362,6 +362,20 @@ test("admin temp login gives operator feedback when access guard stays closed", 
   assert.match(pageSource, /DMARK_ADMIN_ACCESS/);
 });
 
+test("dashboard backend URL allows domain creation but still rejects unrelated backend paths", () => {
+  const previousBase = process.env.DMARK_API_BASE_URL;
+
+  try {
+    process.env.DMARK_API_BASE_URL = "https://dmark.kastro.is";
+    const api = loadTSModule("lib/dashboard-api.ts");
+
+    assert.equal(api.dashboardBackendURL("/api/v1/domains").toString(), "https://dmark.kastro.is/api/v1/domains");
+    assert.throws(() => api.dashboardBackendURL("/api/v1/admin/provider-health"), /not allowed/);
+  } finally {
+    restoreEnv("DMARK_API_BASE_URL", previousBase);
+  }
+});
+
 test("dashboard API client attaches bearer token and uses DMARK_API aliases", async () => {
   const previousBase = process.env.DMARK_API_BASE_URL;
   const previousToken = process.env.DMARK_API_TOKEN;

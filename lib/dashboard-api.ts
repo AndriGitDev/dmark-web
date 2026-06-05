@@ -242,7 +242,7 @@ export function dashboardBackendURL(path: string): URL {
 
   try {
     const url = new URL(path, base.endsWith("/") ? base : `${base}/`);
-    if (!url.pathname.startsWith("/api/v1/dashboard")) {
+    if (!isAllowedDashboardBackendPath(url.pathname)) {
       throw new DashboardAPIError("Dashboard backend path is not allowed.", 500);
     }
     return url;
@@ -250,6 +250,10 @@ export function dashboardBackendURL(path: string): URL {
     if (error instanceof DashboardAPIError) throw error;
     throw new DashboardAPIError("Dashboard backend base URL is invalid.", 503);
   }
+}
+
+function isAllowedDashboardBackendPath(pathname: string): boolean {
+  return pathname.startsWith("/api/v1/dashboard") || pathname === "/api/v1/domains";
 }
 
 export async function dashboardFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
