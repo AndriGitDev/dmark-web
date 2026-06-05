@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { Activity, Building2, ClipboardList, HeartPulse, Lock, Route, ShieldAlert } from "lucide-react";
 import { isAdminOwnerSessionAllowed, isAdminTempPasswordEnabled } from "@/lib/admin-access";
+import { isAuthentikOIDCEnabled } from "@/lib/authentik-access";
 import {
   buildAdminShellModel,
   buildOperationalEventsPanelModel,
@@ -129,6 +130,15 @@ function AdminLocked({ eyebrow, title, description, loginStatus }: { eyebrow: st
           </div>
           <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">{title}</h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">{description}</p>
+          {isAuthentikOIDCEnabled() ? (
+            <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-700">Owner identity provider</p>
+              <p className="mt-2 text-sm leading-6 text-slate-500">Use Authentik SSO for the global admin control plane.</p>
+              <Link className="mt-4 inline-flex min-h-11 items-center rounded-md bg-slate-950 px-5 font-semibold text-white transition hover:bg-slate-800" href="/api/auth/login">
+                Sign in with Authentik
+              </Link>
+            </div>
+          ) : null}
           {isAdminTempPasswordEnabled() ? (
             <form action="/api/admin/temp-login" method="post" className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-4">
               <label className="block text-sm font-semibold text-slate-700" htmlFor="password">

@@ -40,6 +40,7 @@ function loadTSModule(relativePath) {
     require: (specifier) => {
       if (specifier === "server-only") return {};
       if (specifier === "node:crypto") return { createHmac, timingSafeEqual };
+      if (specifier === "./authentik-access") return loadTSModule("lib/authentik-access.ts");
       throw new Error(`Unexpected require: ${specifier}`);
     },
     setTimeout,
@@ -362,7 +363,84 @@ test("admin temp login gives operator feedback when access guard stays closed", 
   assert.match(pageSource, /DMARK_ADMIN_ACCESS/);
 });
 
-test("dashboard backend URL allows domain creation but still rejects unrelated backend paths", () => {
+test("Authentik config derives OIDC endpoints and stays disabled until complete", () => {
+  const previous = snapshotEnv([
+    "DMARK_AUTHENTIK_CLIENT_ID",
+    "DMARK_AUTHENTIK_CLIENT_SECRET",
+    "DMARK_AUTHENTIK_ISSUER",
+    "DMARK_AUTHENTIK_REDIRECT_URI",
+    "DMARK_AUTHENTIK_SESSION_SECRET",
+  ]);
+
+  try {
+    const authentik = loadTSModule("lib/authentik-access.ts");
+    delete process.env.DMARK_AUTHENTIK_CLIENT_ID;
+    delete process.env.DMARK_AUTHENTIK_CLIENT_SECRET;
+    delete process.env.DMARK_AUTHENTIK_ISSUER;
+    delete process.env.DMARK_AUTHENTIK_REDIRECT_URI;
+    delete process.env.DMARK_AUTHENTIK_SESSION_SECRET;
+    assert.equal(authentik.getAuthentikConfig(), null);
+
+    process.env.DMARK_AUTHENTIK_ISSUER = "https://auth.kastro.is/application/o/dmark";
+    process.env.DMARK_AUTHENTIK_CLIENT_ID = "dmark-client";
+    process.env.DMARK_AUTHENTIK_CLIENT_SECRET = ["fixture", "client", "secret"].join("-");
+    process.env.DMARK_AUTHENTIK_REDIRECT_URI = "https://dmark.is/api/auth/callback";
+    process.env.DMARK_AUTHENTIK_SESSION_SECRET = ["fixture", "session", "secret"].join("-");
+
+    const config = authentik.getAuthentikConfig();
+    assert.equal(config.issuer, "https://auth.kastro.is/application/o/dmark/");
+    assert.equal(config.authorizationEndpoint, "https://auth.kastro.is/application/o/dmark/authorize/");
+    assert.equal(config.tokenEndpoint, "https://auth.kastro.is/application/o/dmark/token/");
+    assert.equal(config.userInfoEndpoint, "https://auth.kastro.is/application/o/dmark/userinfo/");
+    assert.equal(JSON.stringify(config).includes("fixture-client-secret"), false);
+  } finally {
+    restoreEnvSnapshot(previous);
+  }
+});
+
+test("Authentik sessions are signed, expiring, and authorize configured owner emails or groups", () => {
+  const previous = snapshotEnv([
+    "DMARK_AUTHENTIK_ALLOWED_EMAILS",
+    "DMARK_AUTHENTIK_ALLOWED_GROUPS",
+    "DMARK_AUTHENTIK_CLIENT_ID",
+    "DMARK_AUTHENTIK_CLIENT_SECRET",
+    "DMARK_AUTHENTIK_ISSUER",
+    "DMARK_AUTHENTIK_REDIRECT_URI",
+    "DMARK_AUTHENTIK_SESSION_SECRET",
+  ]);
+
+  try {
+    const authentik = loadTSModule("lib/authentik-access.ts");
+    process.env.DMARK_AUTHENTIK_ISSUER = "https://auth.kastro.is/application/o/dmark/";
+    process.env.DMARK_AUTHENTIK_CLIENT_ID = "dmark-client";
+    process.env.DMARK_AUTHENTIK_CLIENT_SECRET = ["fixture", "client", "secret"].join("-");
+    process.env.DMARK_AUTHENTIK_REDIRECT_URI = "https://dmark.is/api/auth/callback";
+    process.env.DMARK_AUTHENTIK_SESSION_SECRET = ["fixture", "session", "secret"].join("-");
+    process.env.DMARK_AUTHENTIK_ALLOWED_EMAILS = "andri@example.is";
+    process.env.DMARK_AUTHENTIK_ALLOWED_GROUPS = "dmark-admins";
+
+    assert.equal(authentik.isAuthentikUserAllowed({ email: "andri@example.is", groups: [] }), true);
+    assert.equal(authentik.isAuthentikUserAllowed({ email: "other@example.is", groups: ["dmark-admins"] }), true);
+    assert.equal(authentik.isAuthentikUserAllowed({ email: "other@example.is", groups: ["customers"] }), false);
+
+    const session = authentik.signAuthentikSession({ email: "andri@example.is", name: "Andri", groups: ["dmark-admins"] }, 1893456000);
+    assert.equal(authentik.verifyAuthentikSession(session, 1893455000)?.email, "andri@example.is");
+    assert.equal(authentik.verifyAuthentikSession(`${session}tampered`, 1893455000), null);
+    assert.equal(authentik.verifyAuthentikSession(session, 1893457000), null);
+  } finally {
+    restoreEnvSnapshot(previous);
+  }
+});
+
+test("admin page exposes Authentik login before temporary password fallback", () => {
+  const source = readFileSync(join(root, "app/admin/page.tsx"), "utf8");
+
+  assert.match(source, /isAuthentikOIDCEnabled/);
+  assert.match(source, /\/api\/auth\/login/);
+  assert.match(source, /Sign in with Authentik/);
+});
+
+test("dashboard backend allowlist includes domain creation without opening admin paths", () => {
   const previousBase = process.env.DMARK_API_BASE_URL;
 
   try {
@@ -1410,6 +1488,16 @@ test("admin shell locked model is fail-closed without backend affordances", () =
   assert.match(model.description, /owner session/i);
   assert.equal(JSON.stringify(model).includes("/api/v1/admin"), false);
 });
+
+function snapshotEnv(keys) {
+  return Object.fromEntries(keys.map((key) => [key, process.env[key]]));
+}
+
+function restoreEnvSnapshot(snapshot) {
+  for (const [key, value] of Object.entries(snapshot)) {
+    restoreEnv(key, value);
+  }
+}
 
 function restoreEnv(key, value) {
   if (value === undefined) {

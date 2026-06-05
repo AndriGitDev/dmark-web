@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { isAuthentikSessionAllowed } from "./authentik-access";
 
 const OPEN_VALUES = new Set(["1", "true", "yes", "open"]);
 const ADMIN_TEMP_COOKIE = "dmark_admin_temp_session";
@@ -28,6 +29,10 @@ export function signAdminTempPassword(password: string): string {
 }
 
 export function isAdminOwnerSessionAllowed(headers: Headers): boolean {
+  if (isAuthentikSessionAllowed(headers)) {
+    return true;
+  }
+
   if (!isAdminAccessEnabled()) {
     return false;
   }
