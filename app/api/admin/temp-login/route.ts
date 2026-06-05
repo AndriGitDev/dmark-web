@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { adminTempCookieName, signAdminTempPassword } from "@/lib/admin-access";
 
+const DEFAULT_PUBLIC_ORIGIN = "https://dmark.is";
+
 export async function POST(request: Request) {
   const form = await request.formData();
   const password = String(form.get("password") || "");
@@ -24,16 +26,25 @@ export async function POST(request: Request) {
 }
 
 function adminRedirectURL(request: Request): URL {
+  const configuredOrigin = firstForwardedValue(process.env.DMARK_PUBLIC_ORIGIN || process.env.NEXT_PUBLIC_SITE_URL || "");
+  if (configuredOrigin) {
+    return new URL("/admin", configuredOrigin);
+  }
+
   const forwardedHost = firstForwardedValue(request.headers.get("x-forwarded-host")) || firstForwardedValue(request.headers.get("host"));
   const forwardedProto = firstForwardedValue(request.headers.get("x-forwarded-proto")) || "https";
 
-  if (forwardedHost) {
+  if (forwardedHost && !isLocalhostHost(forwardedHost)) {
     return new URL("/admin", `${forwardedProto}://${forwardedHost}`);
   }
 
-  return new URL("/admin", request.url);
+  return new URL("/admin", DEFAULT_PUBLIC_ORIGIN);
 }
 
 function firstForwardedValue(value: string | null): string {
   return String(value || "").split(",")[0]?.trim() || "";
+}
+
+function isLocalhostHost(host: string): boolean {
+  return host === "localhost" || host.startsWith("localhost:") || host === "127.0.0.1" || host.startsWith("127.0.0.1:");
 }
