@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { dashboardLockedResponseBody, isDashboardAccessEnabled } from "@/lib/dashboard-access";
+import { dashboardAuthRequiredResponseBody, isDashboardAuthentikSessionAllowed } from "@/lib/dashboard-authentik-access";
 import {
   dashboardAPIErrorResponse,
   dashboardProxyFetch,
@@ -24,6 +25,9 @@ export async function GET(request: Request, context: DashboardRouteContext) {
   if (!isDashboardAccessEnabled()) {
     return dashboardLockedResponse();
   }
+  if (!isDashboardAuthentikSessionAllowed(request.headers)) {
+    return dashboardAuthRequiredResponse();
+  }
 
   const backendPath = await backendDashboardPath(request, context);
 
@@ -37,6 +41,9 @@ export async function GET(request: Request, context: DashboardRouteContext) {
 export async function POST(request: Request, context: DashboardRouteContext) {
   if (!isDashboardAccessEnabled()) {
     return dashboardLockedResponse();
+  }
+  if (!isDashboardAuthentikSessionAllowed(request.headers)) {
+    return dashboardAuthRequiredResponse();
   }
 
   const backendPath = await backendDashboardPath(request, context, "POST");
@@ -59,6 +66,9 @@ export async function PUT(request: Request, context: DashboardRouteContext) {
   if (!isDashboardAccessEnabled()) {
     return dashboardLockedResponse();
   }
+  if (!isDashboardAuthentikSessionAllowed(request.headers)) {
+    return dashboardAuthRequiredResponse();
+  }
 
   const backendPath = await backendDashboardPath(request, context);
   const body = await request.text();
@@ -78,6 +88,10 @@ export async function PUT(request: Request, context: DashboardRouteContext) {
 
 function dashboardLockedResponse(): Response {
   return NextResponse.json(dashboardLockedResponseBody(), { status: 403 });
+}
+
+function dashboardAuthRequiredResponse(): Response {
+  return NextResponse.json(dashboardAuthRequiredResponseBody(), { status: 401 });
 }
 
 async function backendDashboardPath(request: Request, context: DashboardRouteContext, method = "GET"): Promise<string> {

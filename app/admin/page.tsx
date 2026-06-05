@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { Activity, Building2, ClipboardList, HeartPulse, Lock, Route, ShieldAlert } from "lucide-react";
-import { isAdminOwnerSessionAllowed, isAdminTempPasswordEnabled } from "@/lib/admin-access";
+import { isAdminOwnerSessionAllowed } from "@/lib/admin-access";
 import { isAuthentikOIDCEnabled } from "@/lib/authentik-access";
 import {
   buildAdminShellModel,
@@ -49,12 +49,11 @@ type AdminPageProps = {
 
 export default async function AdminPage({ searchParams }: AdminPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : {};
-  const loginStatus = firstSearchParam(resolvedSearchParams.login).trim();
   const requestHeaders = await headers();
   const model = buildAdminShellModel({ allowed: isAdminOwnerSessionAllowed(requestHeaders) });
 
   if (model.status === "locked") {
-    return <AdminLocked title={model.title} description={model.description} eyebrow={model.eyebrow} loginStatus={loginStatus} />;
+    return <AdminLocked title={model.title} description={model.description} eyebrow={model.eyebrow} />;
   }
 
   const selectedRouteID = firstSearchParam(resolvedSearchParams.routeID ?? resolvedSearchParams.routeId ?? resolvedSearchParams.route_id).trim();
@@ -117,9 +116,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   );
 }
 
-function AdminLocked({ eyebrow, title, description, loginStatus }: { eyebrow: string; title: string; description: string; loginStatus: string }) {
-  const loginMessage = adminLoginMessage(loginStatus);
-
+function AdminLocked({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) {
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#e0f2fe_0,#f8fafc_34%,#ffffff_70%)] px-5 py-10 text-navy sm:px-8">
       <section className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-4xl place-items-center">
@@ -139,41 +136,11 @@ function AdminLocked({ eyebrow, title, description, loginStatus }: { eyebrow: st
               </Link>
             </div>
           ) : null}
-          {isAdminTempPasswordEnabled() ? (
-            <form action="/api/admin/temp-login" method="post" className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <label className="block text-sm font-semibold text-slate-700" htmlFor="password">
-                Temporary admin password
-              </label>
-              <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-                <input
-                  className="min-h-11 flex-1 rounded-md border border-slate-300 px-3 text-base outline-none ring-trust/20 transition focus:ring-4"
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                />
-                <button className="min-h-11 rounded-md bg-slate-950 px-5 font-semibold text-white transition hover:bg-slate-800" type="submit">
-                  Unlock briefly
-                </button>
-              </div>
-              <p className="mt-3 text-xs leading-5 text-slate-500">
-                This temporary cookie expires after 15 minutes and is intended only for pre-Authentik operator testing.
-              </p>
-              {loginMessage ? <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">{loginMessage}</p> : null}
-            </form>
-          ) : null}
           <p className="mt-6 text-sm text-slate-500">Public scanning and client organization dashboards remain outside this owner-only global admin surface.</p>
         </div>
       </section>
     </main>
   );
-}
-
-function adminLoginMessage(status: string): string {
-  if (status === "failed") return "That temporary password did not match.";
-  if (status === "closed") return "Password accepted, but DMARK_ADMIN_ACCESS is not open in the frontend environment yet.";
-  return "";
 }
 
 function AdminSectionCard({ section }: { section: AdminShellSection }) {

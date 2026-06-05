@@ -353,14 +353,12 @@ test("dashboard API route maps domain creation to the backend domain API", () =>
   assert.match(source, /return `\/api\/v1\/domains/);
 });
 
-test("admin temp login gives operator feedback when access guard stays closed", () => {
-  const routeSource = readFileSync(join(root, "app/api/admin/temp-login/route.ts"), "utf8");
+test("admin temp login fallback is removed after Authentik cutover", () => {
   const pageSource = readFileSync(join(root, "app/admin/page.tsx"), "utf8");
+  const accessSource = readFileSync(join(root, "lib/admin-access.ts"), "utf8");
 
-  assert.match(routeSource, /isAdminAccessEnabled\(\)/);
-  assert.match(routeSource, /url\.searchParams\.set\("login", "closed"\)/);
-  assert.match(pageSource, /loginStatus/);
-  assert.match(pageSource, /DMARK_ADMIN_ACCESS/);
+  assert.doesNotMatch(pageSource, /api\/admin\/temp-login|Temporary admin password|isAdminTempPasswordEnabled/);
+  assert.doesNotMatch(accessSource, /DMARK_ADMIN_TEMP_PASSWORD|signAdminTempPassword|adminTempCookieName|dmark_admin_temp_session/);
 });
 
 test("Authentik callback avoids localhost admin redirects behind proxies", () => {
@@ -441,12 +439,13 @@ test("Authentik sessions are signed, expiring, and authorize configured owner em
   }
 });
 
-test("admin page exposes Authentik login before temporary password fallback", () => {
+test("admin page exposes only the admin Authentik login", () => {
   const source = readFileSync(join(root, "app/admin/page.tsx"), "utf8");
 
   assert.match(source, /isAuthentikOIDCEnabled/);
   assert.match(source, /\/api\/auth\/login/);
   assert.match(source, /Sign in with Authentik/);
+  assert.doesNotMatch(source, /temporary password fallback|api\/admin\/temp-login/i);
 });
 
 test("dashboard backend allowlist includes domain creation without opening admin paths", () => {
@@ -553,6 +552,121 @@ test("dashboard access is closed by default and only opens by explicit server en
     restoreEnv("DMARK_DASHBOARD_ACCESS", previousAccess);
     restoreEnv("DMARK_DASHBOARD_ENABLED", previousEnabled);
   }
+});
+
+test("dashboard Authentik config uses customer env, callback, and cookies separate from admin", () => {
+  const previous = snapshotEnv([
+    "DMARK_AUTHENTIK_CLIENT_ID",
+    "DMARK_AUTHENTIK_CLIENT_SECRET",
+    "DMARK_AUTHENTIK_ISSUER",
+    "DMARK_AUTHENTIK_REDIRECT_URI",
+    "DMARK_AUTHENTIK_SESSION_SECRET",
+    "DMARK_DASHBOARD_AUTHENTIK_CLIENT_ID",
+    "DMARK_DASHBOARD_AUTHENTIK_CLIENT_SECRET",
+    "DMARK_DASHBOARD_AUTHENTIK_ISSUER",
+    "DMARK_DASHBOARD_AUTHENTIK_REDIRECT_URI",
+    "DMARK_DASHBOARD_AUTHENTIK_SESSION_SECRET",
+  ]);
+
+  try {
+    const admin = loadTSModule("lib/authentik-access.ts");
+    const dashboard = loadTSModule("lib/dashboard-authentik-access.ts");
+
+    process.env.DMARK_AUTHENTIK_ISSUER = "https://auth.kastro.is/application/o/dmark-web-admin/";
+    process.env.DMARK_AUTHENTIK_CLIENT_ID = "dmark-web-admin";
+    process.env.DMARK_AUTHENTIK_CLIENT_SECRET = ["fixture", "admin", "secret"].join("-");
+    process.env.DMARK_AUTHENTIK_REDIRECT_URI = "https://dmark.is/api/auth/callback";
+    process.env.DMARK_AUTHENTIK_SESSION_SECRET = ["fixture", "admin", "session"].join("-");
+
+    delete process.env.DMARK_DASHBOARD_AUTHENTIK_ISSUER;
+    delete process.env.DMARK_DASHBOARD_AUTHENTIK_CLIENT_ID;
+    delete process.env.DMARK_DASHBOARD_AUTHENTIK_CLIENT_SECRET;
+    delete process.env.DMARK_DASHBOARD_AUTHENTIK_REDIRECT_URI;
+    delete process.env.DMARK_DASHBOARD_AUTHENTIK_SESSION_SECRET;
+    assert.equal(dashboard.getDashboardAuthentikConfig(), null);
+
+    process.env.DMARK_DASHBOARD_AUTHENTIK_ISSUER = "https://auth.kastro.is/application/o/dmark-dashboard/";
+    process.env.DMARK_DASHBOARD_AUTHENTIK_CLIENT_ID = "dmark-dashboard";
+    process.env.DMARK_DASHBOARD_AUTHENTIK_CLIENT_SECRET = ["fixture", "dashboard", "secret"].join("-");
+    process.env.DMARK_DASHBOARD_AUTHENTIK_REDIRECT_URI = "https://dmark.is/api/dashboard/auth/callback";
+    process.env.DMARK_DASHBOARD_AUTHENTIK_SESSION_SECRET = ["fixture", "dashboard", "session"].join("-");
+
+    const config = dashboard.getDashboardAuthentikConfig();
+    assert.equal(config.clientID, "dmark-dashboard");
+    assert.equal(config.redirectURI, "https://dmark.is/api/dashboard/auth/callback");
+    assert.equal(config.authorizationEndpoint, "https://auth.kastro.is/application/o/authorize/");
+    assert.equal(dashboard.dashboardAuthentikSessionCookieName(), "dmark_dashboard_authentik_session");
+    assert.equal(dashboard.dashboardAuthentikStateCookieName(), "dmark_dashboard_authentik_state");
+    assert.notEqual(dashboard.dashboardAuthentikSessionCookieName(), admin.authentikSessionCookieName());
+    assert.notEqual(dashboard.dashboardAuthentikStateCookieName(), admin.authentikStateCookieName());
+    assert.equal(JSON.stringify(config).includes("fixture-dashboard-secret"), false);
+  } finally {
+    restoreEnvSnapshot(previous);
+  }
+});
+
+test("dashboard Authentik sessions do not grant admin access and admin cookies do not grant customer access", () => {
+  const previous = snapshotEnv([
+    "DMARK_AUTHENTIK_ALLOWED_EMAILS",
+    "DMARK_AUTHENTIK_CLIENT_ID",
+    "DMARK_AUTHENTIK_CLIENT_SECRET",
+    "DMARK_AUTHENTIK_ISSUER",
+    "DMARK_AUTHENTIK_REDIRECT_URI",
+    "DMARK_AUTHENTIK_SESSION_SECRET",
+    "DMARK_DASHBOARD_AUTHENTIK_ALLOWED_EMAILS",
+    "DMARK_DASHBOARD_AUTHENTIK_CLIENT_ID",
+    "DMARK_DASHBOARD_AUTHENTIK_CLIENT_SECRET",
+    "DMARK_DASHBOARD_AUTHENTIK_ISSUER",
+    "DMARK_DASHBOARD_AUTHENTIK_REDIRECT_URI",
+    "DMARK_DASHBOARD_AUTHENTIK_SESSION_SECRET",
+  ]);
+
+  try {
+    const admin = loadTSModule("lib/authentik-access.ts");
+    const dashboard = loadTSModule("lib/dashboard-authentik-access.ts");
+
+    process.env.DMARK_AUTHENTIK_ISSUER = "https://auth.kastro.is/application/o/dmark-web-admin/";
+    process.env.DMARK_AUTHENTIK_CLIENT_ID = "dmark-web-admin";
+    process.env.DMARK_AUTHENTIK_CLIENT_SECRET = ["fixture", "admin", "secret"].join("-");
+    process.env.DMARK_AUTHENTIK_REDIRECT_URI = "https://dmark.is/api/auth/callback";
+    process.env.DMARK_AUTHENTIK_SESSION_SECRET = ["fixture", "admin", "session"].join("-");
+    process.env.DMARK_AUTHENTIK_ALLOWED_EMAILS = "andri@example.is";
+
+    process.env.DMARK_DASHBOARD_AUTHENTIK_ISSUER = "https://auth.kastro.is/application/o/dmark-dashboard/";
+    process.env.DMARK_DASHBOARD_AUTHENTIK_CLIENT_ID = "dmark-dashboard";
+    process.env.DMARK_DASHBOARD_AUTHENTIK_CLIENT_SECRET = ["fixture", "dashboard", "secret"].join("-");
+    process.env.DMARK_DASHBOARD_AUTHENTIK_REDIRECT_URI = "https://dmark.is/api/dashboard/auth/callback";
+    process.env.DMARK_DASHBOARD_AUTHENTIK_SESSION_SECRET = ["fixture", "dashboard", "session"].join("-");
+    process.env.DMARK_DASHBOARD_AUTHENTIK_ALLOWED_EMAILS = "customer@example.is";
+
+    const adminSession = admin.signAuthentikSession({ email: "andri@example.is" }, 1893456000);
+    const dashboardSession = dashboard.signDashboardAuthentikSession({ email: "customer@example.is" }, 1893456000);
+
+    assert.equal(admin.isAuthentikSessionAllowed(new Headers({ cookie: `${admin.authentikSessionCookieName()}=${adminSession}` })), true);
+    assert.equal(dashboard.isDashboardAuthentikSessionAllowed(new Headers({ cookie: `${dashboard.dashboardAuthentikSessionCookieName()}=${dashboardSession}` })), true);
+    assert.equal(admin.isAuthentikSessionAllowed(new Headers({ cookie: `${dashboard.dashboardAuthentikSessionCookieName()}=${dashboardSession}` })), false);
+    assert.equal(dashboard.isDashboardAuthentikSessionAllowed(new Headers({ cookie: `${admin.authentikSessionCookieName()}=${adminSession}` })), false);
+  } finally {
+    restoreEnvSnapshot(previous);
+  }
+});
+
+test("dashboard page and API are protected by customer Authentik while public scan remains open", () => {
+  const dashboardPage = readFileSync(join(root, "app/dashboard/page.tsx"), "utf8");
+  const dashboardRoute = readFileSync(join(root, "app/api/dashboard/[[...path]]/route.ts"), "utf8");
+  const scanRoute = readFileSync(join(root, "app/api/scan/route.ts"), "utf8");
+  const loginRoute = readFileSync(join(root, "app/api/dashboard/auth/login/route.ts"), "utf8");
+  const callbackRoute = readFileSync(join(root, "app/api/dashboard/auth/callback/route.ts"), "utf8");
+
+  assert.match(dashboardPage, /isDashboardAuthentikSessionAllowed/);
+  assert.match(dashboardPage, /\/api\/dashboard\/auth\/login/);
+  assert.match(dashboardRoute, /isDashboardAuthentikSessionAllowed/);
+  assert.match(dashboardRoute, /dashboardAuthRequiredResponseBody/);
+  assert.match(loginRoute, /buildDashboardAuthentikAuthorizeURL/);
+  assert.match(callbackRoute, /\/dashboard/);
+  assert.match(callbackRoute, /dashboardAuthentikSessionCookieName/);
+  assert.doesNotMatch(callbackRoute, /authentikSessionCookieName/);
+  assert.doesNotMatch(scanRoute, /Authentik|isDashboardAuthentikSessionAllowed|isDashboardAccessEnabled/);
 });
 
 test("dashboard response mapper renders summary metrics and domain next action", () => {
@@ -1113,7 +1227,7 @@ test("backend scan mapper marks public scan responses as live evidence", () => {
   assert.equal(view.durationMs, 184);
 });
 
-test("admin control plane access is fail-closed and requires owner session secret or temporary cookie", () => {
+test("admin control plane access is fail-closed and requires owner session secret or admin Authentik session", () => {
   const previousAccess = process.env.DMARK_ADMIN_ACCESS;
   const previousSecret = process.env.DMARK_ADMIN_OWNER_SESSION_SECRET;
   const previousTempPassword = process.env.DMARK_ADMIN_TEMP_PASSWORD;
@@ -1136,9 +1250,9 @@ test("admin control plane access is fail-closed and requires owner session secre
     assert.equal(adminAccess.isAdminOwnerSessionAllowed(new Headers({ "x-dmark-owner-session": "owner-test-session" })), true);
 
     process.env.DMARK_ADMIN_TEMP_PASSWORD = "temporary-password";
-    const cookieValue = adminAccess.signAdminTempPassword("temporary-password");
-    assert.equal(adminAccess.signAdminTempPassword("wrong-password"), "");
-    assert.equal(adminAccess.isAdminOwnerSessionAllowed(new Headers({ cookie: `${adminAccess.adminTempCookieName()}=${cookieValue}` })), true);
+    assert.equal(adminAccess.isAdminOwnerSessionAllowed(new Headers({ cookie: "dmark_admin_temp_session=temporary-password" })), false);
+    assert.equal("signAdminTempPassword" in adminAccess, false);
+    assert.equal("adminTempCookieName" in adminAccess, false);
   } finally {
     restoreEnv("DMARK_ADMIN_ACCESS", previousAccess);
     restoreEnv("DMARK_ADMIN_OWNER_SESSION_SECRET", previousSecret);
