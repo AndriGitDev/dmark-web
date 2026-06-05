@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { Activity, Building2, ClipboardList, HeartPulse, Lock, Route, ShieldAlert } from "lucide-react";
-import { isAdminOwnerSessionAllowed } from "@/lib/admin-access";
+import { isAdminOwnerSessionAllowed, isAdminTempPasswordEnabled } from "@/lib/admin-access";
 import {
   buildAdminShellModel,
   buildOperationalEventsPanelModel,
@@ -126,6 +126,29 @@ function AdminLocked({ eyebrow, title, description }: { eyebrow: string; title: 
           </div>
           <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">{title}</h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">{description}</p>
+          {isAdminTempPasswordEnabled() ? (
+            <form action="/api/admin/temp-login" method="post" className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <label className="block text-sm font-semibold text-slate-700" htmlFor="password">
+                Temporary admin password
+              </label>
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                <input
+                  className="min-h-11 flex-1 rounded-md border border-slate-300 px-3 text-base outline-none ring-trust/20 transition focus:ring-4"
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                />
+                <button className="min-h-11 rounded-md bg-slate-950 px-5 font-semibold text-white transition hover:bg-slate-800" type="submit">
+                  Unlock briefly
+                </button>
+              </div>
+              <p className="mt-3 text-xs leading-5 text-slate-500">
+                This temporary cookie expires after 15 minutes and is intended only for pre-Authentik operator testing.
+              </p>
+            </form>
+          ) : null}
           <p className="mt-6 text-sm text-slate-500">Public scanning and client organization dashboards remain outside this owner-only global admin surface.</p>
         </div>
       </section>

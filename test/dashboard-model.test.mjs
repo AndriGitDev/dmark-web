@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import test from "node:test";
@@ -39,7 +39,7 @@ function loadTSModule(relativePath) {
     process,
     require: (specifier) => {
       if (specifier === "server-only") return {};
-      if (specifier === "node:crypto") return { timingSafeEqual };
+      if (specifier === "node:crypto") return { createHmac, timingSafeEqual };
       throw new Error(`Unexpected require: ${specifier}`);
     },
     setTimeout,
@@ -952,15 +952,17 @@ test("backend scan mapper marks public scan responses as live evidence", () => {
   assert.equal(view.durationMs, 184);
 });
 
-test("admin control plane access is fail-closed and requires owner session secret", () => {
+test("admin control plane access is fail-closed and requires owner session secret or temporary cookie", () => {
   const previousAccess = process.env.DMARK_ADMIN_ACCESS;
   const previousSecret = process.env.DMARK_ADMIN_OWNER_SESSION_SECRET;
+  const previousTempPassword = process.env.DMARK_ADMIN_TEMP_PASSWORD;
 
   try {
     const adminAccess = loadTSModule("lib/admin-access.ts");
 
     delete process.env.DMARK_ADMIN_ACCESS;
     delete process.env.DMARK_ADMIN_OWNER_SESSION_SECRET;
+    delete process.env.DMARK_ADMIN_TEMP_PASSWORD;
     assert.equal(adminAccess.isAdminAccessEnabled(), false);
     assert.equal(adminAccess.adminLockedResponseBody().error, "Admin control plane access is closed.");
 
@@ -971,9 +973,15 @@ test("admin control plane access is fail-closed and requires owner session secre
     process.env.DMARK_ADMIN_OWNER_SESSION_SECRET = "owner-test-session";
     assert.equal(adminAccess.isAdminOwnerSessionAllowed(new Headers({ "x-dmark-owner-session": "wrong" })), false);
     assert.equal(adminAccess.isAdminOwnerSessionAllowed(new Headers({ "x-dmark-owner-session": "owner-test-session" })), true);
+
+    process.env.DMARK_ADMIN_TEMP_PASSWORD = "temporary-password";
+    const cookieValue = adminAccess.signAdminTempPassword("temporary-password");
+    assert.equal(adminAccess.signAdminTempPassword("wrong-password"), "");
+    assert.equal(adminAccess.isAdminOwnerSessionAllowed(new Headers({ cookie: `${adminAccess.adminTempCookieName()}=${cookieValue}` })), true);
   } finally {
     restoreEnv("DMARK_ADMIN_ACCESS", previousAccess);
     restoreEnv("DMARK_ADMIN_OWNER_SESSION_SECRET", previousSecret);
+    restoreEnv("DMARK_ADMIN_TEMP_PASSWORD", previousTempPassword);
   }
 });
 
