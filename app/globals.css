@@ -4,13 +4,13 @@
 
 :root {
   color-scheme: light;
-  --paper: #F5F3EC;
-  --paper-soft: #ECE8DD;
-  --card: #FCFBF7;
-  --midnight: #0E0F14;
-  --ink: #14151A;
-  --brand: #2826E6;
-  --line: #E0DBCD;
+  --paper: #F4F8FA;
+  --paper-soft: #EAF3F6;
+  --card: #FFFFFF;
+  --midnight: #071522;
+  --ink: #132844;
+  --brand: #42B6CE;
+  --line: #D6E4EA;
 }
 
 * {
@@ -25,7 +25,9 @@ html {
 body {
   margin: 0;
   overflow-x: hidden;
-  background: var(--paper);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(66, 182, 206, 0.16), transparent 30rem),
+    var(--paper);
   color: var(--ink);
   font-family: var(--font-schibsted), "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
   font-size: 17px;
@@ -52,19 +54,19 @@ button {
 }
 
 ::selection {
-  background: #2826E6;
+  background: #42B6CE;
   color: #ffffff;
 }
 
 :focus-visible {
-  outline: 2px solid #2826E6;
+  outline: 2px solid #42B6CE;
   outline-offset: 3px;
 }
 
 .dmark-grid {
   background-image:
-    linear-gradient(rgba(40, 38, 230, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(40, 38, 230, 0.08) 1px, transparent 1px);
+    linear-gradient(rgba(66, 182, 206, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(66, 182, 206, 0.12) 1px, transparent 1px);
   background-size: 46px 46px;
   mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.88), transparent 82%);
 }

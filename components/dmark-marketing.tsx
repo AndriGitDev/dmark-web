@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -235,17 +236,18 @@ export function DmarkMarketing() {
         <div className="relative mx-auto max-w-[1200px] px-5 py-10 sm:px-8 lg:px-12 lg:py-16">
           <div className="grid min-h-[calc(100vh-96px)] items-center gap-10 lg:grid-cols-[minmax(0,1fr)_460px]">
             <div>
+              <Image className="mb-8 h-auto w-48 drop-shadow-sm sm:w-56" src="/brand/dmark-logo.png" alt="dmark.is" width={769} height={240} priority />
               <p className="inline-flex items-center gap-3 rounded-full border border-line-strong bg-card px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.22em] text-brand shadow-sm">
                 <span className="h-2 w-2 rounded-full bg-brand" aria-hidden="true" /> dmark.is · Icelandic email security
               </p>
               <h1 className="mt-6 max-w-4xl text-balance text-[clamp(38px,6.2vw,76px)] font-[760] leading-[0.98] tracking-[-0.035em]">
-                Scan the DNS records attackers use to <span className="text-brand underline decoration-brand/25 decoration-4 underline-offset-[10px]">borrow your brand.</span>
+                Scan the DNS records attackers use to <span className="text-brand-ink underline decoration-brand/35 decoration-4 underline-offset-[10px]">borrow your brand.</span>
               </h1>
               <p className="mt-7 max-w-2xl text-pretty text-[clamp(17px,1.5vw,21px)] leading-[1.55] text-ink-500">
                 Run a public DMARC and SPF diagnostic, see exactly why spoofed mail can pass, then move into automated flattening, readable reports, and a safe path to p=reject.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <button type="button" onClick={() => scrollToScanner("nav")} className="inline-flex min-h-[58px] items-center justify-center gap-3 rounded bg-brand px-8 font-semibold text-white shadow-glow transition hover:-translate-y-0.5 hover:bg-brand-ink">
+                <button type="button" onClick={() => scrollToScanner("nav")} className="inline-flex min-h-[58px] items-center justify-center gap-3 rounded bg-brand-ink px-8 font-semibold text-white shadow-glow transition hover:-translate-y-0.5 hover:bg-brand">
                   <Search className="h-5 w-5" aria-hidden="true" /> Scan my domain
                 </button>
                 <button type="button" onClick={() => openUpgradeModal("saas", "nav")} className="inline-flex min-h-[58px] items-center justify-center gap-3 rounded border border-line-strong px-8 font-semibold text-ink transition hover:-translate-y-0.5 hover:border-ink">
@@ -415,11 +417,8 @@ function Header({ onScan, onUpgrade }: { onScan: () => void; onUpgrade: () => vo
     <header className="sticky top-0 z-40 border-b border-line/80 bg-paper/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-[1200px] items-center justify-between px-5 py-4 sm:px-8 lg:px-12">
         <a href="#top" className="flex items-center gap-3" aria-label="dmark.is home">
-          <span className="grid h-10 w-10 place-items-center rounded bg-ink text-white"><ShieldCheck className="h-5 w-5" aria-hidden="true" /></span>
-          <span>
-            <span className="block text-lg font-extrabold tracking-tight">dmark<span className="text-brand">.is</span></span>
-            <span className="block font-mono text-[0.65rem] uppercase tracking-[0.18em] text-ink-400">Email authentication</span>
-          </span>
+          <Image className="h-11 w-auto" src="/brand/dmark-logo.png" alt="dmark.is" width={769} height={240} priority />
+          <span className="sr-only">Email authentication</span>
         </a>
         <nav className="hidden items-center gap-6 text-sm font-semibold text-ink-500 md:flex" aria-label="Primary">
           <a className="transition hover:text-brand" href="#threat">Threat</a>
@@ -427,9 +426,9 @@ function Header({ onScan, onUpgrade }: { onScan: () => void; onUpgrade: () => vo
           <a className="transition hover:text-brand" href="#features">Features</a>
           <a className="transition hover:text-brand" href="#pricing">Pricing</a>
           <button className="transition hover:text-brand" onClick={onUpgrade} type="button">Early access</button>
-          <button className="inline-flex min-h-10 items-center gap-2 rounded bg-brand px-4 text-sm font-semibold text-white transition hover:bg-brand-ink" onClick={onScan} type="button"><Search className="h-4 w-4" aria-hidden="true" /> Scan a domain</button>
+          <button className="inline-flex min-h-10 items-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white transition hover:bg-brand" onClick={onScan} type="button"><Search className="h-4 w-4" aria-hidden="true" /> Scan a domain</button>
         </nav>
-        <button className="inline-flex min-h-10 items-center gap-2 rounded bg-brand px-4 text-sm font-semibold text-white md:hidden" onClick={onScan} type="button"><Search className="h-4 w-4" /> Scan</button>
+        <button className="inline-flex min-h-10 items-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white md:hidden" onClick={onScan} type="button"><Search className="h-4 w-4" /> Scan</button>
       </div>
     </header>
   );
@@ -479,7 +478,7 @@ function ScannerCard({ domain, setDomain, scanState, activeStep, error, result, 
               <form onSubmit={onScan} className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto]">
                 <label className="sr-only" htmlFor="domain">Domain</label>
                 <input id="domain" ref={inputRef} value={domain} onChange={(event) => setDomain(event.target.value)} className="min-h-14 rounded border border-line-strong bg-paper px-4 font-mono text-base text-ink outline-none transition placeholder:text-ink-300 focus:border-brand focus:ring-4 focus:ring-brand-soft" placeholder="yourcompany.is" autoComplete="off" inputMode="url" spellCheck={false} aria-invalid={scanState === "error" ? "true" : undefined} aria-describedby={scanState === "error" ? "domain-error" : undefined} />
-                <button type="submit" disabled={scanState === "scanning"} className="inline-flex min-h-14 items-center justify-center gap-2 rounded bg-brand px-5 font-semibold text-white shadow-glow transition hover:bg-brand-ink disabled:cursor-not-allowed disabled:bg-ink-300">
+                <button type="submit" disabled={scanState === "scanning"} className="inline-flex min-h-14 items-center justify-center gap-2 rounded bg-brand-ink px-5 font-semibold text-white shadow-glow transition hover:bg-brand disabled:cursor-not-allowed disabled:bg-ink-300">
                   {scanState === "scanning" ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />} {scanState === "scanning" ? "Scanning" : "Scan"}
                 </button>
               </form>
@@ -552,7 +551,7 @@ function ResultsDashboard({ result, onRescan, onUpgrade }: { result: ScanPayload
             {remediationPlan.steps.map((step, index) => <li key={step.title} className="rounded border border-line bg-card p-3 text-sm"><span className="font-mono text-brand">{index + 1}.</span> <strong>{step.title}</strong> — <span className="text-ink-500">{step.detail}</span></li>)}
           </ol>
         </article>
-        <button type="button" onClick={onUpgrade} className="inline-flex min-h-12 items-center justify-center gap-2 rounded bg-brand px-5 font-semibold text-white shadow-glow transition hover:bg-brand-ink"><Lock className="h-4 w-4" /> Unlock continuous remediation</button>
+        <button type="button" onClick={onUpgrade} className="inline-flex min-h-12 items-center justify-center gap-2 rounded bg-brand-ink px-5 font-semibold text-white shadow-glow transition hover:bg-brand"><Lock className="h-4 w-4" /> Unlock continuous remediation</button>
         <button type="button" onClick={onRescan} className="inline-flex min-h-11 items-center justify-center gap-2 rounded border border-line-strong px-5 font-semibold text-ink transition hover:border-ink"><Search className="h-4 w-4" /> Scan another</button>
       </div>
     </div>
@@ -637,7 +636,7 @@ function Footer({ onScan, onUpgrade }: { onScan: () => void; onUpgrade: () => vo
   return (
     <footer className="bg-midnight py-10 text-white">
       <div className="mx-auto flex max-w-[1200px] flex-col gap-5 px-5 sm:px-8 md:flex-row md:items-center md:justify-between lg:px-12">
-        <div><p className="text-lg font-bold">dmark<span className="text-brand-d">.is</span></p><p className="mt-2 max-w-xl text-sm leading-6 text-white/60">DMARC/SPF diagnostics, flattening, reporting, and managed rollout for Icelandic businesses.</p><p className="mt-3 text-sm text-white/45">A <a href="https://kastro.is" className="font-semibold text-white underline decoration-white/30 underline-offset-4 transition hover:decoration-white" target="_blank" rel="noreferrer">Kastro</a> made product.</p></div>
+        <div><span className="inline-flex rounded bg-white px-3 py-2"><Image className="h-10 w-auto" src="/brand/dmark-logo.png" alt="dmark.is" width={769} height={240} /></span><p className="mt-4 max-w-xl text-sm leading-6 text-white/60">DMARC/SPF diagnostics, flattening, reporting, and managed rollout for Icelandic businesses.</p><p className="mt-3 text-sm text-white/45">A <a href="https://kastro.is" className="font-semibold text-white underline decoration-white/30 underline-offset-4 transition hover:decoration-white" target="_blank" rel="noreferrer">Kastro</a> made product.</p></div>
         <div className="flex flex-col gap-2 sm:flex-row"><button type="button" onClick={onScan} className="inline-flex min-h-11 items-center justify-center gap-2 rounded bg-white px-4 font-semibold text-ink transition hover:bg-brand-soft"><Search className="h-4 w-4" /> Scan domain</button><button type="button" onClick={onUpgrade} className="inline-flex min-h-11 items-center justify-center gap-2 rounded border border-white/25 px-4 font-semibold text-white transition hover:bg-white/10"><Gauge className="h-4 w-4" /> Request early access</button></div>
       </div>
     </footer>
@@ -691,7 +690,7 @@ function CheckoutModal({ plan, domain, onClose }: { plan: ModalPlan; domain: str
                 <Field label="Company Domain" value={form.domain} onChange={(value) => setForm((current) => ({ ...current, domain: value }))} autoComplete="off" />
                 <Field label="Contact Email" type="email" value={form.email} onChange={(value) => setForm((current) => ({ ...current, email: value }))} autoComplete="email" />
                 {status === "error" ? <p className="rounded border border-fail/30 bg-fail-soft px-4 py-3 text-sm font-semibold text-fail">{error}</p> : null}
-                <button type="submit" disabled={status === "submitting"} className="inline-flex min-h-12 items-center justify-center gap-2 rounded bg-brand px-5 font-semibold text-white shadow-glow transition hover:bg-brand-ink disabled:cursor-not-allowed disabled:bg-ink-300">{status === "submitting" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ServerCog className="h-4 w-4" />} Submit request</button>
+                <button type="submit" disabled={status === "submitting"} className="inline-flex min-h-12 items-center justify-center gap-2 rounded bg-brand-ink px-5 font-semibold text-white shadow-glow transition hover:bg-brand disabled:cursor-not-allowed disabled:bg-ink-300">{status === "submitting" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ServerCog className="h-4 w-4" />} Submit request</button>
               </form>
             )}
           </motion.div>

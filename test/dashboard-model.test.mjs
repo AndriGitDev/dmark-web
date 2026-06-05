@@ -207,11 +207,14 @@ test("public marketing uses the approved editorial redesign tokens and sections"
   const globalsSource = readFileSync(join(root, "app/globals.css"), "utf8");
   const layoutSource = readFileSync(join(root, "app/layout.tsx"), "utf8");
 
-  assert.match(tailwindSource, /paper:\s*"#F5F3EC"/);
-  assert.match(tailwindSource, /brand:\s*"#2826E6"/);
-  assert.match(tailwindSource, /midnight:\s*"#0E0F14"/);
-  assert.match(globalsSource, /#2826E6/);
+  assert.match(tailwindSource, /paper:\s*"#F4F8FA"/);
+  assert.match(tailwindSource, /brand:\s*"#42B6CE"/);
+  assert.match(tailwindSource, /"brand-ink":\s*"#182E4F"/);
+  assert.match(tailwindSource, /midnight:\s*"#071522"/);
+  assert.match(globalsSource, /#42B6CE/);
   assert.match(layoutSource, /Schibsted_Grotesk/);
+  assert.match(marketingSource, /\/brand\/dmark-logo\.png/);
+  assert.match(marketingSource, /alt="dmark\.is"/);
   assert.match(marketingSource, /Anyone can send email as your domain/);
   assert.match(marketingSource, /With DMARK · p=reject/);
   assert.match(marketingSource, /dmark · public scan/);
