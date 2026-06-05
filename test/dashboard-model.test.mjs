@@ -208,10 +208,10 @@ test("public marketing uses the approved editorial redesign tokens and sections"
   const layoutSource = readFileSync(join(root, "app/layout.tsx"), "utf8");
 
   assert.match(tailwindSource, /paper:\s*"#F4F8FA"/);
-  assert.match(tailwindSource, /brand:\s*"#42B6CE"/);
-  assert.match(tailwindSource, /"brand-ink":\s*"#182E4F"/);
+  assert.match(tailwindSource, /brand:\s*"#44B6CD"/);
+  assert.match(tailwindSource, /"brand-ink":\s*"#182E4D"/);
   assert.match(tailwindSource, /midnight:\s*"#071522"/);
-  assert.match(globalsSource, /#42B6CE/);
+  assert.match(globalsSource, /#44B6CD/);
   assert.match(layoutSource, /Schibsted_Grotesk/);
   assert.match(marketingSource, /\/brand\/dmark-logo\.png/);
   assert.match(marketingSource, /alt="dmark\.is"/);
