@@ -223,6 +223,29 @@ test("public marketing uses the approved editorial redesign tokens and sections"
   assert.doesNotMatch(marketingSource, /14 reporting orgs/);
 });
 
+test("public marketing launch copy distinguishes proven scanner from beta and managed surfaces", () => {
+  const source = readFileSync(join(root, "components/dmark-marketing.tsx"), "utf8");
+
+  for (const requiredCopy of [
+    "Public scanner is live",
+    "Beta automation",
+    "Operator-managed rollout",
+    "Early access while DNS publication and reporting gates finish",
+    "Kastro verifies DNS changes before they go live",
+  ]) {
+    assert.ok(source.includes(requiredCopy), `missing launch-boundary copy: ${requiredCopy}`);
+  }
+
+  for (const overclaim of [
+    /GA-ready/,
+    /Automated SPF flattening/,
+    /Continuous email-auth remediation/,
+    /automated flattening, readable reports, and a safe path to p=reject/,
+  ]) {
+    assert.doesNotMatch(source, overclaim);
+  }
+});
+
 test("public marketing wires privacy funnel events without passing raw identifiers", () => {
   const source = readFileSync(join(root, "components/dmark-marketing.tsx"), "utf8");
 

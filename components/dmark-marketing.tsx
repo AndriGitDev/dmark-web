@@ -49,10 +49,10 @@ const scanSteps = [
 ];
 
 const trustSignals = [
-  { label: "SPF budget", value: "10 / 10", detail: "Flatten before receivers return a permerror." },
-  { label: "DMARC target", value: "p=reject", detail: "Progress through monitor, quarantine, reject." },
-  { label: "Report orgs", value: "GA-ready", detail: "Readable aggregate reports after upgrade." },
-  { label: "Setup", value: "0 logins", detail: "The first risk picture needs only public DNS." },
+  { label: "Public scanner is live", value: "0 logins", detail: "The first risk picture needs only public DNS." },
+  { label: "Beta automation", value: "Early access", detail: "SPF flattening and reporting stay gated until live-provider proof is complete." },
+  { label: "Operator-managed rollout", value: "Kastro", detail: "Kastro verifies DNS changes before they go live." },
+  { label: "DMARC target", value: "p=reject", detail: "Progress through monitor, quarantine, reject without breaking legitimate mail." },
 ];
 
 const quickDomains = ["landsbankinn.is", "kastro.is", "island.is"];
@@ -86,13 +86,13 @@ const workflow = [
 
 const features = [
   {
-    title: "Dynamic SPF flattening",
-    detail: "Keep Microsoft 365, Google Workspace, marketing tools, and local senders below the 10-lookup limit.",
+    title: "SPF flattening in beta",
+    detail: "Keep Microsoft 365, Google Workspace, marketing tools, and local senders below the 10-lookup limit once the route is provisioned.",
     icon: Layers3,
   },
   {
-    title: "Readable DMARC reporting",
-    detail: "Turn XML into sender inventory, pass/fail trends, and the next safe enforcement decision.",
+    title: "Readable reporting roadmap",
+    detail: "Turn XML into sender inventory, pass/fail trends, and the next safe enforcement decision as reporting gates finish.",
     icon: Gauge,
   },
   {
@@ -115,11 +115,11 @@ const pricing = [
   {
     name: "Sjálfvirkni",
     price: "4,900 ISK/mo",
-    description: "Continuous email-auth remediation for teams that want the system to stay healthy.",
+    description: "Early access while DNS publication and reporting gates finish.",
     cta: "Request early access",
     mode: "saas",
     featured: true,
-    points: ["Automated SPF flattening", "Readable DMARC reporting", "Guided p=reject progression"],
+    points: ["SPF flattening beta", "Readable reporting roadmap", "Guided p=reject progression"],
   },
   {
     name: "Kastro Managed",
@@ -244,7 +244,7 @@ export function DmarkMarketing() {
                 Scan the DNS records attackers use to <span className="text-brand-ink underline decoration-brand/35 decoration-4 underline-offset-[10px]">borrow your brand.</span>
               </h1>
               <p className="mt-7 max-w-2xl text-pretty text-[clamp(17px,1.5vw,21px)] leading-[1.55] text-ink-500">
-                Run a public DMARC and SPF diagnostic, see exactly why spoofed mail can pass, then move into automated flattening, readable reports, and a safe path to p=reject.
+                Run a public DMARC and SPF diagnostic, see exactly why spoofed mail can pass, then request early access for beta automation, reporting, and a safe path to p=reject.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <button type="button" onClick={() => scrollToScanner("nav")} className="inline-flex min-h-[58px] items-center justify-center gap-3 rounded bg-brand-ink px-8 font-semibold text-white shadow-glow transition hover:-translate-y-0.5 hover:bg-brand">
@@ -333,7 +333,7 @@ export function DmarkMarketing() {
 
       <section id="features" className="bg-paper-soft py-20 lg:py-28">
         <div className="mx-auto max-w-[1200px] px-5 sm:px-8 lg:px-12">
-          <SectionHead eyebrow="04 — Premium tier" title="Move from exposed DNS records to enforced domain trust." text="The paid product turns one-off evidence into a durable operating system for sender inventory, SPF limits, and DMARC enforcement." />
+          <SectionHead eyebrow="04 — Premium tier" title="Move from exposed DNS records to enforced domain trust." text="The paid product is in early access: scanner evidence is public today, while SPF automation and reporting remain gated until their launch checks are boring." />
           <div className="mt-12 grid gap-5 md:grid-cols-3">
             {features.map((feature) => {
               const Icon = feature.icon;
