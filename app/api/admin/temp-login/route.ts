@@ -5,7 +5,7 @@ export async function POST(request: Request) {
   const form = await request.formData();
   const password = String(form.get("password") || "");
   const token = signAdminTempPassword(password);
-  const url = new URL("/admin", request.url);
+  const url = adminRedirectURL(request);
 
   if (!token) {
     url.searchParams.set("login", "failed");
@@ -21,4 +21,19 @@ export async function POST(request: Request) {
     secure: true,
   });
   return response;
+}
+
+function adminRedirectURL(request: Request): URL {
+  const forwardedHost = firstForwardedValue(request.headers.get("x-forwarded-host")) || firstForwardedValue(request.headers.get("host"));
+  const forwardedProto = firstForwardedValue(request.headers.get("x-forwarded-proto")) || "https";
+
+  if (forwardedHost) {
+    return new URL("/admin", `${forwardedProto}://${forwardedHost}`);
+  }
+
+  return new URL("/admin", request.url);
+}
+
+function firstForwardedValue(value: string | null): string {
+  return String(value || "").split(",")[0]?.trim() || "";
 }
