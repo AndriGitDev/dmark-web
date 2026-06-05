@@ -671,6 +671,18 @@ test("dashboard page and API are protected by customer Authentik while public sc
   assert.doesNotMatch(scanRoute, /Authentik|isDashboardAuthentikSessionAllowed|isDashboardAccessEnabled/);
 });
 
+test("dashboard login page renders customer-safe recovery copy for Authentik failures", () => {
+  const dashboardPage = readFileSync(join(root, "app/dashboard/page.tsx"), "utf8");
+
+  assert.match(dashboardPage, /searchParams/);
+  assert.match(dashboardPage, /authentik-failed/);
+  assert.match(dashboardPage, /Your sign-in session expired\. Please try again\./);
+  assert.match(dashboardPage, /clear site data for dmark\.is and auth\.kastro\.is/);
+  assert.match(dashboardPage, /start from \/dashboard/);
+  assert.match(dashboardPage, /Sign in to Dmark dashboard/);
+  assert.doesNotMatch(dashboardPage, /DMARK_AUTHENTIK_|dmark_authentik_session|admin control plane/i);
+});
+
 test("dashboard response mapper renders summary metrics and domain next action", () => {
   const dashboard = loadTSModule("lib/dashboard.ts");
   const view = dashboard.mapDashboardResponse({

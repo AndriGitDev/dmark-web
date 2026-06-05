@@ -34,14 +34,20 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+type DashboardPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   if (!isDashboardAccessEnabled()) {
     return <DashboardLocked />;
   }
 
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const loginStatus = firstSearchParam(resolvedSearchParams.login);
   const requestHeaders = await headers();
   if (!isDashboardAuthentikSessionAllowed(requestHeaders)) {
-    return <DashboardLoginRequired />;
+    return <DashboardLoginRequired loginStatus={loginStatus} />;
   }
 
   const initialState = await loadInitialDashboardState(requestHeaders);
@@ -98,7 +104,9 @@ function DashboardLocked() {
   );
 }
 
-function DashboardLoginRequired() {
+function DashboardLoginRequired({ loginStatus }: { loginStatus?: string }) {
+  const recoveryMessage = dashboardLoginRecoveryMessage(loginStatus);
+
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#e0f2fe_0,#f8fafc_34%,#ffffff_70%)] px-5 py-10 text-navy sm:px-8">
       <section className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-4xl place-items-center">
@@ -107,20 +115,46 @@ function DashboardLoginRequired() {
             <Lock className="h-4 w-4" aria-hidden="true" />
             Customer login
           </div>
-          <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">Sign in to your Dmark dashboard.</h1>
+          <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">Sign in to Dmark dashboard</h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
             The customer dashboard is protected by the dedicated dmark-dashboard Authentik application. Public scans remain available without login.
           </p>
+          {recoveryMessage ? (
+            <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950" role="status">
+              <p className="font-semibold">{recoveryMessage}</p>
+              <p className="mt-2">
+                If this keeps happening, clear site data for dmark.is and auth.kastro.is, then start from /dashboard.
+              </p>
+            </div>
+          ) : null}
           <Link className="mt-8 inline-flex min-h-12 items-center justify-center rounded-md bg-trust px-5 font-semibold text-white transition hover:bg-trust-hover" href="/api/dashboard/auth/login">
             Sign in with Authentik
           </Link>
           <p className="mt-6 text-sm text-slate-500">
-            Admin access uses a separate Authentik provider and separate cookies; customer sessions do not unlock the admin control plane.
+            Customer dashboard sessions are scoped to dashboard routes only. Public scans remain available without a session.
           </p>
         </div>
       </section>
     </main>
   );
+}
+
+function firstSearchParam(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) return value[0] || "";
+  return value || "";
+}
+
+function dashboardLoginRecoveryMessage(loginStatus?: string): string {
+  switch (loginStatus) {
+    case "authentik-failed":
+      return "Your sign-in session expired. Please try again.";
+    case "authentik-forbidden":
+      return "This account is not enabled for the Dmark dashboard.";
+    case "authentik-unconfigured":
+      return "Dashboard sign-in is not configured yet.";
+    default:
+      return "";
+  }
 }
 
 async function loadInitialDashboardState(requestHeaders: Headers): Promise<DashboardInitialState> {
