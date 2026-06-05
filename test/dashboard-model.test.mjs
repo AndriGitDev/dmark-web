@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { createServer } from "node:http";
 import { dirname, join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -1611,6 +1613,99 @@ test("admin shell locked model is fail-closed without backend affordances", () =
   assert.match(model.description, /owner session/i);
   assert.equal(JSON.stringify(model).includes("/api/v1/admin"), false);
 });
+
+test("dashboard auth smoke script verifies production boundaries without leaking cookies", async () => {
+  const requests = [];
+  const server = createServer((req, res) => {
+    requests.push({ method: req.method, url: req.url });
+    if (req.method === "GET" && req.url === "/dashboard") {
+      res.writeHead(200, { "content-type": "text/html" });
+      res.end('<main><a href="/api/dashboard/auth/login">Sign in to Dmark dashboard</a></main>');
+      return;
+    }
+    if (req.method === "GET" && req.url === "/api/dashboard") {
+      res.writeHead(401, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "login required" }));
+      return;
+    }
+    if (req.method === "GET" && req.url === "/api/dashboard/auth/login") {
+      const origin = `http://${req.headers.host}`;
+      res.writeHead(303, {
+        location: `https://auth.kastro.is/application/o/authorize/?client_id=dmark-dashboard&redirect_uri=${encodeURIComponent(`${origin}/api/dashboard/auth/callback`)}&response_type=code&state=test-state`,
+        "set-cookie": "dmark_dashboard_authentik_state=fixture-secret; Path=/api/dashboard/auth/callback; HttpOnly; Secure; SameSite=lax",
+      });
+      res.end();
+      return;
+    }
+    if (req.method === "GET" && req.url === "/api/auth/login") {
+      const origin = `http://${req.headers.host}`;
+      res.writeHead(303, {
+        location: `https://auth.kastro.is/application/o/authorize/?client_id=dmark-web-admin&redirect_uri=${encodeURIComponent(`${origin}/api/auth/callback`)}&response_type=code&state=admin-state`,
+      });
+      res.end();
+      return;
+    }
+    if (req.method === "POST" && req.url === "/api/scan") {
+      let body = "";
+      req.on("data", (chunk) => {
+        body += chunk;
+      });
+      req.on("end", () => {
+        const payload = JSON.parse(body);
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({ domain: payload.domain, status: "PASS", source: "live" }));
+      });
+      return;
+    }
+    res.writeHead(404);
+    res.end("not found");
+  });
+
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  try {
+    const { port } = server.address();
+    const result = await runNodeScript("scripts/smoke-dashboard-auth.mjs", [`http://127.0.0.1:${port}`]);
+
+    assert.equal(result.code, 0, result.stderr || result.stdout);
+    assert.match(result.stdout, /PASS dashboard page shows customer login UI/);
+    assert.match(result.stdout, /PASS dashboard API rejects unauthenticated access/);
+    assert.match(result.stdout, /PASS dashboard login redirects to customer Authentik provider/);
+    assert.match(result.stdout, /PASS public scanner remains unauthenticated/);
+    assert.match(result.stdout, /PASS admin login remains on separate Authentik provider/);
+    assert.doesNotMatch(result.stdout + result.stderr, /fixture-secret|test-state|admin-state/);
+    assert.deepEqual(
+      requests.map((request) => `${request.method} ${request.url}`),
+      [
+        "GET /dashboard",
+        "GET /api/dashboard",
+        "GET /api/dashboard/auth/login",
+        "POST /api/scan",
+        "GET /api/auth/login",
+      ],
+    );
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+function runNodeScript(relativePath, args = []) {
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, [join(root, relativePath), ...args], {
+      cwd: root,
+      env: { ...process.env, NODE_ENV: "test" },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    child.on("close", (code) => resolve({ code, stdout, stderr }));
+  });
+}
 
 function snapshotEnv(keys) {
   return Object.fromEntries(keys.map((key) => [key, process.env[key]]));

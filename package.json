@@ -7,7 +7,8 @@
     "build": "next build --webpack",
     "start": "next start",
     "test": "node --test",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "smoke:dashboard-auth": "node scripts/smoke-dashboard-auth.mjs"
   },
   "dependencies": {
     "framer-motion": "^11.18.2",
