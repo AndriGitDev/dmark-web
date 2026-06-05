@@ -47,14 +47,15 @@ type AdminPageProps = {
 };
 
 export default async function AdminPage({ searchParams }: AdminPageProps) {
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const loginStatus = firstSearchParam(resolvedSearchParams.login).trim();
   const requestHeaders = await headers();
   const model = buildAdminShellModel({ allowed: isAdminOwnerSessionAllowed(requestHeaders) });
 
   if (model.status === "locked") {
-    return <AdminLocked title={model.title} description={model.description} eyebrow={model.eyebrow} />;
+    return <AdminLocked title={model.title} description={model.description} eyebrow={model.eyebrow} loginStatus={loginStatus} />;
   }
 
-  const resolvedSearchParams = searchParams ? await searchParams : {};
   const selectedRouteID = firstSearchParam(resolvedSearchParams.routeID ?? resolvedSearchParams.routeId ?? resolvedSearchParams.route_id).trim();
   const [providerHealth, operationalEvents, publicationAudit] = await Promise.all([
     fetchAdminProviderHealth()
@@ -115,7 +116,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   );
 }
 
-function AdminLocked({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) {
+function AdminLocked({ eyebrow, title, description, loginStatus }: { eyebrow: string; title: string; description: string; loginStatus: string }) {
+  const loginMessage = adminLoginMessage(loginStatus);
+
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#e0f2fe_0,#f8fafc_34%,#ffffff_70%)] px-5 py-10 text-navy sm:px-8">
       <section className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-4xl place-items-center">
@@ -147,6 +150,7 @@ function AdminLocked({ eyebrow, title, description }: { eyebrow: string; title: 
               <p className="mt-3 text-xs leading-5 text-slate-500">
                 This temporary cookie expires after 15 minutes and is intended only for pre-Authentik operator testing.
               </p>
+              {loginMessage ? <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">{loginMessage}</p> : null}
             </form>
           ) : null}
           <p className="mt-6 text-sm text-slate-500">Public scanning and client organization dashboards remain outside this owner-only global admin surface.</p>
@@ -154,6 +158,12 @@ function AdminLocked({ eyebrow, title, description }: { eyebrow: string; title: 
       </section>
     </main>
   );
+}
+
+function adminLoginMessage(status: string): string {
+  if (status === "failed") return "That temporary password did not match.";
+  if (status === "closed") return "Password accepted, but DMARK_ADMIN_ACCESS is not open in the frontend environment yet.";
+  return "";
 }
 
 function AdminSectionCard({ section }: { section: AdminShellSection }) {

@@ -706,6 +706,16 @@ export async function getDashboardData(): Promise<DashboardViewModel> {
   return mapDashboardResponse(await dashboardJSON<BackendDashboardResponse>("/api/dashboard"));
 }
 
+export async function createDashboardDomain(domain: string): Promise<ProtectedDomain> {
+  const payload = await dashboardJSON<BackendDashboardDomain>("/api/dashboard/domains", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ domain: domain.trim() }),
+  });
+
+  return mapBackendDomain(payload);
+}
+
 export async function getReporterData(domainID: string, filter?: "unknown"): Promise<ReporterViewModel> {
   const query = filter ? `?filter=${encodeURIComponent(filter)}` : "";
   return mapReporterResponse(await dashboardJSON<BackendDashboardReporterResponse>(`/api/dashboard/domains/${domainID}/reporter${query}`));

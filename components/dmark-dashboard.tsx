@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -33,6 +34,7 @@ import {
 } from "lucide-react";
 import {
   acknowledgeDashboardAlert,
+  createDashboardDomain,
   fetchReporterCSV,
   getBrandRiskData,
   getChangePlan,
@@ -224,6 +226,9 @@ export function DmarkDashboard({
   const [includeInactiveBrandRisk, setIncludeInactiveBrandRisk] = useState(false);
   const [savingSettingsForm, setSavingSettingsForm] = useState(false);
   const [settingsError, setSettingsError] = useState("");
+  const [newDomain, setNewDomain] = useState("");
+  const [addingDomain, setAddingDomain] = useState(false);
+  const [addDomainError, setAddDomainError] = useState("");
 
   const domains = dashboard.protectedDomains;
 
@@ -388,6 +393,37 @@ export function DmarkDashboard({
 
   function announce(message: string) {
     setActionNotice(message);
+  }
+
+  async function addDomain(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const domain = newDomain.trim();
+    if (!domain) {
+      setAddDomainError("Enter a domain first.");
+      return;
+    }
+
+    setAddingDomain(true);
+    setAddDomainError("");
+    trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("start"), source: "dashboard_add_domain" });
+
+    try {
+      const created = await createDashboardDomain(domain);
+      const refreshed = await getDashboardData();
+      setDashboard(refreshed);
+      setSelectedDomainID(created.id);
+      setNewDomain("");
+      setActiveTab("domains");
+      announce(`${created.domain} was added. Run a recheck to populate live posture.`);
+      trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_add_domain" });
+    } catch (error) {
+      const message = errorMessage(error, "Domain could not be added.");
+      setAddDomainError(message);
+      announce(message);
+      trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_add_domain" });
+    } finally {
+      setAddingDomain(false);
+    }
   }
 
   function selectDashboardTab(tab: TabID) {
@@ -646,10 +682,34 @@ export function DmarkDashboard({
               >
                 Marketing
               </Link>
+              <form className="hidden items-center gap-2 xl:flex" onSubmit={addDomain} aria-label="Add protected domain">
+                <label className="sr-only" htmlFor="new-domain">
+                  Domain to protect
+                </label>
+                <input
+                  id="new-domain"
+                  value={newDomain}
+                  onChange={(event) => setNewDomain(event.target.value)}
+                  placeholder="example.is"
+                  className="min-h-10 w-44 rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-trust focus:ring-2 focus:ring-trust/20"
+                  aria-invalid={addDomainError ? "true" : undefined}
+                />
+                <button
+                  type="submit"
+                  disabled={addingDomain}
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-trust px-4 text-sm font-semibold text-white transition hover:bg-trust-hover disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {addingDomain ? <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
+                  {addingDomain ? "Adding" : "Add domain"}
+                </button>
+              </form>
               <button
                 type="button"
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-trust px-4 text-sm font-semibold text-white transition hover:bg-trust-hover"
-                onClick={() => announce("Add domains from the protected-domain workspace.")}
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-trust px-4 text-sm font-semibold text-white transition hover:bg-trust-hover xl:hidden"
+                onClick={() => {
+                  setActiveTab("domains");
+                  announce("Use the add-domain form at the top of the desktop dashboard, or widen the screen.");
+                }}
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 Add domain
@@ -668,6 +728,33 @@ export function DmarkDashboard({
               className="w-full bg-transparent text-sm outline-none"
             />
           </label>
+
+          <form className="mb-5 flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm xl:hidden" onSubmit={addDomain} aria-label="Add protected domain">
+            <label className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500" htmlFor="new-domain-mobile">
+              Add protected domain
+            </label>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                id="new-domain-mobile"
+                value={newDomain}
+                onChange={(event) => setNewDomain(event.target.value)}
+                placeholder="example.is"
+                className="min-h-11 flex-1 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-trust focus:ring-2 focus:ring-trust/20"
+                aria-invalid={addDomainError ? "true" : undefined}
+              />
+              <button
+                type="submit"
+                disabled={addingDomain}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-trust px-4 text-sm font-semibold text-white transition hover:bg-trust-hover disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {addingDomain ? <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
+                {addingDomain ? "Adding" : "Add domain"}
+              </button>
+            </div>
+            {addDomainError ? <p className="text-sm font-medium text-red-700">{addDomainError}</p> : null}
+          </form>
+
+          {addDomainError ? <p className="mb-5 hidden text-sm font-medium text-red-700 xl:block">{addDomainError}</p> : null}
 
           {activeTab === "overview" ? (
             <OverviewTab

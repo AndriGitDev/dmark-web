@@ -39,7 +39,7 @@ export async function POST(request: Request, context: DashboardRouteContext) {
     return dashboardLockedResponse();
   }
 
-  const backendPath = await backendDashboardPath(request, context);
+  const backendPath = await backendDashboardPath(request, context, "POST");
   const body = await request.text();
 
   if (shouldUseDashboardMock()) {
@@ -80,10 +80,13 @@ function dashboardLockedResponse(): Response {
   return NextResponse.json(dashboardLockedResponseBody(), { status: 403 });
 }
 
-async function backendDashboardPath(request: Request, context: DashboardRouteContext): Promise<string> {
+async function backendDashboardPath(request: Request, context: DashboardRouteContext, method = "GET"): Promise<string> {
   const { path = [] } = await context.params;
   const suffix = path.length ? `/${path.map(encodeURIComponent).join("/")}` : "";
   const requestURL = new URL(request.url);
+  if (method === "POST" && path.length === 1 && path[0] === "domains") {
+    return `/api/v1/domains${requestURL.search}`;
+  }
   return `/api/v1/dashboard${suffix}${requestURL.search}`;
 }
 
@@ -365,7 +368,28 @@ function mockGET(path: string): Response {
 function mockPOST(path: string, body: string): Response {
   const url = new URL(path, "http://mock.local");
   const parts = url.pathname.split("/").filter(Boolean);
-  const tail = parts.slice(3);
+  const tail = parts[2] === "dashboard" ? parts.slice(3) : parts.slice(2);
+
+  if (url.pathname === "/api/v1/domains") {
+    const payload = JSON.parse(body || "{}");
+    const domain = String(payload.domain || "").trim().toLowerCase();
+    return NextResponse.json(
+      {
+        id: `mock-domain-${domain.replaceAll(".", "-") || "new"}`,
+        domain,
+        last_checked_at: new Date().toISOString(),
+        status: "monitoring",
+        score: 0,
+        dmarc_policy: "none",
+        spf_lookup_count: 0,
+        dkim_coverage: "unknown",
+        alignment_rate: 0,
+        unknown_sender_count: 0,
+        next_action: "Run the first monitoring check.",
+      },
+      { status: 201 },
+    );
+  }
 
   if (tail[0] === "domains" && tail[2] === "recheck") {
     return NextResponse.json(

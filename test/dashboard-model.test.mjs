@@ -155,6 +155,7 @@ test("privacy events allow claim, CTA, recommendation, and dashboard lifecycle e
   events.trackPrivacyEvent("recommendation_view", { status: "WARNING", source: "public_scanner", record: "v=spf1 include:vendor.example" }, target);
   events.trackPrivacyEvent("claim_start", { source: "upgrade_modal", email: "person@example.is" }, target);
   events.trackPrivacyEvent("claim_complete", { status: "PASS", source: "upgrade_modal", name: "Customer" }, target);
+  events.trackPrivacyEvent("dashboard_interaction", { status: "PASS", source: "dashboard_add_domain", domain: "customer.is" }, target);
   events.trackPrivacyEvent("dashboard_interaction", { status: "PASS", source: "dashboard_spf_route", domain: "customer.is", action: "sync" }, target);
 
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
@@ -162,6 +163,7 @@ test("privacy events allow claim, CTA, recommendation, and dashboard lifecycle e
     ["recommendation_view", { props: { status: "WARNING", source: "public_scanner" } }],
     ["claim_start", { props: { source: "upgrade_modal" } }],
     ["claim_complete", { props: { status: "PASS", source: "upgrade_modal" } }],
+    ["dashboard_interaction", { props: { status: "PASS", source: "dashboard_add_domain" } }],
     ["dashboard_interaction", { props: { status: "PASS", source: "dashboard_spf_route" } }],
   ]);
 });
@@ -300,6 +302,64 @@ test("public scan SPF finding separates invalid records from lookup pressure", (
   );
   assert.equal(overLimit.tone, "fail");
   assert.match(overLimit.headline, /above the receiver limit/);
+});
+
+test("dashboard domain creation posts through the frontend dashboard proxy", async () => {
+  const previousFetch = globalThis.fetch;
+  const observed = {};
+
+  globalThis.fetch = async (url, init) => {
+    observed.url = url;
+    observed.method = init?.method;
+    observed.contentType = init?.headers?.["content-type"];
+    observed.body = init?.body;
+    return new Response(
+      JSON.stringify({
+        id: "domain-created",
+        domain: "kastro.is",
+        status: "monitoring",
+        score: 0,
+        dmarc_policy: "none",
+        spf_lookup_count: 0,
+        dkim_coverage: "unknown",
+        alignment_rate: 0,
+        unknown_sender_count: 0,
+        next_action: "Run the first monitoring check.",
+      }),
+      { status: 201, headers: { "content-type": "application/json" } },
+    );
+  };
+
+  try {
+    const dashboard = loadTSModule("lib/dashboard.ts");
+    const domain = await dashboard.createDashboardDomain(" kastro.is ");
+
+    assert.equal(observed.url, "/api/dashboard/domains");
+    assert.equal(observed.method, "POST");
+    assert.equal(observed.contentType, "application/json");
+    assert.deepEqual(JSON.parse(observed.body), { domain: "kastro.is" });
+    assert.equal(domain.id, "domain-created");
+    assert.equal(domain.domain, "kastro.is");
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
+test("dashboard API route maps domain creation to the backend domain API", () => {
+  const source = readFileSync(join(root, "app/api/dashboard/[[...path]]/route.ts"), "utf8");
+
+  assert.match(source, /backendDashboardPath\(request, context, "POST"\)/);
+  assert.match(source, /return `\/api\/v1\/domains/);
+});
+
+test("admin temp login gives operator feedback when access guard stays closed", () => {
+  const routeSource = readFileSync(join(root, "app/api/admin/temp-login/route.ts"), "utf8");
+  const pageSource = readFileSync(join(root, "app/admin/page.tsx"), "utf8");
+
+  assert.match(routeSource, /isAdminAccessEnabled\(\)/);
+  assert.match(routeSource, /url\.searchParams\.set\("login", "closed"\)/);
+  assert.match(pageSource, /loginStatus/);
+  assert.match(pageSource, /DMARK_ADMIN_ACCESS/);
 });
 
 test("dashboard API client attaches bearer token and uses DMARK_API aliases", async () => {

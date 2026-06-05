@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminTempCookieName, signAdminTempPassword } from "@/lib/admin-access";
+import { adminTempCookieName, isAdminAccessEnabled, signAdminTempPassword } from "@/lib/admin-access";
 
 const DEFAULT_PUBLIC_ORIGIN = "https://dmark.is";
 
@@ -11,6 +11,11 @@ export async function POST(request: Request) {
 
   if (!token) {
     url.searchParams.set("login", "failed");
+    return NextResponse.redirect(url, { status: 303 });
+  }
+
+  if (!isAdminAccessEnabled()) {
+    url.searchParams.set("login", "closed");
     return NextResponse.redirect(url, { status: 303 });
   }
 

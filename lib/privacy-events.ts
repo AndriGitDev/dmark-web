@@ -18,6 +18,7 @@ type PrivacyEventSource =
   | "result_upsell"
   | "upgrade_modal"
   | "dashboard_nav"
+  | "dashboard_add_domain"
   | "dashboard_domain_recheck"
   | "dashboard_spf_route"
   | "dashboard_alerts"
@@ -58,6 +59,7 @@ const allowedSources = new Set<PrivacyEventSource>([
   "result_upsell",
   "upgrade_modal",
   "dashboard_nav",
+  "dashboard_add_domain",
   "dashboard_domain_recheck",
   "dashboard_spf_route",
   "dashboard_alerts",
