@@ -166,6 +166,36 @@ test("privacy events allow claim, CTA, recommendation, and dashboard lifecycle e
   ]);
 });
 
+test("privacy events allow beta-lock CTA sources and discard raw beta request details", () => {
+  const events = loadTSModule("lib/privacy-events.ts");
+  const calls = [];
+  const target = { plausible: (...args) => calls.push(args) };
+
+  events.trackPrivacyEvent("cta_click", { source: "dashboard_beta_lock_scan", domain: "customer.is", url: "/?domain=customer.is" }, target);
+  events.trackPrivacyEvent("cta_click", { source: "dashboard_beta_lock_access", email: "person@example.is", plan: "managed" }, target);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
+    ["cta_click", { props: { source: "dashboard_beta_lock_scan" } }],
+    ["cta_click", { props: { source: "dashboard_beta_lock_access" } }],
+  ]);
+});
+
+test("locked dashboard page wires privacy-safe beta-lock CTA analytics", () => {
+  const pageSource = readFileSync(join(root, "app/dashboard/page.tsx"), "utf8");
+  const ctaSource = readFileSync(join(root, "components/dashboard-locked-analytics.tsx"), "utf8");
+
+  assert.match(pageSource, /DashboardLockedCTALink/);
+  assert.match(ctaSource, /trackPrivacyEvent\("cta_click", \{ source \}\)/);
+  for (const coarseSource of ["dashboard_beta_lock_scan", "dashboard_beta_lock_access"]) {
+    assert.match(pageSource + ctaSource, new RegExp(coarseSource));
+  }
+  const eventCalls = ctaSource.match(/trackPrivacyEvent\([^\n]+\);/g) || [];
+  assert.equal(eventCalls.length, 1);
+  for (const call of eventCalls) {
+    assert.doesNotMatch(call, /domain|email|url|record|plan|name|form\.|response/);
+  }
+});
+
 test("public marketing wires privacy funnel events without passing raw identifiers", () => {
   const source = readFileSync(join(root, "components/dmark-marketing.tsx"), "utf8");
 

@@ -22,7 +22,9 @@ type PrivacyEventSource =
   | "dashboard_spf_route"
   | "dashboard_alerts"
   | "dashboard_settings"
-  | "dashboard_export";
+  | "dashboard_export"
+  | "dashboard_beta_lock_scan"
+  | "dashboard_beta_lock_access";
 
 type PrivacyEventProperties = {
   status?: string;
@@ -61,6 +63,8 @@ const allowedSources = new Set<PrivacyEventSource>([
   "dashboard_alerts",
   "dashboard_settings",
   "dashboard_export",
+  "dashboard_beta_lock_scan",
+  "dashboard_beta_lock_access",
 ]);
 
 function sanitizePrivacyEventName(value: string): PrivacyEventName | null {

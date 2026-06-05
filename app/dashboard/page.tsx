@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import Link from "next/link";
 import { Lock, MailCheck, ShieldCheck } from "lucide-react";
+import { DashboardLockedCTALink } from "@/components/dashboard-locked-analytics";
 import { DmarkDashboard } from "@/components/dmark-dashboard";
 import { isDashboardAccessEnabled } from "@/lib/dashboard-access";
 import {
@@ -65,20 +65,22 @@ function DashboardLocked() {
             Public scans remain open, but the operations dashboard is invite-only while Dmark is being hardened for early customers.
           </p>
           <div className="mt-8 grid gap-3 sm:grid-cols-2">
-            <Link
+            <DashboardLockedCTALink
               href="/#scanner"
+              source="dashboard_beta_lock_scan"
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-trust px-5 font-semibold text-white transition hover:bg-trust-hover"
             >
               <MailCheck className="h-4 w-4" aria-hidden="true" />
               Run a public scan
-            </Link>
-            <Link
+            </DashboardLockedCTALink>
+            <DashboardLockedCTALink
               href="/#pricing"
+              source="dashboard_beta_lock_access"
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-5 font-semibold text-navy transition hover:bg-slate-50"
             >
               <ShieldCheck className="h-4 w-4" aria-hidden="true" />
               Request early access
-            </Link>
+            </DashboardLockedCTALink>
           </div>
           <p className="mt-6 text-sm text-slate-500">
             Internal access can be enabled server-side with <code className="rounded bg-slate-100 px-1.5 py-0.5">DMARK_DASHBOARD_ACCESS=open</code>.
