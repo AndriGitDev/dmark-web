@@ -229,6 +229,9 @@ export function DmarkMarketing() {
 
   return (
     <main className="min-h-screen overflow-hidden bg-paper text-ink">
+      <a href="#scanner-panel" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-brand-ink focus:px-4 focus:py-3 focus:font-semibold focus:text-white">
+        Skip to scanner
+      </a>
       <Header onScan={() => scrollToScanner("nav")} onUpgrade={() => openUpgradeModal("saas", "nav")} />
 
       <section id="top" className="relative border-b border-line bg-paper">
@@ -256,7 +259,7 @@ export function DmarkMarketing() {
               </div>
             </div>
 
-            <div id="scanner-panel">
+            <div id="scanner-panel" tabIndex={-1}>
               <ScannerCard
                 domain={domain}
                 setDomain={setDomain}

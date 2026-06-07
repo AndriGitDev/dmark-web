@@ -246,6 +246,48 @@ test("public marketing launch copy distinguishes proven scanner from beta and ma
   }
 });
 
+test("public metadata is launch-ready for SEO, social previews, and install surfaces", () => {
+  const layoutSource = readFileSync(join(root, "app/layout.tsx"), "utf8");
+  const manifestSource = readFileSync(join(root, "app/manifest.ts"), "utf8");
+
+  for (const required of [
+    /metadataBase:\s*new URL\("https:\/\/dmark\.is"\)/,
+    /alternates:\s*{\s*canonical:\s*"\/"/s,
+    /openGraph:\s*{/,
+    /url:\s*"https:\/\/dmark\.is\/"/,
+    /siteName:\s*"dmark\.is"/,
+    /images:\s*\[/,
+    /url:\s*"\/brand\/dmark-icon\.png"/,
+    /twitter:\s*{/,
+    /card:\s*"summary_large_image"/,
+    /robots:\s*{\s*index:\s*true,\s*follow:\s*true/s,
+    /icons:\s*{/,
+    /manifest:\s*"\/manifest\.webmanifest"/,
+  ]) {
+    assert.match(layoutSource, required);
+  }
+
+  assert.match(manifestSource, /name:\s*"dmark\.is"/);
+  assert.match(manifestSource, /start_url:\s*"\/"/);
+  assert.match(manifestSource, /theme_color:\s*"#44B6CD"/);
+  assert.match(manifestSource, /background_color:\s*"#F4F8FA"/);
+  assert.match(manifestSource, /src:\s*"\/brand\/dmark-icon\.png"/);
+  assert.doesNotMatch(layoutSource + manifestSource, /google-analytics|gtag|GTM|facebook|hotjar/i);
+});
+
+test("public marketing includes keyboard skip navigation and reduced-motion guardrails", () => {
+  const marketingSource = readFileSync(join(root, "components/dmark-marketing.tsx"), "utf8");
+  const globalsSource = readFileSync(join(root, "app/globals.css"), "utf8");
+
+  assert.match(marketingSource, /href="#scanner-panel"/);
+  assert.match(marketingSource, /Skip to scanner/);
+  assert.match(marketingSource, /sr-only focus:not-sr-only/);
+  assert.match(marketingSource, /tabIndex={-1}/);
+  assert.match(globalsSource, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(globalsSource, /scroll-behavior:\s*auto/);
+  assert.match(globalsSource, /animation-duration:\s*0\.01ms/);
+});
+
 test("public marketing wires privacy funnel events without passing raw identifiers", () => {
   const source = readFileSync(join(root, "components/dmark-marketing.tsx"), "utf8");
 
