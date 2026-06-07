@@ -210,6 +210,12 @@ test("public marketing uses the approved editorial redesign tokens and sections"
   assert.match(tailwindSource, /paper:\s*"#F4F8FA"/);
   assert.match(tailwindSource, /brand:\s*"#44B6CD"/);
   assert.match(tailwindSource, /"brand-ink":\s*"#182E4D"/);
+  assert.match(tailwindSource, /pass:\s*"#1C9C68"/);
+  assert.match(tailwindSource, /"pass-ink":\s*"#14734D"/);
+  assert.match(tailwindSource, /warn:\s*"#C5870F"/);
+  assert.match(tailwindSource, /"warn-ink":\s*"#7A5209"/);
+  assert.match(tailwindSource, /fail:\s*"#D6433A"/);
+  assert.match(tailwindSource, /"fail-ink":\s*"#B52D26"/);
   assert.match(tailwindSource, /midnight:\s*"#071522"/);
   assert.match(globalsSource, /#44B6CD/);
   assert.match(layoutSource, /Schibsted_Grotesk/);
