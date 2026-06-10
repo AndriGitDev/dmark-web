@@ -18,13 +18,13 @@ export function AlertsTab({
     <div className="grid gap-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-trust">Alert queue</p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-navy">Changes that need operator review</h2>
+          <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-brand-ink">Alert queue</p>
+          <h2 className="mt-2 text-3xl font-bold tracking-tight text-ink">Changes that need operator review</h2>
         </div>
         <button
           type="button"
           onClick={onOpenDomains}
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-navy px-4 text-sm font-semibold text-white transition hover:bg-navy-soft"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white transition hover:bg-midnight"
         >
           Review domains
           <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
@@ -34,24 +34,24 @@ export function AlertsTab({
       {alerts.length ? (
         <div className="grid gap-4">
           {alerts.map((alert) => (
-            <article key={alert.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <article key={alert.id} className="rounded border border-line bg-card p-5 shadow-sm">
               <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
                 <div>
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${severityTone(alert.severity)}`}>
+                    <span className={`rounded border px-2.5 py-1 text-xs font-semibold ${severityTone(alert.severity)}`}>
                       {alert.severity}
                     </span>
-                    <span className="text-xs font-semibold text-slate-500">{alert.age}</span>
+                    <span className="text-xs font-semibold text-ink-400">{alert.age}</span>
                   </div>
-                  <h3 className="mt-3 text-xl font-semibold text-navy">{alert.title}</h3>
-                  <p className="mt-2 text-sm font-semibold text-trust">{alert.domain}</p>
-                  <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">{alert.detail}</p>
+                  <h3 className="mt-3 text-xl font-semibold text-ink">{alert.title}</h3>
+                  <p className="mt-2 text-sm font-semibold text-brand-ink">{alert.domain}</p>
+                  <p className="mt-3 max-w-3xl text-sm leading-6 text-ink-500">{alert.detail}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => onResolveAlert(alert.id, "acknowledged")}
-                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-trust px-3 text-sm font-semibold text-white transition hover:bg-trust-hover"
+                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-3 text-sm font-semibold text-white transition hover:bg-brand"
                   >
                     <Check className="h-4 w-4" aria-hidden="true" />
                     Acknowledge
@@ -59,7 +59,7 @@ export function AlertsTab({
                   <button
                     type="button"
                     onClick={() => onResolveAlert(alert.id, "muted")}
-                    className="inline-flex min-h-10 items-center justify-center rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-700 transition hover:border-trust hover:text-trust"
+                    className="inline-flex min-h-10 items-center justify-center rounded border border-line-strong px-3 text-sm font-semibold text-ink-700 transition hover:border-brand hover:text-brand"
                   >
                     Mute
                   </button>

@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import {
   ArrowUpRight,
   BarChart3,
@@ -52,44 +53,50 @@ export function OverviewTab({
       />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {dashboard.metrics.map((metric) => {
+        {dashboard.metrics.map((metric, index) => {
           const Icon = dashboardIcon(metric.icon);
           return (
-            <article key={metric.label} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <motion.article
+              key={metric.label}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: index * 0.05 }}
+              className="rounded border border-line bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-editorial"
+            >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
                     {metric.label}
                   </p>
-                  <p className="mt-3 text-3xl font-semibold tracking-tight text-navy">{metric.value}</p>
+                  <p className="mt-3 text-3xl font-bold tracking-tight text-ink">{metric.value}</p>
                 </div>
-                <span className={`grid h-10 w-10 place-items-center rounded-md border ${metricTone(metric.tone)}`}>
+                <span className={`grid h-10 w-10 place-items-center rounded border ${metricTone(metric.tone)}`}>
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>
               </div>
-              <p className="mt-4 text-sm text-slate-600">{metric.detail}</p>
-              <p className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
+              <p className="mt-4 text-sm text-ink-500">{metric.detail}</p>
+              <p className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-pass-ink">
                 <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
                 {metric.trend}
               </p>
-            </article>
+            </motion.article>
           );
         })}
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_0.9fr]">
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <article className="rounded border border-line bg-card p-5 shadow-sm">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
             <div>
-              <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
                 Fleet health
               </p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-navy">Live domain posture</h2>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight text-ink">Live domain posture</h2>
             </div>
             <button
               type="button"
               onClick={() => onOpenTab("reporter")}
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:border-trust hover:text-trust"
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded border border-line-strong px-4 text-sm font-semibold text-ink-700 transition hover:border-brand hover:text-brand"
             >
               Reporter detail
               <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
@@ -101,15 +108,15 @@ export function OverviewTab({
                 key={domain.id}
                 type="button"
                 onClick={() => onSelectDomain(domain.id)}
-                className={`flex min-h-14 items-center justify-between gap-4 rounded-md border px-4 text-left transition ${
+                className={`flex min-h-14 items-center justify-between gap-4 rounded border px-4 text-left transition ${
                   selectedDomain.id === domain.id
-                    ? "border-trust bg-blue-50 text-trust"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+                    ? "border-brand bg-brand-soft text-brand-ink"
+                    : "border-line bg-card text-ink-700 hover:border-line-strong"
                 }`}
               >
                 <span>
                   <span className="block text-sm font-semibold">{domain.domain}</span>
-                  <span className="mt-1 block text-xs text-slate-500">{domain.nextAction}</span>
+                  <span className="mt-1 block text-xs text-ink-400">{domain.nextAction}</span>
                 </span>
                 <span className="font-mono text-sm font-semibold">{domain.score}</span>
               </button>
@@ -117,15 +124,15 @@ export function OverviewTab({
           </div>
         </article>
 
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <article className="rounded border border-line bg-card p-5 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
                 Focus domain
               </p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-navy">{selectedDomain.domain}</h2>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight text-ink">{selectedDomain.domain}</h2>
             </div>
-            <span className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${statusTone(selectedDomain.status)}`}>
+            <span className={`rounded border px-3 py-1.5 text-xs font-semibold ${statusTone(selectedDomain.status)}`}>
               {formatStatus(selectedDomain.status)}
             </span>
           </div>
@@ -135,7 +142,7 @@ export function OverviewTab({
             <CompactStat label="SPF lookups" value={`${selectedDomain.spfLookups}`} />
             <CompactStat label="Alignment" value={`${selectedDomain.alignmentRate}%`} />
           </div>
-          <p className="mt-5 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+          <p className="mt-5 rounded border border-line bg-paper px-4 py-3 text-sm leading-6 text-ink-500">
             {selectedDomain.nextAction}
           </p>
         </article>
@@ -165,29 +172,29 @@ function CommandCenter({
   const isRechecking = recheckingDomainID === selectedDomain.id;
 
   return (
-    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <section className="overflow-hidden rounded border border-line bg-card shadow-editorial">
       <div className="grid gap-0 lg:grid-cols-[1fr_380px]">
         <div className="p-5 sm:p-6">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 font-mono text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-trust">
+            <span className="inline-flex items-center gap-2 rounded border border-brand/30 bg-brand-soft px-3 py-1.5 font-mono text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-brand-ink">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
               Operator view
             </span>
-            <span className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${statusTone(selectedDomain.status)}`}>
+            <span className={`rounded border px-3 py-1.5 text-xs font-semibold ${statusTone(selectedDomain.status)}`}>
               {formatStatus(selectedDomain.status)}
             </span>
           </div>
           <div className="mt-5 flex flex-col justify-between gap-5 xl:flex-row xl:items-end">
             <div>
-              <h2 className="text-3xl font-semibold tracking-tight text-navy">{selectedDomain.domain}</h2>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{selectedDomain.nextAction}</p>
+              <h2 className="text-3xl font-bold tracking-tight text-ink">{selectedDomain.domain}</h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-ink-500">{selectedDomain.nextAction}</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => onRecheckDomain(selectedDomain)}
                 disabled={isRechecking}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-trust px-4 text-sm font-semibold text-white transition hover:bg-trust-hover disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-brand disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <RefreshCw className={`h-4 w-4 ${isRechecking ? "animate-spin" : ""}`} aria-hidden="true" />
                 {isRechecking ? "Checking..." : "Recheck DNS"}
@@ -195,7 +202,7 @@ function CommandCenter({
               <button
                 type="button"
                 onClick={onOpenReporter}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:border-trust hover:text-trust"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded border border-line-strong px-4 text-sm font-semibold text-ink-700 transition hover:border-brand hover:text-brand"
               >
                 <BarChart3 className="h-4 w-4" aria-hidden="true" />
                 Reports
@@ -203,7 +210,7 @@ function CommandCenter({
               <button
                 type="button"
                 onClick={onOpenBrandRisk}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:border-trust hover:text-trust"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded border border-line-strong px-4 text-sm font-semibold text-ink-700 transition hover:border-brand hover:text-brand"
               >
                 <ShieldAlert className="h-4 w-4" aria-hidden="true" />
                 Brand Risk
@@ -217,8 +224,8 @@ function CommandCenter({
           </div>
         </div>
 
-        <div className="border-t border-slate-200 bg-slate-50 p-5 lg:border-l lg:border-t-0">
-          <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+        <div className="border-t border-line bg-paper p-5 lg:border-l lg:border-t-0">
+          <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
             Enforcement ladder
           </p>
           <div className="mt-5 grid gap-3">
@@ -230,17 +237,17 @@ function CommandCenter({
               return (
                 <div key={policy} className="flex items-center gap-3">
                   <span
-                    className={`grid h-9 w-9 place-items-center rounded-md border text-sm font-semibold ${
-                      active ? "border-trust bg-blue-50 text-trust" : "border-slate-200 bg-white text-slate-400"
+                    className={`grid h-9 w-9 place-items-center rounded border text-sm font-semibold ${
+                      active ? "border-brand bg-brand-soft text-brand-ink" : "border-line bg-card text-ink-300"
                     }`}
                   >
                     {index + 1}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold capitalize text-navy">{policy}</p>
-                    <p className="font-mono text-xs text-slate-500">p={policy}</p>
+                    <p className="text-sm font-semibold capitalize text-ink">{policy}</p>
+                    <p className="font-mono text-xs text-ink-400">p={policy}</p>
                   </div>
-                  {active ? <Check className="h-4 w-4 text-emerald-600" aria-hidden="true" /> : null}
+                  {active ? <Check className="h-4 w-4 text-pass-ink" aria-hidden="true" /> : null}
                 </div>
               );
             })}
@@ -253,28 +260,28 @@ function CommandCenter({
 
 function RecommendationsPanel({ dashboard }: { dashboard: DashboardViewModel }) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="rounded border border-line bg-card p-5 shadow-sm">
       <div>
-        <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+        <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
           Remediation queue
         </p>
-        <h2 className="mt-2 text-xl font-semibold text-navy">Recommended next actions</h2>
+        <h2 className="mt-2 text-xl font-semibold text-ink">Recommended next actions</h2>
       </div>
       {dashboard.recommendations.length ? (
         <div className="mt-5 grid gap-3">
           {dashboard.recommendations.map((item) => (
-            <div key={item.id} className="rounded-md border border-slate-200 p-4">
+            <div key={item.id} className="rounded border border-line p-4">
               <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
                 <div>
-                  <h3 className="text-sm font-semibold text-navy">{item.title}</h3>
-                  <p className="mt-1 text-xs font-semibold text-trust">{item.domain}</p>
+                  <h3 className="text-sm font-semibold text-ink">{item.title}</h3>
+                  <p className="mt-1 text-xs font-semibold text-brand-ink">{item.domain}</p>
                 </div>
-                <span className="w-fit rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                <span className="w-fit rounded border border-line bg-paper px-2.5 py-1 text-xs font-semibold text-ink-500">
                   {item.due}
                 </span>
               </div>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{item.impact}</p>
-              <p className="mt-3 text-xs font-semibold text-slate-500">Effort: {item.effort}</p>
+              <p className="mt-3 text-sm leading-6 text-ink-500">{item.impact}</p>
+              <p className="mt-3 text-xs font-semibold text-ink-400">Effort: {item.effort}</p>
             </div>
           ))}
         </div>
@@ -287,25 +294,25 @@ function RecommendationsPanel({ dashboard }: { dashboard: DashboardViewModel }) 
 
 function ActivityPanel({ dashboard }: { dashboard: DashboardViewModel }) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="rounded border border-line bg-card p-5 shadow-sm">
       <div>
-        <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+        <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
           Audit trail
         </p>
-        <h2 className="mt-2 text-xl font-semibold text-navy">Recent activity</h2>
+        <h2 className="mt-2 text-xl font-semibold text-ink">Recent activity</h2>
       </div>
       <div className="mt-5 grid gap-4">
         {dashboard.activityEvents.map((event) => {
           const Icon = dashboardIcon(event.icon);
           return (
             <div key={`${event.title}-${event.time}`} className="flex gap-3">
-              <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-md bg-slate-100 text-slate-600">
+              <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded bg-paper-soft text-ink-500">
                 <Icon className="h-4 w-4" aria-hidden="true" />
               </span>
               <div>
-                <p className="text-sm font-semibold text-navy">{event.title}</p>
-                <p className="mt-1 text-sm leading-6 text-slate-600">{event.detail}</p>
-                <p className="mt-1 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-slate-400">{event.time}</p>
+                <p className="text-sm font-semibold text-ink">{event.title}</p>
+                <p className="mt-1 text-sm leading-6 text-ink-500">{event.detail}</p>
+                <p className="mt-1 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-ink-300">{event.time}</p>
               </div>
             </div>
           );

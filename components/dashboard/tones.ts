@@ -8,78 +8,78 @@ import type {
 export function metricTone(tone: DashboardMetric["tone"]) {
   switch (tone) {
     case "green":
-      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+      return "border-pass/30 bg-pass-soft text-pass-ink";
     case "amber":
-      return "border-amber-200 bg-amber-50 text-amber-700";
+      return "border-warn/30 bg-warn-soft text-warn-ink";
     case "red":
-      return "border-red-200 bg-red-50 text-red-700";
+      return "border-fail/30 bg-fail-soft text-fail-ink";
     default:
-      return "border-blue-200 bg-blue-50 text-blue-700";
+      return "border-brand/30 bg-brand-soft text-brand-ink";
   }
 }
 
 export function statusTone(status: DomainStatus) {
   switch (status) {
     case "protected":
-      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+      return "border-pass/30 bg-pass-soft text-pass-ink";
     case "monitoring":
-      return "border-blue-200 bg-blue-50 text-blue-700";
+      return "border-brand/30 bg-brand-soft text-brand-ink";
     default:
-      return "border-amber-200 bg-amber-50 text-amber-700";
+      return "border-warn/30 bg-warn-soft text-warn-ink";
   }
 }
 
 export function severityTone(severity: AlertSeverity) {
   switch (severity) {
     case "critical":
-      return "border-red-200 bg-red-50 text-red-700";
+      return "border-fail/40 bg-fail-soft text-fail-ink";
     case "high":
-      return "border-orange-200 bg-orange-50 text-orange-700";
+      return "border-fail/25 bg-fail-soft text-fail-ink";
     case "medium":
-      return "border-amber-200 bg-amber-50 text-amber-700";
+      return "border-warn/30 bg-warn-soft text-warn-ink";
     default:
-      return "border-slate-200 bg-slate-50 text-slate-700";
+      return "border-line bg-paper text-ink-500";
   }
 }
 
 export function brandRiskSeverityTone(severity: BrandRiskSeverity) {
   switch (severity) {
     case "Critical":
-      return "border-red-200 bg-red-50 text-red-700";
+      return "border-fail/40 bg-fail-soft text-fail-ink";
     case "High":
-      return "border-orange-200 bg-orange-50 text-orange-700";
+      return "border-fail/25 bg-fail-soft text-fail-ink";
     case "Medium":
-      return "border-amber-200 bg-amber-50 text-amber-700";
+      return "border-warn/30 bg-warn-soft text-warn-ink";
     case "Low":
-      return "border-blue-200 bg-blue-50 text-blue-700";
+      return "border-brand/30 bg-brand-soft text-brand-ink";
     default:
-      return "border-slate-200 bg-slate-50 text-slate-700";
+      return "border-line bg-paper text-ink-500";
   }
 }
 
 export function changeStatusTone(status: string) {
   switch (status) {
     case "ready":
-      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+      return "border-pass/30 bg-pass-soft text-pass-ink";
     case "review":
-      return "border-blue-200 bg-blue-50 text-blue-700";
+      return "border-brand/30 bg-brand-soft text-brand-ink";
     case "blocked":
-      return "border-red-200 bg-red-50 text-red-700";
+      return "border-fail/30 bg-fail-soft text-fail-ink";
     default:
-      return "border-amber-200 bg-amber-50 text-amber-700";
+      return "border-warn/30 bg-warn-soft text-warn-ink";
   }
 }
 
 export function spfRouteToneClass(tone: "green" | "amber" | "red" | "blue") {
   switch (tone) {
     case "green":
-      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+      return "border-pass/30 bg-pass-soft text-pass-ink";
     case "red":
-      return "border-red-200 bg-red-50 text-red-700";
+      return "border-fail/30 bg-fail-soft text-fail-ink";
     case "amber":
-      return "border-amber-200 bg-amber-50 text-amber-700";
+      return "border-warn/30 bg-warn-soft text-warn-ink";
     default:
-      return "border-blue-200 bg-blue-50 text-blue-700";
+      return "border-brand/30 bg-brand-soft text-brand-ink";
   }
 }
 

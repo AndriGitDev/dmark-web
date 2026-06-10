@@ -29,9 +29,9 @@ export function ReporterTab({
   return (
     <div className="grid gap-6">
       <div>
-        <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-trust">Reporter</p>
-        <h2 className="mt-2 text-3xl font-semibold tracking-tight text-navy">DMARC aggregate intelligence</h2>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-brand-ink">Reporter</p>
+        <h2 className="mt-2 text-3xl font-bold tracking-tight text-ink">DMARC aggregate intelligence</h2>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-ink-500">
           Sender inventory, alignment rates, and enforcement signals for {selectedDomain.domain}.
         </p>
       </div>
@@ -53,19 +53,19 @@ export function ReporterTab({
 
           {reporter.setupGuidance ? <PanelNotice text={reporter.setupGuidance} /> : null}
 
-          <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            <div className="flex flex-col justify-between gap-3 border-b border-slate-200 p-5 sm:flex-row sm:items-center">
+          <article className="overflow-hidden rounded border border-line bg-card shadow-sm">
+            <div className="flex flex-col justify-between gap-3 border-b border-line p-5 sm:flex-row sm:items-center">
               <div>
-                <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
                   Sender inventory
                 </p>
-                <h3 className="mt-2 text-xl font-semibold text-navy">Top sources by message volume</h3>
+                <h3 className="mt-2 text-xl font-semibold text-ink">Top sources by message volume</h3>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={onToggleFilter}
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:border-trust hover:text-trust"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded border border-line-strong px-4 text-sm font-semibold text-ink-700 transition hover:border-brand hover:text-brand"
                 >
                   <Filter className="h-4 w-4" aria-hidden="true" />
                   {sourceFilter === "all" ? "Unknown only" : "All senders"}
@@ -73,7 +73,7 @@ export function ReporterTab({
                 <button
                   type="button"
                   onClick={onExport}
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-navy px-4 text-sm font-semibold text-white transition hover:bg-navy-soft"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white transition hover:bg-midnight"
                 >
                   <FileText className="h-4 w-4" aria-hidden="true" />
                   Export CSV
@@ -83,7 +83,7 @@ export function ReporterTab({
             {reporter.senderSources.length ? (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[720px] text-left text-sm">
-                  <thead className="bg-slate-50 text-xs uppercase tracking-[0.12em] text-slate-500">
+                  <thead className="bg-paper text-xs uppercase tracking-[0.12em] text-ink-400">
                     <tr>
                       <th className="px-5 py-3 font-semibold">Provider</th>
                       <th className="px-5 py-3 font-semibold">Volume</th>
@@ -92,24 +92,24 @@ export function ReporterTab({
                       <th className="px-5 py-3 font-semibold">Trend</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200">
+                  <tbody className="divide-y divide-line">
                     {reporter.senderSources.map((source) => (
                       <tr key={source.id}>
-                        <td className="px-5 py-4 font-semibold text-navy">{source.provider}</td>
-                        <td className="px-5 py-4 text-slate-600">{source.volume}</td>
-                        <td className="px-5 py-4 text-slate-600">{source.aligned}%</td>
+                        <td className="px-5 py-4 font-semibold text-ink">{source.provider}</td>
+                        <td className="px-5 py-4 text-ink-500">{source.volume}</td>
+                        <td className="px-5 py-4 text-ink-500">{source.aligned}%</td>
                         <td className="px-5 py-4">
                           <span
-                            className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${
+                            className={`rounded border px-2.5 py-1 text-xs font-semibold ${
                               source.unknown
-                                ? "border-red-200 bg-red-50 text-red-700"
-                                : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                ? "border-fail/30 bg-fail-soft text-fail-ink"
+                                : "border-pass/30 bg-pass-soft text-pass-ink"
                             }`}
                           >
                             {source.unknown ? "Unknown" : "Expected"}
                           </span>
                         </td>
-                        <td className="px-5 py-4 text-slate-600">{source.trend}</td>
+                        <td className="px-5 py-4 text-ink-500">{source.trend}</td>
                       </tr>
                     ))}
                   </tbody>

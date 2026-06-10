@@ -29,16 +29,16 @@ export function BrandRiskTab({
     <div className="grid gap-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-trust">Brand Risk</p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-navy">{selectedDomain.domain}</h2>
+          <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-brand-ink">Brand Risk</p>
+          <h2 className="mt-2 text-3xl font-bold tracking-tight text-ink">{selectedDomain.domain}</h2>
         </div>
         <button
           type="button"
           onClick={onToggleInactive}
-          className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-4 text-sm font-semibold transition ${
+          className={`inline-flex min-h-11 items-center justify-center gap-2 rounded border px-4 text-sm font-semibold transition ${
             includeInactive
-              ? "border-trust bg-blue-50 text-trust"
-              : "border-slate-300 bg-white text-slate-700 hover:border-trust hover:text-trust"
+              ? "border-brand bg-brand-soft text-brand-ink"
+              : "border-line-strong bg-card text-ink-700 hover:border-brand hover:text-brand"
           }`}
           aria-pressed={includeInactive}
         >
@@ -52,15 +52,15 @@ export function BrandRiskTab({
 
       {brandRisk ? (
         <>
-          <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <article className="rounded border border-line bg-card p-5 shadow-sm">
             <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
               <div>
-                <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
                   Email-auth findings
                 </p>
-                <h3 className="mt-2 text-xl font-semibold text-navy">Authentication posture</h3>
+                <h3 className="mt-2 text-xl font-semibold text-ink">Authentication posture</h3>
               </div>
-              <span className="rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">
+              <span className="rounded border border-line bg-paper px-3 py-1.5 text-xs font-semibold text-ink-500">
                 {brandRisk.findings.length} finding{brandRisk.findings.length === 1 ? "" : "s"}
               </span>
             </div>
@@ -68,18 +68,18 @@ export function BrandRiskTab({
             {brandRisk.findings.length ? (
               <div className="mt-5 grid gap-3">
                 {brandRisk.findings.map((finding) => (
-                  <div key={finding.id} className="rounded-md border border-slate-200 bg-slate-50 p-4">
+                  <div key={finding.id} className="rounded border border-line bg-paper p-4">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${brandRiskSeverityTone(finding.severity)}`}>
+                      <span className={`rounded border px-2.5 py-1 text-xs font-semibold ${brandRiskSeverityTone(finding.severity)}`}>
                         {finding.severity}
                       </span>
-                      <span className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">
+                      <span className="rounded border border-line bg-card px-2.5 py-1 text-xs font-semibold text-ink-500">
                         {finding.category}
                       </span>
                     </div>
-                    <h4 className="mt-3 text-base font-semibold text-navy">{finding.title}</h4>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{finding.evidence}</p>
-                    <p className="mt-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm leading-6 text-blue-800">
+                    <h4 className="mt-3 text-base font-semibold text-ink">{finding.title}</h4>
+                    <p className="mt-2 text-sm leading-6 text-ink-500">{finding.evidence}</p>
+                    <p className="mt-3 rounded border border-brand/30 bg-brand-soft px-3 py-2 text-sm leading-6 text-brand-ink">
                       {finding.recommendedAction}
                     </p>
                   </div>
@@ -90,15 +90,15 @@ export function BrandRiskTab({
             )}
           </article>
 
-          <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            <div className="flex flex-col justify-between gap-3 border-b border-slate-200 p-5 sm:flex-row sm:items-center">
+          <article className="overflow-hidden rounded border border-line bg-card shadow-sm">
+            <div className="flex flex-col justify-between gap-3 border-b border-line p-5 sm:flex-row sm:items-center">
               <div>
-                <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
                   Defender lookalikes
                 </p>
-                <h3 className="mt-2 text-xl font-semibold text-navy">Lookalike-domain evidence</h3>
+                <h3 className="mt-2 text-xl font-semibold text-ink">Lookalike-domain evidence</h3>
               </div>
-              <span className="rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">
+              <span className="rounded border border-line bg-paper px-3 py-1.5 text-xs font-semibold text-ink-500">
                 {brandRisk.lookalikes.filter((candidate) => candidate.activeEvidence).length} active
               </span>
             </div>
@@ -106,7 +106,7 @@ export function BrandRiskTab({
             {brandRisk.lookalikes.length ? (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[900px] text-left text-sm">
-                  <thead className="bg-slate-50 text-xs uppercase tracking-[0.12em] text-slate-500">
+                  <thead className="bg-paper text-xs uppercase tracking-[0.12em] text-ink-400">
                     <tr>
                       <th className="px-5 py-3 font-semibold">Domain</th>
                       <th className="px-5 py-3 font-semibold">Kind</th>
@@ -115,48 +115,48 @@ export function BrandRiskTab({
                       <th className="px-5 py-3 font-semibold">Recommended action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200">
+                  <tbody className="divide-y divide-line">
                     {brandRisk.lookalikes.map((candidate) => (
                       <tr key={candidate.id} className="align-top">
                         <td className="px-5 py-4">
-                          <p className="font-semibold text-navy">{candidate.domain}</p>
-                          <p className="mt-1 max-w-[18rem] text-sm leading-6 text-slate-600">{candidate.reason}</p>
+                          <p className="font-semibold text-ink">{candidate.domain}</p>
+                          <p className="mt-1 max-w-[18rem] text-sm leading-6 text-ink-500">{candidate.reason}</p>
                           {!candidate.activeEvidence ? (
-                            <span className="mt-2 inline-flex rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                            <span className="mt-2 inline-flex rounded border border-line bg-paper px-2.5 py-1 text-xs font-semibold text-ink-500">
                               Inactive candidate
                             </span>
                           ) : null}
                         </td>
-                        <td className="px-5 py-4 text-slate-600">{candidate.kind}</td>
+                        <td className="px-5 py-4 text-ink-500">{candidate.kind}</td>
                         <td className="px-5 py-4">
                           <div className="flex flex-wrap gap-2">
                             <span
-                              className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${
+                              className={`rounded border px-2.5 py-1 text-xs font-semibold ${
                                 candidate.hasAddressRecords
-                                  ? "border-orange-200 bg-orange-50 text-orange-700"
-                                  : "border-slate-200 bg-slate-50 text-slate-500"
+                                  ? "border-warn/40 bg-warn-soft text-warn-ink"
+                                  : "border-line bg-paper text-ink-400"
                               }`}
                             >
                               A/AAAA
                             </span>
                             <span
-                              className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${
+                              className={`rounded border px-2.5 py-1 text-xs font-semibold ${
                                 candidate.hasMXRecords
-                                  ? "border-orange-200 bg-orange-50 text-orange-700"
-                                  : "border-slate-200 bg-slate-50 text-slate-500"
+                                  ? "border-warn/40 bg-warn-soft text-warn-ink"
+                                  : "border-line bg-paper text-ink-400"
                               }`}
                             >
                               MX
                             </span>
                           </div>
-                          <p className="mt-2 max-w-[18rem] text-sm leading-6 text-slate-600">{candidate.evidence}</p>
+                          <p className="mt-2 max-w-[18rem] text-sm leading-6 text-ink-500">{candidate.evidence}</p>
                         </td>
                         <td className="px-5 py-4">
-                          <span className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${brandRiskSeverityTone(candidate.severity)}`}>
+                          <span className={`rounded border px-2.5 py-1 text-xs font-semibold ${brandRiskSeverityTone(candidate.severity)}`}>
                             {candidate.severity}
                           </span>
                         </td>
-                        <td className="max-w-[18rem] px-5 py-4 text-slate-600">{candidate.recommendedAction}</td>
+                        <td className="max-w-[18rem] px-5 py-4 text-ink-500">{candidate.recommendedAction}</td>
                       </tr>
                     ))}
                   </tbody>
