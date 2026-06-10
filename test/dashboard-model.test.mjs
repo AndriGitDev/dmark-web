@@ -11,6 +11,22 @@ import ts from "typescript";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 
+function readDashboardComponentSource() {
+  const files = [
+    "components/dmark-dashboard.tsx",
+    "components/dashboard/overview-tab.tsx",
+    "components/dashboard/domains-tab.tsx",
+    "components/dashboard/reporter-tab.tsx",
+    "components/dashboard/brand-risk-tab.tsx",
+    "components/dashboard/alerts-tab.tsx",
+    "components/dashboard/settings-tab.tsx",
+    "components/dashboard/sidebar.tsx",
+    "components/dashboard/ui.tsx",
+    "components/dashboard/tones.ts",
+  ];
+  return files.map((file) => readFileSync(join(root, file), "utf8")).join("\n");
+}
+
 function loadTSModule(relativePath) {
   const filename = join(root, relativePath);
   const source = readFileSync(filename, "utf8");
@@ -1122,7 +1138,7 @@ test("DNS guidance client uses dashboard proxy path and maps unknown fallback", 
 });
 
 test("dashboard component wires DNS provider guidance without browser credentials or false certainty", () => {
-  const source = readFileSync(join(root, "components/dmark-dashboard.tsx"), "utf8");
+  const source = readDashboardComponentSource();
 
   assert.match(source, /getDNSGuidanceData/);
   assert.match(source, /DNSGuidancePanel/);
@@ -1178,7 +1194,7 @@ test("SPF route source update client uses dashboard proxy PUT with only source p
 });
 
 test("dashboard component wires SPF route source management without browser credentials", () => {
-  const source = readFileSync(join(root, "components/dmark-dashboard.tsx"), "utf8");
+  const source = readDashboardComponentSource();
 
   assert.match(source, /getSPFRouteData/);
   assert.match(source, /syncSPFRoute/);
