@@ -23,6 +23,7 @@ export function OverviewTab({
   filteredDomains,
   trends,
   trendsState,
+  onAddDomain,
   onSelectDomain,
   onOpenTab,
   onRecheckDomain,
@@ -33,6 +34,7 @@ export function OverviewTab({
   filteredDomains: ProtectedDomain[];
   trends: TrendsViewModel | null;
   trendsState: LoadState;
+  onAddDomain: () => void;
   onSelectDomain: (id: string) => void;
   onOpenTab: (tab: TabID) => void;
   onRecheckDomain: (domain: ProtectedDomain) => void;
@@ -44,6 +46,8 @@ export function OverviewTab({
         icon={Globe2}
         title="No protected domains"
         detail="Add protected domains, then refresh this dashboard to load live posture and Reporter data."
+        actionLabel="Add your first domain"
+        onAction={onAddDomain}
       />
     );
   }

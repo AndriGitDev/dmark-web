@@ -83,7 +83,40 @@ export function ReporterTab({
               </div>
             </div>
             {reporter.senderSources.length ? (
-              <div className="overflow-x-auto">
+              <>
+                <ul className="grid gap-3 p-4 md:hidden">
+                  {reporter.senderSources.map((source) => (
+                    <li key={source.id} className="rounded border border-line bg-paper p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="font-semibold text-ink">{source.provider}</p>
+                        <span
+                          className={`shrink-0 rounded border px-2.5 py-1 text-xs font-semibold ${
+                            source.unknown
+                              ? "border-fail/30 bg-fail-soft text-fail-ink"
+                              : "border-pass/30 bg-pass-soft text-pass-ink"
+                          }`}
+                        >
+                          {source.unknown ? "Unknown" : "Expected"}
+                        </span>
+                      </div>
+                      <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
+                        <div>
+                          <dt className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-ink-400">Volume</dt>
+                          <dd className="mt-1 font-semibold text-ink">{source.volume}</dd>
+                        </div>
+                        <div>
+                          <dt className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-ink-400">Aligned</dt>
+                          <dd className="mt-1 font-semibold text-ink">{source.aligned}%</dd>
+                        </div>
+                        <div>
+                          <dt className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-ink-400">Trend</dt>
+                          <dd className="mt-1 font-semibold capitalize text-ink">{source.trend}</dd>
+                        </div>
+                      </dl>
+                    </li>
+                  ))}
+                </ul>
+                <div className="hidden overflow-x-auto md:block">
                 <table className="w-full min-w-[720px] text-left text-sm">
                   <thead className="bg-paper text-xs uppercase tracking-[0.12em] text-ink-400">
                     <tr>
@@ -116,7 +149,8 @@ export function ReporterTab({
                     ))}
                   </tbody>
                 </table>
-              </div>
+                </div>
+              </>
             ) : (
               <div className="p-5">
                 <PanelNotice text={reporter.setupGuidance || "Reporter is configured, but no sender inventory has been received yet."} />

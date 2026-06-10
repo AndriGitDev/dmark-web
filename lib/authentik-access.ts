@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 const AUTHENTIK_SESSION_COOKIE = "dmark_authentik_session";
 const AUTHENTIK_STATE_COOKIE = "dmark_authentik_state";
+const AUTHENTIK_NONCE_COOKIE = "dmark_authentik_nonce";
 const DEFAULT_SESSION_TTL_SECONDS = 8 * 60 * 60;
 
 type AuthentikConfig = {
@@ -122,6 +123,33 @@ export function isAuthentikSessionAllowed(headers: Headers): boolean {
   const session = verifyAuthentikSession(cookieValue(headers.get("cookie") || "", AUTHENTIK_SESSION_COOKIE));
   if (!session) return false;
   return isAuthentikUserAllowed(session);
+}
+
+export function authentikNonceCookieName(): string {
+  return AUTHENTIK_NONCE_COOKIE;
+}
+
+export function signAuthentikNonce(nonce: string): string {
+  return signAuthentikState(nonce);
+}
+
+// verifyAuthentikNonce checks the signed nonce cookie against the nonce
+// claim from the backchannel id_token. The id_token arrives over TLS from a
+// client-secret-authenticated token exchange, so claim decoding without JWS
+// verification is sufficient for nonce comparison.
+export function verifyAuthentikNonce(cookieValue: string, idTokenNonce: string): boolean {
+  return verifyAuthentikState(cookieValue, idTokenNonce);
+}
+
+export function decodeAuthentikIDTokenNonce(idToken: string): string {
+  const parts = String(idToken || "").split(".");
+  if (parts.length !== 3 || !parts[1]) return "";
+  try {
+    const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8")) as { nonce?: unknown };
+    return typeof payload.nonce === "string" ? payload.nonce : "";
+  } catch {
+    return "";
+  }
 }
 
 export function signAuthentikState(state: string): string {

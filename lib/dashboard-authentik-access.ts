@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 const DASHBOARD_AUTHENTIK_SESSION_COOKIE = "dmark_dashboard_authentik_session";
 const DASHBOARD_AUTHENTIK_STATE_COOKIE = "dmark_dashboard_authentik_state";
+const DASHBOARD_AUTHENTIK_NONCE_COOKIE = "dmark_dashboard_authentik_nonce";
 const DEFAULT_SESSION_TTL_SECONDS = 8 * 60 * 60;
 
 type DashboardAuthentikConfig = {
@@ -137,6 +138,36 @@ export function verifyDashboardAuthentikState(cookieValue: string, state: string
   const expectedState = String(state || "").trim();
   if (!secret || !cookieState || !signature || extra || !expectedState) return false;
   return timingSafeMatch(cookieState, expectedState) && timingSafeMatch(signValue(cookieState, secret), signature);
+}
+
+export function dashboardAuthentikNonceCookieName(): string {
+  return DASHBOARD_AUTHENTIK_NONCE_COOKIE;
+}
+
+export function signDashboardAuthentikNonce(nonce: string): string {
+  return signDashboardAuthentikState(nonce);
+}
+
+// verifyDashboardAuthentikNonce checks the signed nonce cookie against the
+// nonce claim from the backchannel id_token. The id_token arrives over TLS
+// from a client-secret-authenticated token exchange, so claim decoding
+// without JWS verification is sufficient for nonce comparison.
+export function verifyDashboardAuthentikNonce(cookieValue: string, idTokenNonce: string): boolean {
+  return verifyDashboardAuthentikState(cookieValue, idTokenNonce);
+}
+
+// decodeIDTokenNonce extracts the nonce claim from a compact JWT without
+// verifying its signature; see verifyDashboardAuthentikNonce for why that
+// is acceptable here.
+export function decodeIDTokenNonce(idToken: string): string {
+  const parts = String(idToken || "").split(".");
+  if (parts.length !== 3 || !parts[1]) return "";
+  try {
+    const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8")) as { nonce?: unknown };
+    return typeof payload.nonce === "string" ? payload.nonce : "";
+  } catch {
+    return "";
+  }
 }
 
 export function dashboardAuthRequiredResponseBody() {

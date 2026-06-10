@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  dashboardAuthentikNonceCookieName,
   dashboardAuthentikSessionCookieName,
   dashboardAuthentikStateCookieName,
+  decodeIDTokenNonce,
   getDashboardAuthentikConfig,
   isDashboardAuthentikUserAllowed,
   signDashboardAuthentikSession,
+  verifyDashboardAuthentikNonce,
   verifyDashboardAuthentikState,
 } from "@/lib/dashboard-authentik-access";
 
@@ -14,6 +17,7 @@ const DEFAULT_PUBLIC_ORIGIN = "https://dmark.is";
 
 type TokenPayload = {
   access_token?: string;
+  id_token?: string;
   token_type?: string;
 };
 
@@ -44,11 +48,21 @@ export async function GET(request: NextRequest): Promise<Response> {
     });
     if (!token.access_token) return redirectWithStatus(dashboardURL, "authentik-failed");
 
+    // Bind the login to the nonce issued at /login. Fail closed whenever the
+    // nonce cookie exists: a missing id_token or mismatched nonce claim
+    // rejects the login. Logins without the cookie (expired mid-flow) fall
+    // back to state-only validation above.
+    const nonceCookie = request.cookies.get(dashboardAuthentikNonceCookieName())?.value || "";
+    if (nonceCookie && !verifyDashboardAuthentikNonce(nonceCookie, decodeIDTokenNonce(token.id_token || ""))) {
+      return redirectWithStatus(dashboardURL, "authentik-failed");
+    }
+
     const user = await fetchUserInfo(config.userInfoEndpoint, token.access_token);
     if (!isDashboardAuthentikUserAllowed(user)) return redirectWithStatus(dashboardURL, "authentik-forbidden");
 
     const response = NextResponse.redirect(dashboardURL, { status: 303 });
     response.cookies.delete(dashboardAuthentikStateCookieName());
+    response.cookies.delete(dashboardAuthentikNonceCookieName());
     response.cookies.set(dashboardAuthentikSessionCookieName(), signDashboardAuthentikSession(user), {
       httpOnly: true,
       maxAge: 8 * 60 * 60,
@@ -92,6 +106,7 @@ function redirectWithStatus(url: URL, status: string): Response {
   url.searchParams.set("login", status);
   const response = NextResponse.redirect(url, { status: 303 });
   response.cookies.delete(dashboardAuthentikStateCookieName());
+  response.cookies.delete(dashboardAuthentikNonceCookieName());
   return response;
 }
 

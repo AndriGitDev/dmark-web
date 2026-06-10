@@ -364,6 +364,12 @@ export function DmarkDashboard({
     };
   }, [activeTab, reloadNonce]);
 
+  function focusAddDomainForm() {
+    const input = document.getElementById("new-domain-mobile") || document.getElementById("new-domain");
+    input?.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => (input as HTMLInputElement | null)?.focus(), 300);
+  }
+
   function retryPanelLoads() {
     setReloadNonce((nonce) => nonce + 1);
   }
@@ -772,6 +778,7 @@ export function DmarkDashboard({
               filteredDomains={filteredDomains}
               trends={trends}
               trendsState={trendsState}
+              onAddDomain={focusAddDomainForm}
               onSelectDomain={setSelectedDomainID}
               onOpenTab={selectDashboardTab}
               onRecheckDomain={recheckDomain}
@@ -803,6 +810,7 @@ export function DmarkDashboard({
               onExportDomains={exportDomains}
               onCopy={copyText}
               onRetry={retryPanelLoads}
+              onAddDomain={focusAddDomainForm}
               recheckingDomainID={recheckingDomainID}
             />
           ) : null}
