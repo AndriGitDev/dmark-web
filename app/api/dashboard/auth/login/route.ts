@@ -2,8 +2,10 @@ import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import {
   buildDashboardAuthentikAuthorizeURL,
+  dashboardAuthentikNonceCookieName,
   dashboardAuthentikStateCookieName,
   getDashboardAuthentikConfig,
+  signDashboardAuthentikNonce,
   signDashboardAuthentikState,
 } from "@/lib/dashboard-authentik-access";
 
@@ -22,6 +24,13 @@ export function GET(): Response {
   const nonce = randomBytes(24).toString("base64url");
   const response = NextResponse.redirect(buildDashboardAuthentikAuthorizeURL(state, nonce), { status: 303 });
   response.cookies.set(dashboardAuthentikStateCookieName(), signDashboardAuthentikState(state), {
+    httpOnly: true,
+    maxAge: 10 * 60,
+    path: "/api/dashboard/auth/callback",
+    sameSite: "lax",
+    secure: true,
+  });
+  response.cookies.set(dashboardAuthentikNonceCookieName(), signDashboardAuthentikNonce(nonce), {
     httpOnly: true,
     maxAge: 10 * 60,
     path: "/api/dashboard/auth/callback",

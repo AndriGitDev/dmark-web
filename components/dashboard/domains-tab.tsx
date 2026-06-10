@@ -39,6 +39,7 @@ export function DomainsTab({
   onExportDomains,
   onCopy,
   onRetry,
+  onAddDomain,
   recheckingDomainID,
 }: {
   domains: ProtectedDomain[];
@@ -64,6 +65,7 @@ export function DomainsTab({
   onExportDomains: (domains: ProtectedDomain[]) => void;
   onCopy: (value: string, label: string) => void;
   onRetry: () => void;
+  onAddDomain: () => void;
   recheckingDomainID: string | null;
 }) {
   return (
@@ -145,6 +147,8 @@ export function DomainsTab({
           icon={Globe2}
           title="No protected domains"
           detail="No domains matched the current search or the protected-domain list is empty."
+          actionLabel="Add a domain"
+          onAction={onAddDomain}
         />
       )}
 

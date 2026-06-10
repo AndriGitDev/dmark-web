@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  authentikNonceCookieName,
   authentikSessionCookieName,
   authentikStateCookieName,
+  decodeAuthentikIDTokenNonce,
   getAuthentikConfig,
   isAuthentikUserAllowed,
   signAuthentikSession,
+  verifyAuthentikNonce,
   verifyAuthentikState,
 } from "@/lib/authentik-access";
 
@@ -14,6 +17,7 @@ const DEFAULT_PUBLIC_ORIGIN = "https://dmark.is";
 
 type TokenPayload = {
   access_token?: string;
+  id_token?: string;
   token_type?: string;
 };
 
@@ -44,11 +48,19 @@ export async function GET(request: NextRequest): Promise<Response> {
     });
     if (!token.access_token) return redirectWithStatus(adminURL, "authentik-failed");
 
+    // Bind the login to the nonce issued at /login; fail closed whenever the
+    // nonce cookie exists and the id_token nonce claim does not match.
+    const nonceCookie = request.cookies.get(authentikNonceCookieName())?.value || "";
+    if (nonceCookie && !verifyAuthentikNonce(nonceCookie, decodeAuthentikIDTokenNonce(token.id_token || ""))) {
+      return redirectWithStatus(adminURL, "authentik-failed");
+    }
+
     const user = await fetchUserInfo(config.userInfoEndpoint, token.access_token);
     if (!isAuthentikUserAllowed(user)) return redirectWithStatus(adminURL, "authentik-forbidden");
 
     const response = NextResponse.redirect(adminURL, { status: 303 });
     response.cookies.delete(authentikStateCookieName());
+    response.cookies.delete(authentikNonceCookieName());
     response.cookies.set(authentikSessionCookieName(), signAuthentikSession(user), {
       httpOnly: true,
       maxAge: 8 * 60 * 60,
@@ -92,6 +104,7 @@ function redirectWithStatus(url: URL, status: string): Response {
   url.searchParams.set("login", status);
   const response = NextResponse.redirect(url, { status: 303 });
   response.cookies.delete(authentikStateCookieName());
+  response.cookies.delete(authentikNonceCookieName());
   return response;
 }
 
