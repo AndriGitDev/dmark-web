@@ -12,7 +12,7 @@ import {
   type SPFRouteViewModel,
 } from "@/lib/dashboard";
 import { changeStatusTone, formatStatus, spfRouteToneClass, statusTone } from "./tones";
-import { CompactStat, EmptyState, PanelNotice } from "./ui";
+import { CompactStat, EmptyState, PanelNotice, PanelSkeleton, RetryNotice } from "./ui";
 import type { LoadState } from "./types";
 
 export function DomainsTab({
@@ -38,6 +38,7 @@ export function DomainsTab({
   onRecheckDomain,
   onExportDomains,
   onCopy,
+  onRetry,
   recheckingDomainID,
 }: {
   domains: ProtectedDomain[];
@@ -62,6 +63,7 @@ export function DomainsTab({
   onRecheckDomain: (domain: ProtectedDomain) => void;
   onExportDomains: (domains: ProtectedDomain[]) => void;
   onCopy: (value: string, label: string) => void;
+  onRetry: () => void;
   recheckingDomainID: string | null;
 }) {
   return (
@@ -146,7 +148,7 @@ export function DomainsTab({
         />
       )}
 
-      <DNSGuidancePanel dnsGuidance={dnsGuidance} state={dnsGuidanceState} error={dnsGuidanceError} onCopy={onCopy} />
+      <DNSGuidancePanel dnsGuidance={dnsGuidance} state={dnsGuidanceState} error={dnsGuidanceError} onCopy={onCopy} onRetry={onRetry} />
 
       <SPFRoutePanel
         key={spfRoute?.id || selectedDomain?.id || "spf-route"}
@@ -160,6 +162,7 @@ export function DomainsTab({
         onSync={onSyncSPFRoute}
         onSaveSources={onSaveSPFRouteSources}
         onCopy={onCopy}
+        onRetry={onRetry}
       />
 
       <DNSChangePlan
@@ -168,6 +171,7 @@ export function DomainsTab({
         state={changePlanState}
         error={changePlanError}
         onCopy={onCopy}
+        onRetry={onRetry}
       />
     </div>
   );
@@ -178,11 +182,13 @@ function DNSGuidancePanel({
   state,
   error,
   onCopy,
+  onRetry,
 }: {
   dnsGuidance: DNSGuidanceViewModel | null;
   state: LoadState;
   error: string;
   onCopy: (value: string, label: string) => void;
+  onRetry: () => void;
 }) {
   return (
     <article className="rounded border border-line bg-card p-5 shadow-sm">
@@ -205,8 +211,8 @@ function DNSGuidancePanel({
         ) : null}
       </div>
 
-      {state === "loading" ? <PanelNotice text="Loading DNS provider guidance..." /> : null}
-      {state === "error" ? <PanelNotice tone="error" text={error || "DNS provider guidance unavailable."} /> : null}
+      {state === "loading" ? <PanelSkeleton rows={3} /> : null}
+      {state === "error" ? <RetryNotice text={error || "DNS provider guidance unavailable."} onRetry={onRetry} /> : null}
       {state === "ready" && !dnsGuidance ? <PanelNotice text="DNS provider guidance was not returned for this domain." /> : null}
 
       {dnsGuidance ? (
@@ -276,6 +282,7 @@ function SPFRoutePanel({
   onSync,
   onSaveSources,
   onCopy,
+  onRetry,
 }: {
   spfRoute: SPFRouteViewModel | null;
   state: LoadState;
@@ -287,6 +294,7 @@ function SPFRoutePanel({
   onSync: () => void;
   onSaveSources: (sources: SPFRouteSource[]) => void;
   onCopy: (value: string, label: string) => void;
+  onRetry: () => void;
 }) {
   const panel = spfRoute ? buildSPFRoutePanelModel(spfRoute) : null;
   const [sourceDrafts, setSourceDrafts] = useState<SPFRouteSource[]>(() =>
@@ -339,8 +347,8 @@ function SPFRoutePanel({
         </div>
       </div>
 
-      {state === "loading" ? <PanelNotice text="Loading SPF route state..." /> : null}
-      {state === "error" ? <PanelNotice tone="error" text={error || "SPF route state unavailable."} /> : null}
+      {state === "loading" ? <PanelSkeleton rows={4} /> : null}
+      {state === "error" ? <RetryNotice text={error || "SPF route state unavailable."} onRetry={onRetry} /> : null}
       {state === "ready" && !panel ? <PanelNotice text="No SPF route has been configured for this domain yet." /> : null}
 
       {panel ? (
@@ -510,12 +518,14 @@ function DNSChangePlan({
   state,
   error,
   onCopy,
+  onRetry,
 }: {
   selectedDomain?: ProtectedDomain;
   changePlan: ChangePlanViewModel | null;
   state: LoadState;
   error: string;
   onCopy: (value: string, label: string) => void;
+  onRetry: () => void;
 }) {
   return (
     <article className="rounded border border-line bg-card p-5 shadow-sm">
@@ -531,8 +541,8 @@ function DNSChangePlan({
         </p>
       </div>
 
-      {state === "loading" ? <PanelNotice text="Loading change plan..." /> : null}
-      {state === "error" ? <PanelNotice tone="error" text={error || "Change plan unavailable."} /> : null}
+      {state === "loading" ? <PanelSkeleton rows={3} /> : null}
+      {state === "error" ? <RetryNotice text={error || "Change plan unavailable."} onRetry={onRetry} /> : null}
       {state === "ready" && changePlan && changePlan.changes.length === 0 ? (
         <PanelNotice text={changePlan.nextAction || "No DNS changes are currently staged for this domain."} />
       ) : null}

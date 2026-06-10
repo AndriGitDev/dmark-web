@@ -3,7 +3,7 @@
 import { Filter, ShieldAlert } from "lucide-react";
 import type { BrandRiskViewModel, ProtectedDomain } from "@/lib/dashboard";
 import { brandRiskSeverityTone } from "./tones";
-import { EmptyState, PanelNotice } from "./ui";
+import { EmptyState, PanelNotice, PanelSkeleton, RetryNotice } from "./ui";
 import type { LoadState } from "./types";
 
 export function BrandRiskTab({
@@ -13,6 +13,7 @@ export function BrandRiskTab({
   brandRiskError,
   includeInactive,
   onToggleInactive,
+  onRetry,
 }: {
   selectedDomain?: ProtectedDomain;
   brandRisk: BrandRiskViewModel | null;
@@ -20,6 +21,7 @@ export function BrandRiskTab({
   brandRiskError: string;
   includeInactive: boolean;
   onToggleInactive: () => void;
+  onRetry: () => void;
 }) {
   if (!selectedDomain) {
     return <EmptyState icon={ShieldAlert} title="Domain not found" detail="Select an existing protected domain before opening Brand Risk." />;
@@ -47,8 +49,8 @@ export function BrandRiskTab({
         </button>
       </div>
 
-      {brandRiskState === "loading" ? <PanelNotice text="Loading Brand Risk data..." /> : null}
-      {brandRiskState === "error" ? <PanelNotice tone="error" text={brandRiskError || "Brand Risk data could not be loaded."} /> : null}
+      {brandRiskState === "loading" ? <PanelSkeleton rows={4} /> : null}
+      {brandRiskState === "error" ? <RetryNotice text={brandRiskError || "Brand Risk data could not be loaded."} onRetry={onRetry} /> : null}
 
       {brandRisk ? (
         <>

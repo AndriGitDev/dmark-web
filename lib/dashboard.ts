@@ -24,6 +24,20 @@ import type {
   BackendDashboardTrendsResponse,
 } from "@/lib/dashboard-api";
 
+export class DashboardRequestError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "DashboardRequestError";
+    this.status = status;
+  }
+}
+
+export function isDashboardSessionExpiredError(error: unknown): boolean {
+  return error instanceof DashboardRequestError && error.status === 401;
+}
+
 export type DomainStatus = "protected" | "needs-work" | "monitoring";
 export type AlertSeverity = "critical" | "high" | "medium" | "low";
 export type DashboardIconName =
@@ -1159,7 +1173,7 @@ async function dashboardJSON<T>(url: string, init?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(await responseErrorMessage(response));
+    throw new DashboardRequestError(await responseErrorMessage(response), response.status);
   }
 
   return (await response.json()) as T;

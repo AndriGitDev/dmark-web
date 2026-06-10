@@ -37,6 +37,7 @@ import {
   type SPFRouteViewModel,
   type TrendsViewModel,
 } from "@/lib/dashboard";
+import { isDashboardSessionExpiredError } from "@/lib/dashboard";
 import { trackPrivacyEvent } from "@/lib/privacy-events";
 import { DashboardSidebar, type TabID } from "./dashboard/sidebar";
 import { OverviewTab } from "./dashboard/overview-tab";
@@ -110,6 +111,8 @@ export function DmarkDashboard({
   const [spfRouteHistoryState, setSpfRouteHistoryState] = useState<LoadState>("idle");
   const [plan, setPlan] = useState<PlanViewModel | null>(null);
   const [planState, setPlanState] = useState<LoadState>("idle");
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const [reloadNonce, setReloadNonce] = useState(0);
 
   const domains = dashboard.protectedDomains;
 
@@ -143,6 +146,7 @@ export function DmarkDashboard({
         setReporterState("ready");
       } catch (error) {
         if (ignore) return;
+        noteDashboardError(error);
         setReporter(null);
         setReporterState("error");
         setReporterError(errorMessage(error, "Reporter data could not be loaded."));
@@ -154,7 +158,7 @@ export function DmarkDashboard({
     return () => {
       ignore = true;
     };
-  }, [activeTab, selectedDomain, reporterFilter]);
+  }, [activeTab, selectedDomain, reporterFilter, reloadNonce]);
 
   useEffect(() => {
     if (!selectedDomain || (activeTab !== "domains" && activeTab !== "overview")) return;
@@ -172,6 +176,7 @@ export function DmarkDashboard({
         setChangePlanState("ready");
       } catch (error) {
         if (ignore) return;
+        noteDashboardError(error);
         setChangePlan(null);
         setChangePlanState("error");
         setChangePlanError(errorMessage(error, "Change plan could not be loaded."));
@@ -183,7 +188,7 @@ export function DmarkDashboard({
     return () => {
       ignore = true;
     };
-  }, [activeTab, selectedDomain]);
+  }, [activeTab, selectedDomain, reloadNonce]);
 
   useEffect(() => {
     if (!selectedDomain || (activeTab !== "domains" && activeTab !== "overview")) return;
@@ -201,6 +206,7 @@ export function DmarkDashboard({
         setSpfRouteState("ready");
       } catch (error) {
         if (ignore) return;
+        noteDashboardError(error);
         setSpfRoute(null);
         setSpfRouteState("error");
         setSpfRouteError(errorMessage(error, "SPF route data could not be loaded."));
@@ -212,7 +218,7 @@ export function DmarkDashboard({
     return () => {
       ignore = true;
     };
-  }, [activeTab, selectedDomain]);
+  }, [activeTab, selectedDomain, reloadNonce]);
 
   useEffect(() => {
     if (!selectedDomain || (activeTab !== "domains" && activeTab !== "overview")) return;
@@ -230,6 +236,7 @@ export function DmarkDashboard({
         setDNSGuidanceState("ready");
       } catch (error) {
         if (ignore) return;
+        noteDashboardError(error);
         setDNSGuidance(null);
         setDNSGuidanceState("error");
         setDNSGuidanceError(errorMessage(error, "DNS provider guidance could not be loaded."));
@@ -241,7 +248,7 @@ export function DmarkDashboard({
     return () => {
       ignore = true;
     };
-  }, [activeTab, selectedDomain]);
+  }, [activeTab, selectedDomain, reloadNonce]);
 
   useEffect(() => {
     if (!selectedDomain || activeTab !== "brand-risk") return;
@@ -259,6 +266,7 @@ export function DmarkDashboard({
         setBrandRiskState("ready");
       } catch (error) {
         if (ignore) return;
+        noteDashboardError(error);
         setBrandRisk(null);
         setBrandRiskState("error");
         setBrandRiskError(errorMessage(error, "Brand Risk data could not be loaded."));
@@ -270,7 +278,7 @@ export function DmarkDashboard({
     return () => {
       ignore = true;
     };
-  }, [activeTab, selectedDomain, includeInactiveBrandRisk]);
+  }, [activeTab, selectedDomain, includeInactiveBrandRisk, reloadNonce]);
 
   useEffect(() => {
     if (!selectedDomain || activeTab !== "overview") return;
@@ -285,8 +293,9 @@ export function DmarkDashboard({
         if (ignore) return;
         setTrends(payload);
         setTrendsState("ready");
-      } catch {
+      } catch (error) {
         if (ignore) return;
+        noteDashboardError(error);
         setTrends(null);
         setTrendsState("error");
       }
@@ -297,7 +306,7 @@ export function DmarkDashboard({
     return () => {
       ignore = true;
     };
-  }, [activeTab, selectedDomain]);
+  }, [activeTab, selectedDomain, reloadNonce]);
 
   useEffect(() => {
     if (!selectedDomain || activeTab !== "domains") return;
@@ -312,8 +321,9 @@ export function DmarkDashboard({
         if (ignore) return;
         setSpfRouteHistory(payload);
         setSpfRouteHistoryState("ready");
-      } catch {
+      } catch (error) {
         if (ignore) return;
+        noteDashboardError(error);
         setSpfRouteHistory(null);
         setSpfRouteHistoryState("error");
       }
@@ -324,7 +334,7 @@ export function DmarkDashboard({
     return () => {
       ignore = true;
     };
-  }, [activeTab, selectedDomain]);
+  }, [activeTab, selectedDomain, reloadNonce]);
 
   useEffect(() => {
     if (activeTab !== "settings") return;
@@ -339,8 +349,9 @@ export function DmarkDashboard({
         if (ignore) return;
         setPlan(payload);
         setPlanState("ready");
-      } catch {
+      } catch (error) {
         if (ignore) return;
+        noteDashboardError(error);
         setPlan(null);
         setPlanState("error");
       }
@@ -351,7 +362,15 @@ export function DmarkDashboard({
     return () => {
       ignore = true;
     };
-  }, [activeTab]);
+  }, [activeTab, reloadNonce]);
+
+  function retryPanelLoads() {
+    setReloadNonce((nonce) => nonce + 1);
+  }
+
+  function noteDashboardError(error: unknown) {
+    if (isDashboardSessionExpiredError(error)) setSessionExpired(true);
+  }
 
   function announce(message: string) {
     setActionNotice(message);
@@ -379,6 +398,7 @@ export function DmarkDashboard({
       announce(`${created.domain} was added. Run a recheck to populate live posture.`);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_add_domain" });
     } catch (error) {
+      noteDashboardError(error);
       const message = errorMessage(error, "Domain could not be added.");
       setAddDomainError(message);
       announce(message);
@@ -445,6 +465,7 @@ export function DmarkDashboard({
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_domain_recheck" });
       announce(`${domain.domain} recheck ${result.status}.`);
     } catch (error) {
+      noteDashboardError(error);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_domain_recheck" });
       announce(errorMessage(error, `${domain.domain} recheck failed.`));
     } finally {
@@ -468,6 +489,7 @@ export function DmarkDashboard({
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_spf_route" });
       announce(`SPF route sync ${result.status} for ${selectedDomain.domain}.`);
     } catch (error) {
+      noteDashboardError(error);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_spf_route" });
       const message = errorMessage(error, `${selectedDomain.domain} SPF route sync could not be queued.`);
       setSpfRouteError(message);
@@ -492,6 +514,7 @@ export function DmarkDashboard({
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_spf_route" });
       announce(`SPF source management saved for ${selectedDomain.domain}; sync queued by backend.`);
     } catch (error) {
+      noteDashboardError(error);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_spf_route" });
       const message = errorMessage(error, `${selectedDomain.domain} SPF sources could not be saved.`);
       setSpfRouteError(message);
@@ -515,6 +538,7 @@ export function DmarkDashboard({
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_alerts" });
       announce(`${alert?.title || "Alert"} ${action}.`);
     } catch (error) {
+      noteDashboardError(error);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_alerts" });
       announce(errorMessage(error, `${alert?.title || "Alert"} could not be ${action}.`));
     }
@@ -534,6 +558,7 @@ export function DmarkDashboard({
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_settings" });
       announce("Automation setting saved.");
     } catch (error) {
+      noteDashboardError(error);
       setSettings(previous);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_settings" });
       const message = errorMessage(error, "Settings could not be saved.");
@@ -565,6 +590,7 @@ export function DmarkDashboard({
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_settings" });
       announce("Dashboard settings saved.");
     } catch (error) {
+      noteDashboardError(error);
       const message = errorMessage(error, "Settings could not be saved.");
       setSettings(previous);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_settings" });
@@ -596,6 +622,7 @@ export function DmarkDashboard({
       downloadBlob("dmark-reporter-senders.csv", blob);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_export" });
     } catch (error) {
+      noteDashboardError(error);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_export" });
       announce(errorMessage(error, "Reporter CSV could not be exported."));
     }
@@ -670,8 +697,9 @@ export function DmarkDashboard({
                 type="button"
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-brand xl:hidden"
                 onClick={() => {
-                  setActiveTab("domains");
-                  announce("Use the add-domain form at the top of the desktop dashboard, or widen the screen.");
+                  const input = document.getElementById("new-domain-mobile");
+                  input?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  window.setTimeout(() => input?.focus(), 300);
                 }}
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
@@ -682,6 +710,23 @@ export function DmarkDashboard({
         </header>
 
         <main className="px-4 py-6 sm:px-6 lg:px-8">
+          {sessionExpired ? (
+            <div
+              className="mb-5 flex flex-col justify-between gap-3 rounded border border-warn/40 bg-warn-soft px-4 py-3 sm:flex-row sm:items-center"
+              role="alert"
+            >
+              <p className="text-sm font-semibold leading-6 text-warn-ink">
+                Your session has expired. Sign in again to keep working with live data.
+              </p>
+              <Link
+                href="/api/dashboard/auth/login"
+                className="inline-flex min-h-10 shrink-0 items-center justify-center rounded bg-brand-ink px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-brand"
+              >
+                Sign in again
+              </Link>
+            </div>
+          ) : null}
+
           <label className="mb-5 flex min-h-11 items-center gap-3 rounded border border-line bg-card px-3 md:hidden">
             <Search className="h-4 w-4 text-ink-300" aria-hidden="true" />
             <input
@@ -757,6 +802,7 @@ export function DmarkDashboard({
               onRecheckDomain={recheckDomain}
               onExportDomains={exportDomains}
               onCopy={copyText}
+              onRetry={retryPanelLoads}
               recheckingDomainID={recheckingDomainID}
             />
           ) : null}
@@ -773,6 +819,7 @@ export function DmarkDashboard({
                 announce(next === "unknown" ? "Showing unknown senders only." : "Showing all senders.");
               }}
               onExport={exportReporterCSV}
+              onRetry={retryPanelLoads}
             />
           ) : null}
           {activeTab === "brand-risk" ? (
@@ -786,6 +833,7 @@ export function DmarkDashboard({
                 setIncludeInactiveBrandRisk((current) => !current);
                 announce(!includeInactiveBrandRisk ? "Including inactive lookalike candidates." : "Showing active lookalike evidence only.");
               }}
+              onRetry={retryPanelLoads}
             />
           ) : null}
           {activeTab === "alerts" ? (
