@@ -11,8 +11,11 @@ import {
   mockBrandRiskView,
   mockDashboardAlerts,
   mockDashboardViewModel,
+  mockPlanPayload,
   mockReporterView,
   mockSettings,
+  mockSPFRouteHistoryPayload,
+  mockTrendsPayload,
   settingsToBackendPayload,
   type DashboardAlert,
 } from "@/lib/dashboard";
@@ -209,6 +212,11 @@ function mockGET(path: string): Response {
       domain: domainName,
       generated_at: new Date().toISOString(),
       journey_state: mockChangePlan.journeyState,
+      journey_reason: "Reporter evidence is sufficient to begin enforcement.",
+      journey_ready_for_next: true,
+      journey_blocking_signals: [],
+      policy: "none",
+      policy_percent: 100,
       next_action: mockChangePlan.nextAction,
       changes: mockChangePlan.changes.map((change) => ({
         id: change.id,
@@ -258,6 +266,21 @@ function mockGET(path: string): Response {
         },
       ],
     });
+  }
+
+  if (tail[0] === "domains" && tail[2] === "trends") {
+    const domain = mockDashboardViewModel.protectedDomains.find((item) => item.id === tail[1]);
+    const days = Math.max(7, Math.min(90, Number(url.searchParams.get("days")) || 30));
+    return NextResponse.json(mockTrendsPayload(tail[1], domain?.domain || "example.is", days));
+  }
+
+  if (tail[0] === "domains" && tail[2] === "spf-route" && tail[3] === "history") {
+    const domain = mockDashboardViewModel.protectedDomains.find((item) => item.id === tail[1]);
+    return NextResponse.json(mockSPFRouteHistoryPayload(tail[1], domain?.domain || "example.is"));
+  }
+
+  if (tail[0] === "plan") {
+    return NextResponse.json(mockPlanPayload);
   }
 
   if (tail[0] === "domains" && tail[2] === "spf-route") {

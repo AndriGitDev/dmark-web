@@ -10,15 +10,19 @@ import {
   ShieldAlert,
   Sparkles,
 } from "lucide-react";
-import type { DashboardViewModel, ProtectedDomain } from "@/lib/dashboard";
+import type { DashboardViewModel, ProtectedDomain, TrendsViewModel } from "@/lib/dashboard";
 import { formatStatus, metricTone, statusTone } from "./tones";
 import { CompactStat, EmptyState, PanelNotice, dashboardIcon } from "./ui";
+import { Sparkline, sparklineTone } from "./sparkline";
+import type { LoadState } from "./types";
 import type { TabID } from "./sidebar";
 
 export function OverviewTab({
   dashboard,
   selectedDomain,
   filteredDomains,
+  trends,
+  trendsState,
   onSelectDomain,
   onOpenTab,
   onRecheckDomain,
@@ -27,6 +31,8 @@ export function OverviewTab({
   dashboard: DashboardViewModel;
   selectedDomain?: ProtectedDomain;
   filteredDomains: ProtectedDomain[];
+  trends: TrendsViewModel | null;
+  trendsState: LoadState;
   onSelectDomain: (id: string) => void;
   onOpenTab: (tab: TabID) => void;
   onRecheckDomain: (domain: ProtectedDomain) => void;
@@ -46,6 +52,8 @@ export function OverviewTab({
     <div className="grid gap-6">
       <CommandCenter
         selectedDomain={selectedDomain}
+        trends={trends}
+        trendsState={trendsState}
         onOpenReporter={() => onOpenTab("reporter")}
         onOpenBrandRisk={() => onOpenTab("brand-risk")}
         onRecheckDomain={onRecheckDomain}
@@ -158,18 +166,24 @@ export function OverviewTab({
 
 function CommandCenter({
   selectedDomain,
+  trends,
+  trendsState,
   onOpenReporter,
   onOpenBrandRisk,
   onRecheckDomain,
   recheckingDomainID,
 }: {
   selectedDomain: ProtectedDomain;
+  trends: TrendsViewModel | null;
+  trendsState: LoadState;
   onOpenReporter: () => void;
   onOpenBrandRisk: () => void;
   onRecheckDomain: (domain: ProtectedDomain) => void;
   recheckingDomainID: string | null;
 }) {
   const isRechecking = recheckingDomainID === selectedDomain.id;
+  const scorePoints = (trends?.scorePoints || []).map((point) => ({ value: point.score, label: point.date }));
+  const alignmentPoints = (trends?.alignmentPoints || []).map((point) => ({ value: point.alignedPercentage, label: point.date }));
 
   return (
     <section className="overflow-hidden rounded border border-line bg-card shadow-editorial">
@@ -221,6 +235,51 @@ function CommandCenter({
             <CompactStat label="Trust score" value={`${selectedDomain.score}`} detail="Weighted DNS posture" />
             <CompactStat label="Alignment" value={`${selectedDomain.alignmentRate}%`} detail="Last reporting window" />
             <CompactStat label="Unknown senders" value={`${selectedDomain.unknownSenders}`} detail="Needs classification" />
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <div className="rounded border border-line bg-paper px-4 py-3">
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="font-mono text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ink-400">
+                  Score trend
+                </p>
+                <p className="font-mono text-[0.65rem] text-ink-400">{trends ? `${trends.days}d` : ""}</p>
+              </div>
+              {scorePoints.length >= 2 ? (
+                <Sparkline
+                  points={scorePoints}
+                  tone={sparklineTone(scorePoints)}
+                  ariaLabel={`Score trend for ${selectedDomain.domain} over ${trends?.days || 30} days`}
+                  className="mt-2 h-10 w-full"
+                />
+              ) : (
+                <p className="mt-2 text-xs leading-5 text-ink-400">
+                  {trendsState === "loading" ? "Loading trend..." : trendsState === "error" ? "Trend data unavailable." : "Not enough check history for a trend yet."}
+                </p>
+              )}
+            </div>
+            <div className="rounded border border-line bg-paper px-4 py-3">
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="font-mono text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ink-400">
+                  Alignment trend
+                </p>
+                <p className="font-mono text-[0.65rem] text-ink-400">
+                  {alignmentPoints.length ? `${alignmentPoints[alignmentPoints.length - 1].value}%` : ""}
+                </p>
+              </div>
+              {alignmentPoints.length >= 2 ? (
+                <Sparkline
+                  points={alignmentPoints}
+                  tone="brand"
+                  ariaLabel={`DMARC alignment trend for ${selectedDomain.domain} over ${trends?.days || 30} days`}
+                  className="mt-2 h-10 w-full"
+                />
+              ) : (
+                <p className="mt-2 text-xs leading-5 text-ink-400">
+                  {trendsState === "loading" ? "Loading trend..." : "No aggregate-report volume in this window yet."}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 

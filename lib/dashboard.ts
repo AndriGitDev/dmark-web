@@ -10,15 +10,18 @@ import type {
   BackendDashboardDNSProviderDetection,
   BackendDashboardDomain,
   BackendDashboardLookalikeRiskSignal,
+  BackendDashboardPlanResponse,
   BackendDashboardReporterResponse,
   BackendDashboardResponse,
   BackendDashboardRecheckResponse,
   BackendDashboardSender,
   BackendDashboardSettingsResponse,
   BackendDashboardSPFRouteEvidence,
+  BackendDashboardSPFRouteHistoryResponse,
   BackendDashboardSPFRouteResponse,
   BackendDashboardSPFRouteSource,
   BackendDashboardSPFRouteSyncResponse,
+  BackendDashboardTrendsResponse,
 } from "@/lib/dashboard-api";
 
 export type DomainStatus = "protected" | "needs-work" | "monitoring";
@@ -119,8 +122,64 @@ export type ChangePlanViewModel = {
   domain: string;
   generatedAt?: string;
   journeyState?: string;
+  journeyReason?: string;
+  journeyReadyForNext?: boolean;
+  journeyBlockingSignals?: string[];
+  policy?: string;
+  policyPercent?: number;
   nextAction?: string;
   changes: ChangePlanRow[];
+};
+
+export type TrendScorePoint = {
+  date: string;
+  score: number;
+  status: string;
+};
+
+export type TrendAlignmentPoint = {
+  date: string;
+  total: number;
+  aligned: number;
+  alignedPercentage: number;
+};
+
+export type TrendsViewModel = {
+  domainID: string;
+  domain: string;
+  days: number;
+  scorePoints: TrendScorePoint[];
+  alignmentPoints: TrendAlignmentPoint[];
+};
+
+export type SPFRouteHistoryEvent = {
+  kind: string;
+  severity: string;
+  message: string;
+  occurredAt: string;
+  jobID?: string;
+  status?: string;
+  errorClass?: string;
+};
+
+export type SPFRouteHistoryViewModel = {
+  routeID: string;
+  domainID: string;
+  domain: string;
+  events: SPFRouteHistoryEvent[];
+};
+
+export type PlanViewModel = {
+  plan: string;
+  savedDomainsLimit: number;
+  savedDomainsUsed: number;
+  savedDomainsRemaining: number;
+  scanCadenceMinutes: number;
+  reportRetentionDays: number;
+  alertChannels: number;
+  apiAccess: boolean;
+  reporter: boolean;
+  teams: boolean;
 };
 
 export type ReporterViewModel = {
@@ -436,6 +495,75 @@ export const mockBrandRiskView: BrandRiskViewModel = {
   ],
 };
 
+export function mockTrendsPayload(domainID: string, domainName: string, days: number): BackendDashboardTrendsResponse {
+  const scorePoints = [];
+  const alignmentPoints = [];
+  const today = new Date();
+  const points = Math.min(days, 30);
+  for (let index = points - 1; index >= 0; index -= 1) {
+    const date = new Date(today.getTime() - index * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const score = Math.max(40, Math.min(98, 62 + Math.round((points - index) * 1.2) + ((index * 7) % 5) - 2));
+    const total = 1800 + ((index * 131) % 700);
+    const aligned = Math.round(total * Math.min(0.995, 0.86 + (points - index) * 0.004));
+    scorePoints.push({ date, score, status: score >= 90 ? "pass" : score >= 70 ? "warn" : "fail" });
+    alignmentPoints.push({ date, total, aligned, aligned_percentage: Math.round((aligned / total) * 1000) / 10 });
+  }
+  return {
+    domain_id: domainID,
+    domain: domainName,
+    generated_at: new Date().toISOString(),
+    days,
+    score_points: scorePoints,
+    alignment_points: alignmentPoints,
+  };
+}
+
+export function mockSPFRouteHistoryPayload(domainID: string, domainName: string): BackendDashboardSPFRouteHistoryResponse {
+  const now = Date.now();
+  return {
+    route_id: `mock-spf-route-${domainID}`,
+    domain_id: domainID,
+    domain: domainName,
+    generated_at: new Date().toISOString(),
+    events: [
+      {
+        kind: "dashboard.spf_route.sync_queued",
+        severity: "info",
+        message: "dashboard SPF route sync queued",
+        occurred_at: new Date(now - 10 * 60 * 1000).toISOString(),
+        metadata: { job_id: "mock-job-3", status: "queued" },
+      },
+      {
+        kind: "dashboard.spf_route.upserted",
+        severity: "info",
+        message: "dashboard SPF route upserted",
+        occurred_at: new Date(now - 11 * 60 * 1000).toISOString(),
+        metadata: { sources_count: 2 },
+      },
+      {
+        kind: "dashboard.spf_route.sync_failed",
+        severity: "error",
+        message: "dashboard SPF route sync queue failed",
+        occurred_at: new Date(now - 26 * 60 * 60 * 1000).toISOString(),
+        metadata: { error_class: "queue_error" },
+      },
+    ],
+  };
+}
+
+export const mockPlanPayload: BackendDashboardPlanResponse = {
+  plan: "monitor",
+  saved_domains_limit: 10,
+  saved_domains_used: 3,
+  saved_domains_remaining: 7,
+  scan_cadence_minutes: 720,
+  report_retention_days: 30,
+  alert_channels: 1,
+  api_access: false,
+  reporter: false,
+  teams: false,
+};
+
 export const mockDashboardViewModel: DashboardViewModel = dashboardViewModelFromDomains(
   mockProtectedDomains,
   mockDashboardAlerts.length,
@@ -489,8 +617,64 @@ export function mapChangePlanResponse(payload: BackendDashboardChangePlanRespons
     domain: payload.domain,
     generatedAt: payload.generated_at,
     journeyState: payload.journey_state,
+    journeyReason: payload.journey_reason,
+    journeyReadyForNext: payload.journey_ready_for_next,
+    journeyBlockingSignals: payload.journey_blocking_signals || [],
+    policy: payload.policy,
+    policyPercent: payload.policy_percent,
     nextAction: payload.next_action,
     changes: (payload.changes || []).map(mapChangePlanRow),
+  };
+}
+
+export function mapTrendsResponse(payload: BackendDashboardTrendsResponse): TrendsViewModel {
+  return {
+    domainID: payload.domain_id,
+    domain: payload.domain,
+    days: numberOrZero(payload.days),
+    scorePoints: (payload.score_points || []).map((point) => ({
+      date: point.date,
+      score: numberOrZero(point.score),
+      status: point.status || "unknown",
+    })),
+    alignmentPoints: (payload.alignment_points || []).map((point) => ({
+      date: point.date,
+      total: numberOrZero(point.total),
+      aligned: numberOrZero(point.aligned),
+      alignedPercentage: roundOne(point.aligned_percentage),
+    })),
+  };
+}
+
+export function mapSPFRouteHistoryResponse(payload: BackendDashboardSPFRouteHistoryResponse): SPFRouteHistoryViewModel {
+  return {
+    routeID: payload.route_id,
+    domainID: payload.domain_id,
+    domain: payload.domain,
+    events: (payload.events || []).map((event) => ({
+      kind: event.kind,
+      severity: event.severity,
+      message: event.message,
+      occurredAt: event.occurred_at,
+      jobID: typeof event.metadata?.job_id === "string" ? event.metadata.job_id : undefined,
+      status: typeof event.metadata?.status === "string" ? event.metadata.status : undefined,
+      errorClass: typeof event.metadata?.error_class === "string" ? event.metadata.error_class : undefined,
+    })),
+  };
+}
+
+export function mapPlanResponse(payload: BackendDashboardPlanResponse): PlanViewModel {
+  return {
+    plan: payload.plan || "free",
+    savedDomainsLimit: numberOrZero(payload.saved_domains_limit),
+    savedDomainsUsed: numberOrZero(payload.saved_domains_used),
+    savedDomainsRemaining: numberOrZero(payload.saved_domains_remaining),
+    scanCadenceMinutes: numberOrZero(payload.scan_cadence_minutes),
+    reportRetentionDays: numberOrZero(payload.report_retention_days),
+    alertChannels: numberOrZero(payload.alert_channels),
+    apiAccess: Boolean(payload.api_access),
+    reporter: Boolean(payload.reporter),
+    teams: Boolean(payload.teams),
   };
 }
 
@@ -723,6 +907,22 @@ export async function getReporterData(domainID: string, filter?: "unknown"): Pro
 
 export async function getChangePlan(domainID: string): Promise<ChangePlanViewModel> {
   return mapChangePlanResponse(await dashboardJSON<BackendDashboardChangePlanResponse>(`/api/dashboard/domains/${domainID}/change-plan`));
+}
+
+export async function getTrendsData(domainID: string, days = 30): Promise<TrendsViewModel> {
+  return mapTrendsResponse(
+    await dashboardJSON<BackendDashboardTrendsResponse>(`/api/dashboard/domains/${domainID}/trends?days=${days}`),
+  );
+}
+
+export async function getSPFRouteHistory(domainID: string, limit = 50): Promise<SPFRouteHistoryViewModel> {
+  return mapSPFRouteHistoryResponse(
+    await dashboardJSON<BackendDashboardSPFRouteHistoryResponse>(`/api/dashboard/domains/${domainID}/spf-route/history?limit=${limit}`),
+  );
+}
+
+export async function getPlanData(): Promise<PlanViewModel> {
+  return mapPlanResponse(await dashboardJSON<BackendDashboardPlanResponse>("/api/dashboard/plan"));
 }
 
 export async function getSPFRouteData(domainID: string): Promise<SPFRouteViewModel> {

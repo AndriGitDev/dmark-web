@@ -823,6 +823,101 @@ test("dashboard response mapper renders summary metrics and domain next action",
   assert.equal(view.protectedDomains[0].nextAction, "Review unknown senders.");
 });
 
+test("trends mapper preserves score and alignment series", () => {
+  const dashboard = loadTSModule("lib/dashboard.ts");
+  const view = dashboard.mapTrendsResponse({
+    domain_id: "domain-1",
+    domain: "example.is",
+    generated_at: "2026-06-10T12:00:00Z",
+    days: 30,
+    score_points: [
+      { date: "2026-06-01", score: 64, status: "fail" },
+      { date: "2026-06-02", score: 92, status: "pass" },
+    ],
+    alignment_points: [{ date: "2026-06-01", total: 200, aligned: 150, aligned_percentage: 75 }],
+  });
+
+  assert.equal(view.domainID, "domain-1");
+  assert.equal(view.days, 30);
+  assert.equal(view.scorePoints.length, 2);
+  assert.equal(view.scorePoints[1].score, 92);
+  assert.equal(view.scorePoints[1].status, "pass");
+  assert.equal(view.alignmentPoints[0].alignedPercentage, 75);
+});
+
+test("SPF route history mapper keeps whitelisted metadata only", () => {
+  const dashboard = loadTSModule("lib/dashboard.ts");
+  const view = dashboard.mapSPFRouteHistoryResponse({
+    route_id: "route-1",
+    domain_id: "domain-1",
+    domain: "example.is",
+    generated_at: "2026-06-10T12:00:00Z",
+    events: [
+      {
+        kind: "dashboard.spf_route.sync_queued",
+        severity: "info",
+        message: "dashboard SPF route sync queued",
+        occurred_at: "2026-06-10T11:58:00Z",
+        metadata: { job_id: "job-1", status: "queued", method: "PUT", remote_addr: "203.0.113.7" },
+      },
+    ],
+  });
+
+  assert.equal(view.routeID, "route-1");
+  assert.equal(view.events.length, 1);
+  assert.equal(view.events[0].jobID, "job-1");
+  assert.equal(view.events[0].status, "queued");
+  assert.equal(JSON.stringify(view).includes("remote_addr"), false);
+  assert.equal(JSON.stringify(view).includes("203.0.113.7"), false);
+});
+
+test("plan mapper maps entitlement limits and usage", () => {
+  const dashboard = loadTSModule("lib/dashboard.ts");
+  const view = dashboard.mapPlanResponse({
+    plan: "monitor",
+    saved_domains_limit: 10,
+    saved_domains_used: 3,
+    saved_domains_remaining: 7,
+    scan_cadence_minutes: 720,
+    report_retention_days: 30,
+    alert_channels: 1,
+    api_access: false,
+    reporter: false,
+    teams: false,
+  });
+
+  assert.equal(view.plan, "monitor");
+  assert.equal(view.savedDomainsLimit, 10);
+  assert.equal(view.savedDomainsUsed, 3);
+  assert.equal(view.savedDomainsRemaining, 7);
+  assert.equal(view.scanCadenceMinutes, 720);
+  assert.equal(view.reporter, false);
+});
+
+test("change plan mapper exposes journey readiness evidence", () => {
+  const dashboard = loadTSModule("lib/dashboard.ts");
+  const view = dashboard.mapChangePlanResponse({
+    domain_id: "domain-1",
+    domain: "example.is",
+    generated_at: "2026-06-10T12:00:00Z",
+    journey_state: "observing",
+    journey_reason: "DMARC reporting is present, but more evidence is needed.",
+    journey_ready_for_next: false,
+    journey_blocking_signals: ["Fewer than 7 days of aggregate reports have been observed."],
+    policy: "none",
+    policy_percent: 100,
+    next_action: "Keep p=none reporting enabled.",
+    changes: [],
+  });
+
+  assert.equal(view.journeyState, "observing");
+  assert.equal(view.journeyReadyForNext, false);
+  assert.equal(view.journeyBlockingSignals.length, 1);
+  assert.equal(view.policy, "none");
+  assert.equal(view.policyPercent, 100);
+  assert.match(view.journeyReason, /more evidence/);
+});
+
 test("brand risk mapper preserves DNS evidence and inactive candidate semantics", () => {
   const dashboard = loadTSModule("lib/dashboard.ts");
   const view = dashboard.mapBrandRiskResponse({

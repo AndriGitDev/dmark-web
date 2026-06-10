@@ -7,6 +7,7 @@ import {
   type ChangePlanViewModel,
   type DNSGuidanceViewModel,
   type ProtectedDomain,
+  type SPFRouteHistoryViewModel,
   type SPFRouteSource,
   type SPFRouteViewModel,
 } from "@/lib/dashboard";
@@ -27,6 +28,8 @@ export function DomainsTab({
   dnsGuidance,
   dnsGuidanceState,
   dnsGuidanceError,
+  spfRouteHistory,
+  spfRouteHistoryState,
   syncingSPFRoute,
   savingSPFRouteSources,
   onSyncSPFRoute,
@@ -49,6 +52,8 @@ export function DomainsTab({
   dnsGuidance: DNSGuidanceViewModel | null;
   dnsGuidanceState: LoadState;
   dnsGuidanceError: string;
+  spfRouteHistory: SPFRouteHistoryViewModel | null;
+  spfRouteHistoryState: LoadState;
   syncingSPFRoute: boolean;
   savingSPFRouteSources: boolean;
   onSyncSPFRoute: () => void;
@@ -148,6 +153,8 @@ export function DomainsTab({
         spfRoute={spfRoute}
         state={spfRouteState}
         error={spfRouteError}
+        history={spfRouteHistory}
+        historyState={spfRouteHistoryState}
         syncing={syncingSPFRoute}
         savingSources={savingSPFRouteSources}
         onSync={onSyncSPFRoute}
@@ -262,6 +269,8 @@ function SPFRoutePanel({
   spfRoute,
   state,
   error,
+  history,
+  historyState,
   syncing,
   savingSources,
   onSync,
@@ -271,6 +280,8 @@ function SPFRoutePanel({
   spfRoute: SPFRouteViewModel | null;
   state: LoadState;
   error: string;
+  history: SPFRouteHistoryViewModel | null;
+  historyState: LoadState;
   syncing: boolean;
   savingSources: boolean;
   onSync: () => void;
@@ -453,6 +464,40 @@ function SPFRoutePanel({
               )}
             </div>
           </div>
+
+          <div className="rounded border border-line p-4">
+            <p className="text-sm font-semibold text-ink">Sync history</p>
+            <p className="mt-1 text-xs leading-5 text-ink-400">
+              Recent route publication activity recorded by the backend; provider internals are never shown.
+            </p>
+            {historyState === "loading" ? <p className="mt-3 text-sm text-ink-400">Loading sync history...</p> : null}
+            {historyState === "error" ? <p className="mt-3 text-sm text-ink-400">Sync history is unavailable right now.</p> : null}
+            {history && history.events.length ? (
+              <ol className="mt-3 grid gap-2">
+                {history.events.map((event, index) => (
+                  <li key={`${event.kind}-${event.occurredAt}-${index}`} className="flex items-start gap-3 rounded bg-paper px-3 py-2">
+                    <span
+                      className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${
+                        event.severity === "error" ? "bg-fail" : event.severity === "warn" ? "bg-warn" : "bg-pass"
+                      }`}
+                      aria-hidden="true"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold text-ink">{event.message}</span>
+                      <span className="mt-0.5 block font-mono text-[0.68rem] text-ink-400">
+                        {new Date(event.occurredAt).toLocaleString()}
+                        {event.status ? ` · ${event.status}` : ""}
+                        {event.errorClass ? ` · ${event.errorClass}` : ""}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            ) : null}
+            {historyState === "ready" && history && history.events.length === 0 ? (
+              <p className="mt-3 text-sm text-ink-400">No route activity has been recorded yet.</p>
+            ) : null}
+          </div>
         </div>
       ) : null}
     </article>
@@ -495,7 +540,36 @@ function DNSChangePlan({
       {changePlan ? (
         <div className="mt-5 grid gap-3 md:grid-cols-2">
           {changePlan.journeyState ? <CompactStat label="Journey state" value={changePlan.journeyState.replaceAll("_", " ")} /> : null}
+          {changePlan.policy ? (
+            <CompactStat
+              label="Published policy"
+              value={`p=${changePlan.policy}${changePlan.policyPercent && changePlan.policyPercent !== 100 ? ` · pct=${changePlan.policyPercent}` : ""}`}
+            />
+          ) : null}
           {changePlan.nextAction ? <CompactStat label="Next action" value={changePlan.nextAction} /> : null}
+        </div>
+      ) : null}
+
+      {changePlan?.journeyReason ? (
+        <div
+          className={`mt-4 rounded border px-4 py-3 ${
+            changePlan.journeyReadyForNext ? "border-pass/30 bg-pass-soft" : "border-line bg-paper"
+          }`}
+        >
+          <p className={`text-sm font-semibold ${changePlan.journeyReadyForNext ? "text-pass-ink" : "text-ink"}`}>
+            {changePlan.journeyReadyForNext ? "Ready for the next enforcement step" : "Not ready for the next enforcement step yet"}
+          </p>
+          <p className="mt-1 text-sm leading-6 text-ink-500">{changePlan.journeyReason}</p>
+          {changePlan.journeyBlockingSignals?.length ? (
+            <ul className="mt-3 grid gap-2">
+              {changePlan.journeyBlockingSignals.map((signal) => (
+                <li key={signal} className="flex items-start gap-2 text-sm leading-6 text-warn-ink">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-warn" aria-hidden="true" />
+                  {signal}
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       ) : null}
 
