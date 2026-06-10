@@ -2,7 +2,7 @@
 
 import { BarChart3, FileText, Filter } from "lucide-react";
 import type { ProtectedDomain, ReporterViewModel } from "@/lib/dashboard";
-import { CompactStat, EmptyState, PanelNotice } from "./ui";
+import { CompactStat, EmptyState, PanelNotice, PanelSkeleton, RetryNotice } from "./ui";
 import type { LoadState } from "./types";
 
 export function ReporterTab({
@@ -13,6 +13,7 @@ export function ReporterTab({
   sourceFilter,
   onToggleFilter,
   onExport,
+  onRetry,
 }: {
   selectedDomain?: ProtectedDomain;
   reporter: ReporterViewModel | null;
@@ -21,6 +22,7 @@ export function ReporterTab({
   sourceFilter: "all" | "unknown";
   onToggleFilter: () => void;
   onExport: () => void;
+  onRetry: () => void;
 }) {
   if (!selectedDomain) {
     return <EmptyState icon={BarChart3} title="Domain not found" detail="Select an existing protected domain before opening Reporter." />;
@@ -36,9 +38,9 @@ export function ReporterTab({
         </p>
       </div>
 
-      {reporterState === "loading" ? <PanelNotice text="Loading Reporter data..." /> : null}
+      {reporterState === "loading" ? <PanelSkeleton rows={4} /> : null}
       {reporterState === "error" ? (
-        <PanelNotice tone="error" text={reporterError || "Reporter data could not be loaded."} />
+        <RetryNotice text={reporterError || "Reporter data could not be loaded."} onRetry={onRetry} />
       ) : null}
 
       {reporter ? (
