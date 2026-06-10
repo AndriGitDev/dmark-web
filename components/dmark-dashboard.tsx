@@ -13,8 +13,11 @@ import {
   getChangePlan,
   getDashboardData,
   getDNSGuidanceData,
+  getPlanData,
   getReporterData,
   getSPFRouteData,
+  getSPFRouteHistory,
+  getTrendsData,
   muteDashboardAlert,
   recheckDashboardDomain,
   saveDashboardSettings,
@@ -25,11 +28,14 @@ import {
   type DashboardAlert,
   type DashboardViewModel,
   type DNSGuidanceViewModel,
+  type PlanViewModel,
   type ProtectedDomain,
   type ReporterViewModel,
   type SettingsState,
+  type SPFRouteHistoryViewModel,
   type SPFRouteSource,
   type SPFRouteViewModel,
+  type TrendsViewModel,
 } from "@/lib/dashboard";
 import { trackPrivacyEvent } from "@/lib/privacy-events";
 import { DashboardSidebar, type TabID } from "./dashboard/sidebar";
@@ -98,6 +104,12 @@ export function DmarkDashboard({
   const [newDomain, setNewDomain] = useState("");
   const [addingDomain, setAddingDomain] = useState(false);
   const [addDomainError, setAddDomainError] = useState("");
+  const [trends, setTrends] = useState<TrendsViewModel | null>(null);
+  const [trendsState, setTrendsState] = useState<LoadState>("idle");
+  const [spfRouteHistory, setSpfRouteHistory] = useState<SPFRouteHistoryViewModel | null>(null);
+  const [spfRouteHistoryState, setSpfRouteHistoryState] = useState<LoadState>("idle");
+  const [plan, setPlan] = useState<PlanViewModel | null>(null);
+  const [planState, setPlanState] = useState<LoadState>("idle");
 
   const domains = dashboard.protectedDomains;
 
@@ -259,6 +271,87 @@ export function DmarkDashboard({
       ignore = true;
     };
   }, [activeTab, selectedDomain, includeInactiveBrandRisk]);
+
+  useEffect(() => {
+    if (!selectedDomain || activeTab !== "overview") return;
+
+    let ignore = false;
+
+    async function loadTrends() {
+      setTrendsState("loading");
+
+      try {
+        const payload = await getTrendsData(selectedDomain!.id, 30);
+        if (ignore) return;
+        setTrends(payload);
+        setTrendsState("ready");
+      } catch {
+        if (ignore) return;
+        setTrends(null);
+        setTrendsState("error");
+      }
+    }
+
+    void loadTrends();
+
+    return () => {
+      ignore = true;
+    };
+  }, [activeTab, selectedDomain]);
+
+  useEffect(() => {
+    if (!selectedDomain || activeTab !== "domains") return;
+
+    let ignore = false;
+
+    async function loadSPFRouteHistory() {
+      setSpfRouteHistoryState("loading");
+
+      try {
+        const payload = await getSPFRouteHistory(selectedDomain!.id);
+        if (ignore) return;
+        setSpfRouteHistory(payload);
+        setSpfRouteHistoryState("ready");
+      } catch {
+        if (ignore) return;
+        setSpfRouteHistory(null);
+        setSpfRouteHistoryState("error");
+      }
+    }
+
+    void loadSPFRouteHistory();
+
+    return () => {
+      ignore = true;
+    };
+  }, [activeTab, selectedDomain]);
+
+  useEffect(() => {
+    if (activeTab !== "settings") return;
+
+    let ignore = false;
+
+    async function loadPlan() {
+      setPlanState("loading");
+
+      try {
+        const payload = await getPlanData();
+        if (ignore) return;
+        setPlan(payload);
+        setPlanState("ready");
+      } catch {
+        if (ignore) return;
+        setPlan(null);
+        setPlanState("error");
+      }
+    }
+
+    void loadPlan();
+
+    return () => {
+      ignore = true;
+    };
+  }, [activeTab]);
 
   function announce(message: string) {
     setActionNotice(message);
@@ -632,6 +725,8 @@ export function DmarkDashboard({
               dashboard={dashboard}
               selectedDomain={selectedDomain}
               filteredDomains={filteredDomains}
+              trends={trends}
+              trendsState={trendsState}
               onSelectDomain={setSelectedDomainID}
               onOpenTab={selectDashboardTab}
               onRecheckDomain={recheckDomain}
@@ -652,6 +747,8 @@ export function DmarkDashboard({
               dnsGuidance={dnsGuidance}
               dnsGuidanceState={dnsGuidanceState}
               dnsGuidanceError={dnsGuidanceError}
+              spfRouteHistory={spfRouteHistory}
+              spfRouteHistoryState={spfRouteHistoryState}
               syncingSPFRoute={syncingSPFRoute}
               savingSPFRouteSources={savingSPFRouteSources}
               onSyncSPFRoute={syncSelectedSPFRoute}
@@ -699,6 +796,8 @@ export function DmarkDashboard({
               settings={settings}
               savingSetting={savingSetting}
               savingSettingsForm={savingSettingsForm}
+              plan={plan}
+              planState={planState}
               error={settingsError}
               onToggle={toggleSetting}
               onDraftChange={updateSettingsDraft}

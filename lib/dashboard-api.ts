@@ -59,8 +59,64 @@ export type BackendDashboardChangePlanResponse = {
   domain: string;
   generated_at: string;
   journey_state?: string;
+  journey_reason?: string;
+  journey_ready_for_next?: boolean;
+  journey_blocking_signals?: string[];
+  policy?: string;
+  policy_percent?: number;
   next_action?: string;
   changes: BackendDashboardDNSChange[];
+};
+
+export type BackendDashboardTrendScorePoint = {
+  date: string;
+  score: number;
+  status?: string;
+};
+
+export type BackendDashboardTrendAlignmentPoint = {
+  date: string;
+  total: number;
+  aligned: number;
+  aligned_percentage: number;
+};
+
+export type BackendDashboardTrendsResponse = {
+  domain_id: string;
+  domain: string;
+  generated_at: string;
+  days: number;
+  score_points: BackendDashboardTrendScorePoint[];
+  alignment_points: BackendDashboardTrendAlignmentPoint[];
+};
+
+export type BackendDashboardSPFRouteHistoryEvent = {
+  kind: string;
+  severity: string;
+  message: string;
+  occurred_at: string;
+  metadata?: Record<string, unknown>;
+};
+
+export type BackendDashboardSPFRouteHistoryResponse = {
+  route_id: string;
+  domain_id: string;
+  domain: string;
+  generated_at: string;
+  events: BackendDashboardSPFRouteHistoryEvent[];
+};
+
+export type BackendDashboardPlanResponse = {
+  plan: string;
+  saved_domains_limit: number;
+  saved_domains_used: number;
+  saved_domains_remaining: number;
+  scan_cadence_minutes: number;
+  report_retention_days: number;
+  alert_channels: number;
+  api_access: boolean;
+  reporter: boolean;
+  teams: boolean;
 };
 
 export type BackendDashboardSender = {
