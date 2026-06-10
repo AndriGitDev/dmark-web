@@ -29,24 +29,24 @@ export function SettingsTab({
   return (
     <div className="grid gap-6">
       <div>
-        <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-trust">Settings</p>
-        <h2 className="mt-2 text-3xl font-semibold tracking-tight text-navy">Automation and notification controls</h2>
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-brand-ink">Settings</p>
+        <h2 className="mt-2 text-3xl font-bold tracking-tight text-ink">Automation and notification controls</h2>
       </div>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <article className="rounded border border-line bg-card p-5 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
                 Enforcement guardrails
               </p>
-              <h3 className="mt-2 text-xl font-semibold text-navy">DMARC rollout policy</h3>
+              <h3 className="mt-2 text-xl font-semibold text-ink">DMARC rollout policy</h3>
             </div>
-            <Gauge className="h-5 w-5 text-trust" aria-hidden="true" />
+            <Gauge className="h-5 w-5 text-brand-ink" aria-hidden="true" />
           </div>
           <div className="mt-6 grid gap-4">
             <label className="grid gap-2">
-              <span className="text-sm font-semibold text-navy">Alignment threshold before p=reject</span>
+              <span className="text-sm font-semibold text-ink">Alignment threshold before p=reject</span>
               <div className="flex items-center gap-3">
                 <input
                   type="number"
@@ -56,14 +56,14 @@ export function SettingsTab({
                   onChange={(event) =>
                     onDraftChange({ ...settings, alignmentThreshold: Number.parseInt(event.target.value || "0", 10) })
                   }
-                  className="min-h-11 w-28 rounded-md border border-slate-300 px-3 text-sm font-semibold text-navy outline-none focus:border-trust"
+                  className="min-h-11 w-28 rounded border border-line-strong px-3 text-sm font-semibold text-ink outline-none focus:border-brand"
                 />
-                <span className="text-sm font-semibold text-slate-600">%</span>
+                <span className="text-sm font-semibold text-ink-500">%</span>
                 <button
                   type="button"
                   onClick={() => onSave(settings)}
                   disabled={savingSettingsForm}
-                  className="inline-flex min-h-11 items-center justify-center rounded-md bg-trust px-4 text-sm font-semibold text-white transition hover:bg-trust-hover disabled:cursor-not-allowed disabled:opacity-70"
+                  className="inline-flex min-h-11 items-center justify-center rounded bg-brand-ink px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-brand disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {savingSettingsForm ? "Saving..." : "Save"}
                 </button>
@@ -85,15 +85,15 @@ export function SettingsTab({
           {error ? <PanelNotice tone="error" text={error} /> : null}
         </article>
 
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <article className="rounded border border-line bg-card p-5 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
                 Notification channels
               </p>
-              <h3 className="mt-2 text-xl font-semibold text-navy">Notification channels</h3>
+              <h3 className="mt-2 text-xl font-semibold text-ink">Notification channels</h3>
             </div>
-            <Bell className="h-5 w-5 text-trust" aria-hidden="true" />
+            <Bell className="h-5 w-5 text-brand-ink" aria-hidden="true" />
           </div>
           <div className="mt-6 grid gap-3">
             {channels.map((channel) => {
@@ -101,19 +101,19 @@ export function SettingsTab({
               return (
                 <label
                   key={channel}
-                  className="flex min-h-16 items-center justify-between gap-4 rounded-md border border-slate-200 px-4 transition hover:border-trust"
+                  className="flex min-h-16 items-center justify-between gap-4 rounded border border-line px-4 transition hover:border-brand"
                 >
                   <span className="flex items-center gap-3">
-                    <span className="grid h-9 w-9 place-items-center rounded-md bg-slate-100 text-slate-600">
+                    <span className="grid h-9 w-9 place-items-center rounded bg-paper-soft text-ink-500">
                       <Bell className="h-4 w-4" aria-hidden="true" />
                     </span>
-                    <span className="text-sm font-semibold capitalize text-navy">{channel}</span>
+                    <span className="text-sm font-semibold capitalize text-ink">{channel}</span>
                   </span>
                   <input
                     type="checkbox"
                     checked={enabled}
                     onChange={() => onToggleChannel(channel)}
-                    className="h-5 w-5 accent-trust"
+                    className="h-5 w-5 accent-brand"
                   />
                 </label>
               );
@@ -141,15 +141,15 @@ function SettingRow({
       type="button"
       onClick={onToggle}
       disabled={saving}
-      className="flex min-h-14 w-full items-center justify-between gap-4 rounded-md border border-slate-200 px-4 text-left transition hover:border-trust disabled:cursor-not-allowed disabled:opacity-70"
+      className="flex min-h-14 w-full items-center justify-between gap-4 rounded border border-line px-4 text-left transition hover:border-brand disabled:cursor-not-allowed disabled:opacity-70"
       aria-pressed={enabled}
     >
-      <p className="text-sm font-semibold text-navy">{title}</p>
+      <p className="text-sm font-semibold text-ink">{title}</p>
       <span
-        className={`relative h-7 w-12 rounded-full transition ${enabled ? "bg-trust" : "bg-slate-300"}`}
+        className={`relative h-7 w-12 rounded-full transition ${enabled ? "bg-brand-ink" : "bg-line-strong"}`}
         aria-hidden="true"
       >
-        <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${enabled ? "left-6" : "left-1"}`} />
+        <span className={`absolute top-1 h-5 w-5 rounded-full bg-card transition ${enabled ? "left-6" : "left-1"}`} />
       </span>
     </button>
   );

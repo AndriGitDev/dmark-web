@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
+import { motion } from "framer-motion";
 import { Menu, Plus, RefreshCw, Search, X } from "lucide-react";
 import {
   acknowledgeDashboardAlert,
@@ -508,45 +509,46 @@ export function DmarkDashboard({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-navy">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-slate-200 bg-white lg:block">
+    <div className="min-h-screen bg-paper text-ink">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-line bg-paper lg:block">
         <DashboardSidebar activeTab={activeTab} onSelect={selectDashboardTab} />
       </aside>
 
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/92 backdrop-blur">
-          <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-30 border-b border-line/80 bg-paper/90 backdrop-blur-xl">
+          <div className="absolute inset-0 dmark-grid" aria-hidden="true" />
+          <div className="relative flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                className="grid h-10 w-10 place-items-center rounded-md border border-slate-200 text-slate-600 lg:hidden"
+                className="grid h-10 w-10 place-items-center rounded border border-line text-ink-500 lg:hidden"
                 onClick={() => setMobileNavOpen(true)}
                 aria-label="Open navigation"
               >
                 <Menu className="h-5 w-5" aria-hidden="true" />
               </button>
               <div>
-                <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-trust">
+                <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-brand-ink">
                   Dmark command center
                 </p>
                 <h1 className="text-lg font-semibold tracking-tight sm:text-xl">Domain trust dashboard</h1>
               </div>
             </div>
 
-            <label className="hidden min-w-80 items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 md:flex">
-              <Search className="h-4 w-4 text-slate-400" aria-hidden="true" />
+            <label className="hidden min-w-80 items-center gap-3 rounded border border-line bg-paper px-3 md:flex">
+              <Search className="h-4 w-4 text-ink-300" aria-hidden="true" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search domains, owners, next actions"
-                className="min-h-10 w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                className="min-h-10 w-full bg-transparent text-sm outline-none placeholder:text-ink-300"
               />
             </label>
 
             <div className="flex items-center gap-2">
               <Link
                 href="/"
-                className="hidden min-h-10 items-center justify-center rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:border-trust hover:text-trust sm:inline-flex"
+                className="hidden min-h-10 items-center justify-center rounded border border-line-strong px-4 text-sm font-semibold text-ink-700 transition hover:border-brand hover:text-brand sm:inline-flex"
               >
                 Marketing
               </Link>
@@ -559,13 +561,13 @@ export function DmarkDashboard({
                   value={newDomain}
                   onChange={(event) => setNewDomain(event.target.value)}
                   placeholder="example.is"
-                  className="min-h-10 w-44 rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-trust focus:ring-2 focus:ring-trust/20"
+                  className="min-h-10 w-44 rounded border border-line bg-card px-3 text-sm outline-none transition placeholder:text-ink-300 focus:border-brand focus:ring-2 focus:ring-brand-soft"
                   aria-invalid={addDomainError ? "true" : undefined}
                 />
                 <button
                   type="submit"
                   disabled={addingDomain}
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-trust px-4 text-sm font-semibold text-white transition hover:bg-trust-hover disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-brand disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {addingDomain ? <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
                   {addingDomain ? "Adding" : "Add domain"}
@@ -573,7 +575,7 @@ export function DmarkDashboard({
               </form>
               <button
                 type="button"
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-trust px-4 text-sm font-semibold text-white transition hover:bg-trust-hover xl:hidden"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-brand xl:hidden"
                 onClick={() => {
                   setActiveTab("domains");
                   announce("Use the add-domain form at the top of the desktop dashboard, or widen the screen.");
@@ -587,8 +589,8 @@ export function DmarkDashboard({
         </header>
 
         <main className="px-4 py-6 sm:px-6 lg:px-8">
-          <label className="mb-5 flex min-h-11 items-center gap-3 rounded-md border border-slate-200 bg-white px-3 md:hidden">
-            <Search className="h-4 w-4 text-slate-400" aria-hidden="true" />
+          <label className="mb-5 flex min-h-11 items-center gap-3 rounded border border-line bg-card px-3 md:hidden">
+            <Search className="h-4 w-4 text-ink-300" aria-hidden="true" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
@@ -597,8 +599,8 @@ export function DmarkDashboard({
             />
           </label>
 
-          <form className="mb-5 flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm xl:hidden" onSubmit={addDomain} aria-label="Add protected domain">
-            <label className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500" htmlFor="new-domain-mobile">
+          <form className="mb-5 flex flex-col gap-2 rounded border border-line bg-card p-3 shadow-sm xl:hidden" onSubmit={addDomain} aria-label="Add protected domain">
+            <label className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-400" htmlFor="new-domain-mobile">
               Add protected domain
             </label>
             <div className="flex flex-col gap-2 sm:flex-row">
@@ -607,23 +609,24 @@ export function DmarkDashboard({
                 value={newDomain}
                 onChange={(event) => setNewDomain(event.target.value)}
                 placeholder="example.is"
-                className="min-h-11 flex-1 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-trust focus:ring-2 focus:ring-trust/20"
+                className="min-h-11 flex-1 rounded border border-line bg-paper px-3 text-sm outline-none transition placeholder:text-ink-300 focus:border-brand focus:ring-2 focus:ring-brand-soft"
                 aria-invalid={addDomainError ? "true" : undefined}
               />
               <button
                 type="submit"
                 disabled={addingDomain}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-trust px-4 text-sm font-semibold text-white transition hover:bg-trust-hover disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-brand disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {addingDomain ? <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
                 {addingDomain ? "Adding" : "Add domain"}
               </button>
             </div>
-            {addDomainError ? <p className="text-sm font-medium text-red-700">{addDomainError}</p> : null}
+            {addDomainError ? <p className="text-sm font-medium text-fail-ink">{addDomainError}</p> : null}
           </form>
 
-          {addDomainError ? <p className="mb-5 hidden text-sm font-medium text-red-700 xl:block">{addDomainError}</p> : null}
+          {addDomainError ? <p className="mb-5 hidden text-sm font-medium text-fail-ink xl:block">{addDomainError}</p> : null}
 
+          <motion.div key={activeTab} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }}>
           {activeTab === "overview" ? (
             <OverviewTab
               dashboard={dashboard}
@@ -703,11 +706,12 @@ export function DmarkDashboard({
               onToggleChannel={toggleNotificationChannel}
             />
           ) : null}
+          </motion.div>
         </main>
       </div>
 
       <div
-        className="fixed bottom-4 right-4 z-50 max-w-[calc(100vw-2rem)] rounded-md border border-blue-200 bg-white px-4 py-3 text-sm font-semibold text-navy shadow-lg"
+        className="fixed bottom-4 right-4 z-50 max-w-[calc(100vw-2rem)] rounded border border-brand/30 bg-card px-4 py-3 text-sm font-semibold text-ink shadow-lg"
         role="status"
         aria-live="polite"
       >
@@ -718,14 +722,14 @@ export function DmarkDashboard({
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
-            className="absolute inset-0 bg-slate-950/50"
+            className="absolute inset-0 bg-midnight/65 backdrop-blur-sm"
             aria-label="Close navigation"
             onClick={() => setMobileNavOpen(false)}
           />
-          <div className="relative h-full w-80 max-w-[86vw] bg-white shadow-2xl">
+          <div className="relative h-full w-80 max-w-[86vw] bg-card shadow-2xl">
             <button
               type="button"
-              className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-md border border-slate-200 text-slate-600"
+              className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded border border-line text-ink-500"
               onClick={() => setMobileNavOpen(false)}
               aria-label="Close navigation"
             >

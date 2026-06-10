@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import {
   BarChart3,
@@ -8,7 +9,6 @@ import {
   LayoutDashboard,
   Settings,
   ShieldAlert,
-  ShieldCheck,
   Sparkles,
 } from "lucide-react";
 
@@ -26,16 +26,11 @@ export type TabID = (typeof navItems)[number]["id"];
 export function DashboardSidebar({ activeTab, onSelect }: { activeTab: TabID; onSelect: (tab: TabID) => void }) {
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-slate-200 p-6">
-        <Link href="/" className="flex items-center gap-3" aria-label="dmark.is home">
-          <span className="grid h-10 w-10 place-items-center rounded-md bg-navy text-white">
-            <ShieldCheck className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <span>
-            <span className="block text-lg font-semibold tracking-tight">dmark.is</span>
-            <span className="block font-mono text-[0.68rem] uppercase tracking-[0.18em] text-muted">
-              Trust operations
-            </span>
+      <div className="border-b border-line p-6">
+        <Link href="/" className="grid gap-3" aria-label="dmark.is home">
+          <Image className="h-10 w-auto justify-self-start" src="/brand/dmark-logo.png" alt="dmark.is" width={769} height={240} sizes="128px" priority />
+          <span className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-500">
+            Trust operations
           </span>
         </Link>
       </div>
@@ -48,8 +43,8 @@ export function DashboardSidebar({ activeTab, onSelect }: { activeTab: TabID; on
               key={item.id}
               type="button"
               onClick={() => onSelect(item.id)}
-              className={`flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-semibold transition ${
-                active ? "bg-blue-50 text-trust" : "text-slate-600 hover:bg-slate-50 hover:text-navy"
+              className={`flex min-h-11 items-center gap-3 rounded px-3 text-sm font-semibold transition ${
+                active ? "bg-brand-soft text-brand-ink" : "text-ink-500 hover:bg-paper hover:text-ink"
               }`}
             >
               <Icon className="h-4 w-4" aria-hidden="true" />
@@ -58,11 +53,11 @@ export function DashboardSidebar({ activeTab, onSelect }: { activeTab: TabID; on
           );
         })}
       </nav>
-      <div className="mt-auto border-t border-slate-200 p-4">
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <Sparkles className="h-5 w-5 text-trust" aria-hidden="true" />
-          <p className="mt-3 text-sm font-semibold text-navy">Live trust operations</p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+      <div className="mt-auto border-t border-line p-4">
+        <div className="rounded border border-brand/30 bg-brand-soft p-4">
+          <Sparkles className="h-5 w-5 text-brand-ink" aria-hidden="true" />
+          <p className="mt-3 text-sm font-semibold text-ink">Live trust operations</p>
+          <p className="mt-2 text-sm leading-6 text-ink-500">
             Review domain posture, sender evidence, and DNS changes from one workspace.
           </p>
         </div>

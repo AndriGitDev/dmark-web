@@ -63,13 +63,13 @@ export function DomainsTab({
     <div className="grid gap-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-trust">Protected domains</p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-navy">Record monitoring and remediation</h2>
+          <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-brand-ink">Protected domains</p>
+          <h2 className="mt-2 text-3xl font-bold tracking-tight text-ink">Record monitoring and remediation</h2>
         </div>
         <button
           type="button"
           onClick={() => onExportDomains(domains)}
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-trust px-4 text-sm font-semibold text-white transition hover:bg-trust-hover"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white transition hover:bg-brand"
         >
           <Download className="h-4 w-4" aria-hidden="true" />
           Export domains
@@ -81,19 +81,19 @@ export function DomainsTab({
           {domains.map((domain) => (
             <article
               key={domain.id}
-              className={`rounded-lg border bg-white p-5 shadow-sm ${
-                selectedDomainID === domain.id ? "border-trust ring-2 ring-blue-100" : "border-slate-200"
+              className={`rounded border bg-card p-5 shadow-sm ${
+                selectedDomainID === domain.id ? "border-brand ring-2 ring-brand-soft" : "border-line"
               }`}
             >
               <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
                 <div>
                   <div className="flex flex-wrap items-center gap-3">
-                    <h3 className="text-xl font-semibold text-navy">{domain.domain}</h3>
-                    <span className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${statusTone(domain.status)}`}>
+                    <h3 className="text-xl font-semibold text-ink">{domain.domain}</h3>
+                    <span className={`rounded border px-2.5 py-1 text-xs font-semibold ${statusTone(domain.status)}`}>
                       {formatStatus(domain.status)}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm text-slate-500">
+                  <p className="mt-2 text-sm text-ink-400">
                     {domain.owner} · checked {domain.lastChecked}
                   </p>
                 </div>
@@ -101,7 +101,7 @@ export function DomainsTab({
                   <button
                     type="button"
                     onClick={() => onSelectDomain(domain.id)}
-                    className="inline-flex min-h-10 items-center justify-center rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-700 transition hover:border-trust hover:text-trust"
+                    className="inline-flex min-h-10 items-center justify-center rounded border border-line-strong px-3 text-sm font-semibold text-ink-700 transition hover:border-brand hover:text-brand"
                   >
                     Inspect
                   </button>
@@ -109,7 +109,7 @@ export function DomainsTab({
                     type="button"
                     onClick={() => onRecheckDomain(domain)}
                     disabled={recheckingDomainID === domain.id}
-                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-navy px-3 text-sm font-semibold text-white transition hover:bg-navy-soft disabled:cursor-not-allowed disabled:opacity-70"
+                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-3 text-sm font-semibold text-white transition hover:bg-midnight disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {recheckingDomainID === domain.id ? (
                       <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -127,7 +127,7 @@ export function DomainsTab({
                 <CompactStat label="DKIM" value={`${domain.dkimCoverage}%`} />
                 <CompactStat label="Unknown" value={`${domain.unknownSenders}`} />
               </div>
-              <p className="mt-4 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+              <p className="mt-4 rounded border border-line bg-paper px-4 py-3 text-sm leading-6 text-ink-500">
                 {domain.nextAction}
               </p>
             </article>
@@ -178,21 +178,21 @@ function DNSGuidancePanel({
   onCopy: (value: string, label: string) => void;
 }) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="rounded border border-line bg-card p-5 shadow-sm">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
         <div>
-          <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
             DNS provider guidance
           </p>
-          <h3 className="mt-2 text-xl font-semibold text-navy">
+          <h3 className="mt-2 text-xl font-semibold text-ink">
             {dnsGuidance ? `Provider steps for ${dnsGuidance.domain}` : "Provider-specific DNS steps"}
           </h3>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-500">
             DNS provider detection is shown as detected, ambiguous, or unknown before instructions are presented so operators do not get false certainty.
           </p>
         </div>
         {dnsGuidance ? (
-          <span className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${spfRouteToneClass(dnsGuidance.statusTone)}`}>
+          <span className={`rounded border px-3 py-1.5 text-xs font-semibold ${spfRouteToneClass(dnsGuidance.statusTone)}`}>
             {dnsGuidance.statusLabel}
           </span>
         ) : null}
@@ -213,37 +213,37 @@ function DNSGuidancePanel({
           {dnsGuidance.resolverError ? <PanelNotice text={`Resolver fallback: ${dnsGuidance.resolverError}`} /> : null}
 
           {dnsGuidance.evidenceNameservers.length ? (
-            <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm font-semibold text-navy">Nameserver evidence</p>
-              <p className="mt-2 font-mono text-xs text-slate-600">{dnsGuidance.evidenceNameservers.join(", ")}</p>
+            <div className="rounded border border-line bg-paper p-4">
+              <p className="text-sm font-semibold text-ink">Nameserver evidence</p>
+              <p className="mt-2 font-mono text-xs text-ink-500">{dnsGuidance.evidenceNameservers.join(", ")}</p>
             </div>
           ) : null}
 
           <div className="grid gap-3">
             {dnsGuidance.instructions.map((instruction) => (
-              <div key={`${instruction.kind}-${instruction.record}`} className="rounded-md border border-slate-200 p-4">
+              <div key={`${instruction.kind}-${instruction.record}`} className="rounded border border-line p-4">
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                   <div>
-                    <p className="text-sm font-semibold text-navy">
+                    <p className="text-sm font-semibold text-ink">
                       {instruction.providerName} · {instruction.recordType} · TTL {instruction.ttl || "default"}
                     </p>
-                    <code className="mt-3 block overflow-x-auto rounded-md border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700">
+                    <code className="mt-3 block overflow-x-auto rounded border border-line bg-paper px-3 py-2 font-mono text-xs text-ink-700">
                       {instruction.record}
                     </code>
                   </div>
                   <button
                     type="button"
                     onClick={() => onCopy(instruction.record, "DNS record")}
-                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-navy px-3 text-sm font-semibold text-white transition hover:bg-navy-soft"
+                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-3 text-sm font-semibold text-white transition hover:bg-midnight"
                   >
                     <Copy className="h-4 w-4" aria-hidden="true" />
                     Copy DNS record
                   </button>
                 </div>
                 {instruction.steps.length ? (
-                  <ol className="mt-4 grid gap-2 text-sm text-slate-600">
+                  <ol className="mt-4 grid gap-2 text-sm text-ink-500">
                     {instruction.steps.map((step) => (
-                      <li key={step} className="rounded-md bg-slate-50 px-3 py-2">
+                      <li key={step} className="rounded bg-paper px-3 py-2">
                         {step}
                       </li>
                     ))}
@@ -299,20 +299,20 @@ function SPFRoutePanel({
   }
 
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="rounded border border-line bg-card p-5 shadow-sm">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
         <div>
-          <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
             SPF route
           </p>
-          <h3 className="mt-2 text-xl font-semibold text-navy">{panel?.heading || "SPF route"}</h3>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+          <h3 className="mt-2 text-xl font-semibold text-ink">{panel?.heading || "SPF route"}</h3>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-500">
             Manual sync queues a backend job through the dashboard proxy; Bunny DNS credentials stay server-side.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {panel ? (
-            <span className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${spfRouteToneClass(panel.statusTone)}`}>
+            <span className={`rounded border px-3 py-1.5 text-xs font-semibold ${spfRouteToneClass(panel.statusTone)}`}>
               {panel.statusLabel}
             </span>
           ) : null}
@@ -320,7 +320,7 @@ function SPFRoutePanel({
             type="button"
             onClick={onSync}
             disabled={syncing || state === "loading" || !spfRoute}
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-trust px-4 text-sm font-semibold text-white transition hover:bg-trust-hover disabled:cursor-not-allowed disabled:opacity-70"
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-brand disabled:cursor-not-allowed disabled:opacity-70"
           >
             <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} aria-hidden="true" />
             {syncing ? "Queueing sync..." : "Sync SPF route"}
@@ -342,43 +342,43 @@ function SPFRoutePanel({
           </div>
 
           <div className="grid gap-3 lg:grid-cols-2">
-            <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm font-semibold text-navy">Customer CNAME delegation</p>
-              <code className="mt-3 block overflow-x-auto rounded-md border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-700">
+            <div className="rounded border border-line bg-paper p-4">
+              <p className="text-sm font-semibold text-ink">Customer CNAME delegation</p>
+              <code className="mt-3 block overflow-x-auto rounded border border-line bg-card px-3 py-2 font-mono text-xs text-ink-700">
                 {panel.cnameInstruction}
               </code>
               <button
                 type="button"
                 onClick={() => onCopy(panel.cnameInstruction, "SPF route CNAME")}
-                className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-navy px-3 text-sm font-semibold text-white transition hover:bg-navy-soft"
+                className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-3 text-sm font-semibold text-white transition hover:bg-midnight"
               >
                 <Copy className="h-4 w-4" aria-hidden="true" />
                 Copy CNAME
               </button>
             </div>
 
-            <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm font-semibold text-navy">Generated SPF preview</p>
-              <code className="mt-3 block overflow-x-auto rounded-md border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-700">
+            <div className="rounded border border-line bg-paper p-4">
+              <p className="text-sm font-semibold text-ink">Generated SPF preview</p>
+              <code className="mt-3 block overflow-x-auto rounded border border-line bg-card px-3 py-2 font-mono text-xs text-ink-700">
                 {panel.generatedSPFPreview}
               </code>
-              <p className="mt-3 text-xs leading-5 text-slate-500">Last published: {panel.lastPublishedSPF}</p>
+              <p className="mt-3 text-xs leading-5 text-ink-400">Last published: {panel.lastPublishedSPF}</p>
             </div>
           </div>
 
           {panel.errorSummary ? <PanelNotice tone="error" text={panel.errorSummary} /> : null}
 
           <div className="grid gap-3 lg:grid-cols-2">
-            <div className="rounded-md border border-slate-200 p-4">
+            <div className="rounded border border-line p-4">
               <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                 <div>
-                  <p className="text-sm font-semibold text-navy">SPF source management</p>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">Manage include, ip4, and ip6 sources; credentials stay behind the dashboard proxy.</p>
+                  <p className="text-sm font-semibold text-ink">SPF source management</p>
+                  <p className="mt-1 text-xs leading-5 text-ink-400">Manage include, ip4, and ip6 sources; credentials stay behind the dashboard proxy.</p>
                 </div>
                 <button
                   type="button"
                   onClick={addSourceDraft}
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-700 transition hover:border-trust hover:text-trust"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded border border-line-strong px-3 text-sm font-semibold text-ink-700 transition hover:border-brand hover:text-brand"
                 >
                   <Plus className="h-4 w-4" aria-hidden="true" />
                   Add source
@@ -386,42 +386,42 @@ function SPFRoutePanel({
               </div>
               <div className="mt-3 grid gap-3">
                 {sourceDrafts.map((source, index) => (
-                  <div key={`${source.kind}-${source.value}-${index}`} className="grid gap-2 rounded-md bg-slate-50 p-3 md:grid-cols-[8rem_1fr_1fr_auto]">
-                    <label className="grid gap-1 text-xs font-semibold text-slate-600">
+                  <div key={`${source.kind}-${source.value}-${index}`} className="grid gap-2 rounded bg-paper p-3 md:grid-cols-[8rem_1fr_1fr_auto]">
+                    <label className="grid gap-1 text-xs font-semibold text-ink-500">
                       Kind
                       <select
                         value={source.kind}
                         onChange={(event) => updateSourceDraft(index, { kind: event.target.value })}
-                        className="min-h-10 rounded-md border border-slate-300 bg-white px-2 text-sm font-semibold text-navy"
+                        className="min-h-10 rounded border border-line-strong bg-card px-2 text-sm font-semibold text-ink"
                       >
                         <option value="include">include</option>
                         <option value="ip4">ip4</option>
                         <option value="ip6">ip6</option>
                       </select>
                     </label>
-                    <label className="grid gap-1 text-xs font-semibold text-slate-600">
+                    <label className="grid gap-1 text-xs font-semibold text-ink-500">
                       Value
                       <input
                         value={source.value}
                         onChange={(event) => updateSourceDraft(index, { value: event.target.value })}
                         placeholder="_spf.provider.example or 203.0.113.10"
-                        className="min-h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-navy"
+                        className="min-h-10 rounded border border-line-strong bg-card px-3 text-sm text-ink"
                       />
                     </label>
-                    <label className="grid gap-1 text-xs font-semibold text-slate-600">
+                    <label className="grid gap-1 text-xs font-semibold text-ink-500">
                       Label
                       <input
                         value={source.label}
                         onChange={(event) => updateSourceDraft(index, { label: event.target.value })}
                         placeholder="Provider name"
-                        className="min-h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-navy"
+                        className="min-h-10 rounded border border-line-strong bg-card px-3 text-sm text-ink"
                       />
                     </label>
                     <button
                       type="button"
                       onClick={() => removeSourceDraft(index)}
                       disabled={sourceDrafts.length === 1}
-                      className="self-end rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-red-300 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="self-end rounded border border-line-strong px-3 py-2 text-sm font-semibold text-ink-700 transition hover:border-fail/40 hover:text-fail-ink disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Remove
                     </button>
@@ -432,24 +432,24 @@ function SPFRoutePanel({
                 type="button"
                 onClick={saveSourceDrafts}
                 disabled={savingSources || !spfRoute || !sourceDrafts.some((source) => source.value.trim())}
-                className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-trust px-4 text-sm font-semibold text-white transition hover:bg-trust-hover disabled:cursor-not-allowed disabled:opacity-70"
+                className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-brand disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {savingSources ? "Saving sources..." : "Save sources"}
               </button>
             </div>
 
-            <div className="rounded-md border border-slate-200 p-4">
-              <p className="text-sm font-semibold text-navy">Evidence summary</p>
+            <div className="rounded border border-line p-4">
+              <p className="text-sm font-semibold text-ink">Evidence summary</p>
               {panel.evidenceLabels.length ? (
-                <ul className="mt-3 grid gap-2 text-sm text-slate-600">
+                <ul className="mt-3 grid gap-2 text-sm text-ink-500">
                   {panel.evidenceLabels.map((evidence) => (
-                    <li key={evidence} className="rounded-md bg-slate-50 px-3 py-2">
+                    <li key={evidence} className="rounded bg-paper px-3 py-2">
                       {evidence}
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="mt-3 text-sm text-slate-500">No SPF evidence was returned yet.</p>
+                <p className="mt-3 text-sm text-ink-400">No SPF evidence was returned yet.</p>
               )}
             </div>
           </div>
@@ -473,15 +473,15 @@ function DNSChangePlan({
   onCopy: (value: string, label: string) => void;
 }) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="rounded border border-line bg-card p-5 shadow-sm">
       <div>
-        <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+        <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
           Change plan
         </p>
-        <h3 className="mt-2 text-xl font-semibold text-navy">
+        <h3 className="mt-2 text-xl font-semibold text-ink">
           {selectedDomain ? `DNS records for ${selectedDomain.domain}` : "DNS records"}
         </h3>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-500">
           Review staged DNS changes with evidence, risk notes, and rollback guidance before publishing.
         </p>
       </div>
@@ -502,7 +502,7 @@ function DNSChangePlan({
       {changePlan?.changes.length ? (
         <div className="mt-5 overflow-x-auto">
           <table className="w-full min-w-[940px] text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase tracking-[0.12em] text-slate-500">
+            <thead className="bg-paper text-xs uppercase tracking-[0.12em] text-ink-400">
               <tr>
                 <th className="px-4 py-3 font-semibold">Change</th>
                 <th className="px-4 py-3 font-semibold">Record</th>
@@ -512,31 +512,31 @@ function DNSChangePlan({
                 <th className="px-4 py-3 font-semibold">Copy</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-line">
               {changePlan.changes.map((change) => (
                 <tr key={change.id} className="align-top">
                   <td className="px-4 py-4">
-                    <p className="font-semibold text-navy">{change.title}</p>
-                    <span className={`mt-2 inline-flex rounded-md border px-2.5 py-1 text-xs font-semibold ${changeStatusTone(change.state)}`}>
+                    <p className="font-semibold text-ink">{change.title}</p>
+                    <span className={`mt-2 inline-flex rounded border px-2.5 py-1 text-xs font-semibold ${changeStatusTone(change.state)}`}>
                       {change.state}
                     </span>
                   </td>
                   <td className="px-4 py-4">
-                    <p className="font-mono text-xs font-semibold text-slate-500">
+                    <p className="font-mono text-xs font-semibold text-ink-400">
                       {[change.recordName, change.recordType].filter(Boolean).join(" ")}
                     </p>
-                    <code className="mt-2 block max-w-[26rem] overflow-x-auto rounded-md border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-700">
+                    <code className="mt-2 block max-w-[26rem] overflow-x-auto rounded border border-line bg-card px-3 py-2 font-mono text-xs text-ink-700">
                       {change.recordText}
                     </code>
                   </td>
-                  <td className="max-w-[15rem] px-4 py-4 text-slate-600">{change.evidence || "No evidence returned."}</td>
-                  <td className="max-w-[15rem] px-4 py-4 text-slate-600">{change.risk || "No risk note returned."}</td>
-                  <td className="max-w-[15rem] px-4 py-4 text-slate-600">{change.rollbackNote || "No rollback note returned."}</td>
+                  <td className="max-w-[15rem] px-4 py-4 text-ink-500">{change.evidence || "No evidence returned."}</td>
+                  <td className="max-w-[15rem] px-4 py-4 text-ink-500">{change.risk || "No risk note returned."}</td>
+                  <td className="max-w-[15rem] px-4 py-4 text-ink-500">{change.rollbackNote || "No rollback note returned."}</td>
                   <td className="px-4 py-4">
                     <button
                       type="button"
                       onClick={() => onCopy(change.recordText, `${change.title} record`)}
-                      className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-navy px-3 text-sm font-semibold text-white transition hover:bg-navy-soft"
+                      className="inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-3 text-sm font-semibold text-white transition hover:bg-midnight"
                     >
                       <Copy className="h-4 w-4" aria-hidden="true" />
                       Copy

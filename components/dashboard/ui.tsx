@@ -36,10 +36,10 @@ export function dashboardIcon(icon: DashboardIconName): LucideIcon {
 
 export function CompactStat({ label, value, detail }: { label: string; value: string; detail?: string }) {
   return (
-    <div className="rounded-md border border-slate-200 bg-white px-4 py-3">
-      <p className="font-mono text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-slate-500">{label}</p>
-      <p className="mt-2 text-xl font-semibold tracking-tight text-navy">{value}</p>
-      {detail ? <p className="mt-1 text-xs text-slate-500">{detail}</p> : null}
+    <div className="rounded border border-line bg-card px-4 py-3">
+      <p className="font-mono text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ink-400">{label}</p>
+      <p className="mt-2 text-xl font-semibold tracking-tight text-ink">{value}</p>
+      {detail ? <p className="mt-1 text-xs text-ink-400">{detail}</p> : null}
     </div>
   );
 }
@@ -54,10 +54,10 @@ export function EmptyState({
   detail: string;
 }) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
-      <Icon className="mx-auto h-8 w-8 text-trust" aria-hidden="true" />
-      <h3 className="mt-4 text-xl font-semibold text-navy">{title}</h3>
-      <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">{detail}</p>
+    <article className="rounded border border-line bg-card p-8 text-center shadow-sm">
+      <Icon className="mx-auto h-8 w-8 text-brand-ink" aria-hidden="true" />
+      <h3 className="mt-4 text-xl font-semibold text-ink">{title}</h3>
+      <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-ink-500">{detail}</p>
     </article>
   );
 }
@@ -65,10 +65,10 @@ export function EmptyState({
 export function PanelNotice({ text, tone = "info" }: { text: string; tone?: "info" | "error" }) {
   return (
     <p
-      className={`mt-4 rounded-md border px-4 py-3 text-sm leading-6 ${
+      className={`mt-4 rounded border px-4 py-3 text-sm leading-6 ${
         tone === "error"
-          ? "border-red-200 bg-red-50 text-red-800"
-          : "border-blue-200 bg-blue-50 text-blue-800"
+          ? "border-fail/30 bg-fail-soft text-fail-ink"
+          : "border-brand/30 bg-brand-soft text-brand-ink"
       }`}
     >
       {text}
