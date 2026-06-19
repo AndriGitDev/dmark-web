@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { DashboardIconName } from "@/lib/dashboard";
 
 export function dashboardIcon(icon: DashboardIconName): LucideIcon {
@@ -80,18 +81,20 @@ export function Skeleton({ className = "h-4 w-full" }: { className?: string }) {
 }
 
 export function PanelSkeleton({ rows = 3 }: { rows?: number }) {
+  const tc = useTranslations("Common");
   return (
-    <div className="mt-4 grid gap-3" role="status" aria-label="Loading">
+    <div className="mt-4 grid gap-3" role="status" aria-label={tc("loading")}>
       <Skeleton className="h-5 w-2/5" />
       {Array.from({ length: rows }).map((_, index) => (
         <Skeleton key={index} className="h-10 w-full" />
       ))}
-      <span className="sr-only">Loading...</span>
+      <span className="sr-only">{tc("loading")}</span>
     </div>
   );
 }
 
 export function RetryNotice({ text, onRetry }: { text: string; onRetry?: () => void }) {
+  const tc = useTranslations("Common");
   return (
     <div className="mt-4 flex flex-col justify-between gap-3 rounded border border-fail/30 bg-fail-soft px-4 py-3 sm:flex-row sm:items-center">
       <p className="text-sm leading-6 text-fail-ink">{text}</p>
@@ -101,7 +104,7 @@ export function RetryNotice({ text, onRetry }: { text: string; onRetry?: () => v
           onClick={onRetry}
           className="inline-flex min-h-10 shrink-0 items-center justify-center rounded border border-fail/40 bg-card px-4 text-sm font-semibold text-fail-ink transition hover:border-fail"
         >
-          Retry
+          {tc("retry")}
         </button>
       ) : null}
     </div>

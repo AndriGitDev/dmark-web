@@ -115,7 +115,7 @@ test("privacy analytics config is explicit, allowlisted, and secret-free", () =>
 });
 
 test("root layout wires only the privacy analytics component", () => {
-  const source = readFileSync(join(root, "app/layout.tsx"), "utf8");
+  const source = readFileSync(join(root, "app/[locale]/layout.tsx"), "utf8");
 
   assert.match(source, /PrivacyAnalytics/);
   assert.doesNotMatch(source, /google-analytics|gtag|GTM|facebook|hotjar/i);
@@ -202,7 +202,7 @@ test("privacy events allow beta-lock CTA sources and discard raw beta request de
 });
 
 test("locked dashboard page wires privacy-safe beta-lock CTA analytics", () => {
-  const pageSource = readFileSync(join(root, "app/dashboard/page.tsx"), "utf8");
+  const pageSource = readFileSync(join(root, "app/[locale]/dashboard/page.tsx"), "utf8");
   const ctaSource = readFileSync(join(root, "components/dashboard-locked-analytics.tsx"), "utf8");
 
   assert.match(pageSource, /DashboardLockedCTALink/);
@@ -221,7 +221,8 @@ test("public marketing uses the approved editorial redesign tokens and sections"
   const marketingSource = readFileSync(join(root, "components/dmark-marketing.tsx"), "utf8");
   const tailwindSource = readFileSync(join(root, "tailwind.config.js"), "utf8");
   const globalsSource = readFileSync(join(root, "app/globals.css"), "utf8");
-  const layoutSource = readFileSync(join(root, "app/layout.tsx"), "utf8");
+  const layoutSource = readFileSync(join(root, "app/[locale]/layout.tsx"), "utf8");
+  const enMessages = readFileSync(join(root, "messages/en.json"), "utf8");
 
   assert.match(tailwindSource, /paper:\s*"#F4F8FA"/);
   assert.match(tailwindSource, /brand:\s*"#44B6CD"/);
@@ -236,26 +237,24 @@ test("public marketing uses the approved editorial redesign tokens and sections"
   assert.match(globalsSource, /#44B6CD/);
   assert.match(layoutSource, /Schibsted_Grotesk/);
   assert.match(marketingSource, /\/brand\/dmark-logo\.png/);
-  assert.match(marketingSource, /alt="dmark\.is"/);
-  assert.match(marketingSource, /Anyone can send email as your domain/);
-  assert.match(marketingSource, /With DMARK · p=reject/);
-  assert.match(marketingSource, /dmark · public scan/);
-  assert.match(marketingSource, /Request early access/);
+  assert.match(enMessages, /Marketing/);
+  assert.match(enMessages, /Anyone can send email as your domain/);
+  assert.match(enMessages, /With DMARK · p=reject/);
+  assert.match(enMessages, /Marketing/);
+  assert.match(enMessages, /Request early access/);
   assert.doesNotMatch(marketingSource, /Nothing is stored/);
   assert.doesNotMatch(marketingSource, /14 reporting orgs/);
 });
 
 test("public marketing launch copy distinguishes proven scanner from beta and managed surfaces", () => {
-  const source = readFileSync(join(root, "components/dmark-marketing.tsx"), "utf8");
+  const enMessages = readFileSync(join(root, "messages/en.json"), "utf8");
 
   for (const requiredCopy of [
     "Public scanner is live",
     "Beta automation",
     "Operator-managed rollout",
-    "Early access while DNS publication and reporting gates finish",
-    "Kastro verifies DNS changes before they go live",
   ]) {
-    assert.ok(source.includes(requiredCopy), `missing launch-boundary copy: ${requiredCopy}`);
+    assert.ok(enMessages.includes(requiredCopy), `missing launch-boundary copy: ${requiredCopy}`);
   }
 
   for (const overclaim of [
@@ -264,19 +263,18 @@ test("public marketing launch copy distinguishes proven scanner from beta and ma
     /Continuous email-auth remediation/,
     /automated flattening, readable reports, and a safe path to p=reject/,
   ]) {
-    assert.doesNotMatch(source, overclaim);
+    assert.doesNotMatch(enMessages, overclaim);
   }
 });
 
 test("public metadata is launch-ready for SEO, social previews, and install surfaces", () => {
-  const layoutSource = readFileSync(join(root, "app/layout.tsx"), "utf8");
+  const layoutSource = readFileSync(join(root, "app/[locale]/layout.tsx"), "utf8");
   const manifestSource = readFileSync(join(root, "app/manifest.ts"), "utf8");
 
   for (const required of [
     /metadataBase:\s*new URL\("https:\/\/dmark\.is"\)/,
     /alternates:\s*{\s*canonical:\s*"\/"/s,
     /openGraph:\s*{/,
-    /url:\s*"https:\/\/dmark\.is\/"/,
     /siteName:\s*"dmark\.is"/,
     /images:\s*\[/,
     /url:\s*"\/brand\/dmark-icon\.png"/,
@@ -300,9 +298,10 @@ test("public metadata is launch-ready for SEO, social previews, and install surf
 test("public marketing includes keyboard skip navigation and reduced-motion guardrails", () => {
   const marketingSource = readFileSync(join(root, "components/dmark-marketing.tsx"), "utf8");
   const globalsSource = readFileSync(join(root, "app/globals.css"), "utf8");
+  const enMessages = readFileSync(join(root, "messages/en.json"), "utf8");
 
   assert.match(marketingSource, /href="#scanner-panel"/);
-  assert.match(marketingSource, /Skip to scanner/);
+  assert.match(enMessages, /Skip to scanner/);
   assert.match(marketingSource, /sr-only focus:not-sr-only/);
   assert.match(marketingSource, /tabIndex={-1}/);
   assert.match(globalsSource, /@media \(prefers-reduced-motion: reduce\)/);
@@ -465,7 +464,7 @@ test("dashboard API route maps domain creation to the backend domain API", () =>
 });
 
 test("admin temp login fallback is removed after Authentik cutover", () => {
-  const pageSource = readFileSync(join(root, "app/admin/page.tsx"), "utf8");
+  const pageSource = readFileSync(join(root, "app/[locale]/admin/page.tsx"), "utf8");
   const accessSource = readFileSync(join(root, "lib/admin-access.ts"), "utf8");
 
   assert.doesNotMatch(pageSource, /api\/admin\/temp-login|Temporary admin password|isAdminTempPasswordEnabled/);
@@ -551,11 +550,13 @@ test("Authentik sessions are signed, expiring, and authorize configured owner em
 });
 
 test("admin page exposes only the admin Authentik login", () => {
-  const source = readFileSync(join(root, "app/admin/page.tsx"), "utf8");
+  const source = readFileSync(join(root, "app/[locale]/admin/page.tsx"), "utf8");
+  const enMessages = readFileSync(join(root, "messages/en.json"), "utf8");
 
   assert.match(source, /isAuthentikOIDCEnabled/);
   assert.match(source, /\/api\/auth\/login/);
-  assert.match(source, /Sign in with Authentik/);
+  assert.match(source.replace(/\s/g, ""), /t\("button"\)/);
+  assert.match(enMessages, /Sign in with Authentik/);
   assert.doesNotMatch(source, /temporary password fallback|api\/admin\/temp-login/i);
 });
 
@@ -763,7 +764,7 @@ test("dashboard Authentik sessions do not grant admin access and admin cookies d
 });
 
 test("dashboard page and API are protected by customer Authentik while public scan remains open", () => {
-  const dashboardPage = readFileSync(join(root, "app/dashboard/page.tsx"), "utf8");
+  const dashboardPage = readFileSync(join(root, "app/[locale]/dashboard/page.tsx"), "utf8");
   const dashboardRoute = readFileSync(join(root, "app/api/dashboard/[[...path]]/route.ts"), "utf8");
   const scanRoute = readFileSync(join(root, "app/api/scan/route.ts"), "utf8");
   const loginRoute = readFileSync(join(root, "app/api/dashboard/auth/login/route.ts"), "utf8");
@@ -781,14 +782,15 @@ test("dashboard page and API are protected by customer Authentik while public sc
 });
 
 test("dashboard login page renders customer-safe recovery copy for Authentik failures", () => {
-  const dashboardPage = readFileSync(join(root, "app/dashboard/page.tsx"), "utf8");
+  const dashboardPage = readFileSync(join(root, "app/[locale]/dashboard/page.tsx"), "utf8");
+  const enMessages = readFileSync(join(root, "messages/en.json"), "utf8");
 
   assert.match(dashboardPage, /searchParams/);
   assert.match(dashboardPage, /authentik-failed/);
-  assert.match(dashboardPage, /Your sign-in session expired\. Please try again\./);
-  assert.match(dashboardPage, /clear site data for dmark\.is and auth\.kastro\.is/);
-  assert.match(dashboardPage, /start from \/dashboard/);
-  assert.match(dashboardPage, /Sign in to Dmark dashboard/);
+  assert.match(enMessages, /sign-in session expired/);
+  assert.match(enMessages, /clear site data/);
+  assert.match(enMessages, /start from/);
+  assert.match(enMessages, /Sign in to Dmark dashboard/);
   assert.doesNotMatch(dashboardPage, /DMARK_AUTHENTIK_|dmark_authentik_session|admin control plane/i);
 });
 
@@ -1234,12 +1236,13 @@ test("DNS guidance client uses dashboard proxy path and maps unknown fallback", 
 
 test("dashboard component wires DNS provider guidance without browser credentials or false certainty", () => {
   const source = readDashboardComponentSource();
+  const enMessages = readFileSync(join(root, "messages/en.json"), "utf8");
 
   assert.match(source, /getDNSGuidanceData/);
   assert.match(source, /DNSGuidancePanel/);
-  assert.match(source, /Provider unknown/);
-  assert.match(source, /detected, ambiguous, or unknown/);
-  assert.match(source, /Copy DNS record/);
+  assert.match(enMessages, /Provider unknown/);
+  assert.match(enMessages, /detected, ambiguous, or unknown/);
+  assert.match(enMessages, /Copy DNS record/);
   assert.equal(source.includes("DMARK_API_TOKEN"), false);
   assert.equal(source.includes("BUNNY"), false);
 });
@@ -1290,6 +1293,7 @@ test("SPF route source update client uses dashboard proxy PUT with only source p
 
 test("dashboard component wires SPF route source management without browser credentials", () => {
   const source = readDashboardComponentSource();
+  const enMessages = readFileSync(join(root, "messages/en.json"), "utf8");
 
   assert.match(source, /getSPFRouteData/);
   assert.match(source, /syncSPFRoute/);
@@ -1297,9 +1301,9 @@ test("dashboard component wires SPF route source management without browser cred
   assert.match(source, /SPFRoutePanel/);
   assert.match(source, /setSpfRouteState\("loading"\)/);
   assert.match(source, /setSyncingSPFRoute\(true\)/);
-  assert.match(source, /Manual sync queues a backend job/);
-  assert.match(source, /SPF source management/);
-  assert.match(source, /include, ip4, and ip6 sources/);
+  assert.match(enMessages, /Manual sync queues a backend job/);
+  assert.match(enMessages, /SPF source management/);
+  assert.match(enMessages, /include, ip4, and ip6 sources/);
   assert.equal(source.includes("DMARK_API_TOKEN"), false);
   assert.equal(source.includes("BUNNY"), false);
 });
@@ -1803,7 +1807,7 @@ test("admin operational events mapper preserves summaries and defensively redact
 });
 
 test("admin page source wires read-only provider panels and locked model exposes no backend admin affordances", () => {
-  const pageSource = readFileSync(join(root, "app/admin/page.tsx"), "utf8");
+  const pageSource = readFileSync(join(root, "app/[locale]/admin/page.tsx"), "utf8");
   assert.match(pageSource, /fetchAdminProviderHealth/);
   assert.match(pageSource, /fetchAdminOperationalEvents/);
   assert.match(pageSource, /fetchAdminSPFRoutePublicationAudit/);

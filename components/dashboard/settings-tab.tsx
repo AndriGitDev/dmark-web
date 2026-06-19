@@ -1,6 +1,7 @@
 "use client";
 
 import { Bell, CreditCard, Gauge } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { PlanViewModel, SettingsState } from "@/lib/dashboard";
 import { CompactStat, PanelNotice } from "./ui";
 import type { LoadState, NotificationChannel, SettingsKey } from "./types";
@@ -28,13 +29,14 @@ export function SettingsTab({
   onSave: (settings: SettingsState) => void;
   onToggleChannel: (channel: NotificationChannel) => void;
 }) {
+  const t = useTranslations("Dashboard.settings");
   const channels: NotificationChannel[] = ["email", "slack", "webhook"];
 
   return (
     <div className="grid gap-6">
       <div>
-        <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-brand-ink">Settings</p>
-        <h2 className="mt-2 text-3xl font-bold tracking-tight text-ink">Automation and notification controls</h2>
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-brand-ink">{t("title")}</p>
+        <h2 className="mt-2 text-3xl font-bold tracking-tight text-ink">{t("subtitle")}</h2>
       </div>
 
       <PlanUsageCard plan={plan} planState={planState} />
@@ -44,15 +46,15 @@ export function SettingsTab({
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
-                Enforcement guardrails
+                {t("rollout.title")}
               </p>
-              <h3 className="mt-2 text-xl font-semibold text-ink">DMARC rollout policy</h3>
+              <h3 className="mt-2 text-xl font-semibold text-ink">{t("rollout.title")}</h3>
             </div>
             <Gauge className="h-5 w-5 text-brand-ink" aria-hidden="true" />
           </div>
           <div className="mt-6 grid gap-4">
             <label className="grid gap-2">
-              <span className="text-sm font-semibold text-ink">Alignment threshold before p=reject</span>
+              <span className="text-sm font-semibold text-ink">{t("rollout.threshold")}</span>
               <div className="flex items-center gap-3">
                 <input
                   type="number"
@@ -71,18 +73,18 @@ export function SettingsTab({
                   disabled={savingSettingsForm}
                   className="inline-flex min-h-11 items-center justify-center rounded bg-brand-ink px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-brand disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {savingSettingsForm ? "Saving..." : "Save"}
+                  {savingSettingsForm ? t("rollout.saving") : t("rollout.save")}
                 </button>
               </div>
             </label>
             <SettingRow
-              title="Pause automation when unknown senders spike"
+              title={t("rollout.pauseOnUnknownSpike")}
               enabled={settings.pauseOnUnknownSpike}
               saving={savingSetting === "pauseOnUnknownSpike"}
               onToggle={() => onToggle("pauseOnUnknownSpike")}
             />
             <SettingRow
-              title="Auto-generate monthly executive reports"
+              title={t("rollout.monthlyReports")}
               enabled={settings.monthlyReports}
               saving={savingSetting === "monthlyReports"}
               onToggle={() => onToggle("monthlyReports")}
@@ -95,9 +97,9 @@ export function SettingsTab({
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
-                Notification channels
+                {t("notifications.title")}
               </p>
-              <h3 className="mt-2 text-xl font-semibold text-ink">Notification channels</h3>
+              <h3 className="mt-2 text-xl font-semibold text-ink">{t("notifications.title")}</h3>
             </div>
             <Bell className="h-5 w-5 text-brand-ink" aria-hidden="true" />
           </div>
@@ -113,7 +115,7 @@ export function SettingsTab({
                     <span className="grid h-9 w-9 place-items-center rounded bg-paper-soft text-ink-500">
                       <Bell className="h-4 w-4" aria-hidden="true" />
                     </span>
-                    <span className="text-sm font-semibold capitalize text-ink">{channel}</span>
+                    <span className="text-sm font-semibold capitalize text-ink">{t(`notifications.channels.${channel}`)}</span>
                   </span>
                   <input
                     type="checkbox"
@@ -132,10 +134,11 @@ export function SettingsTab({
 }
 
 function PlanUsageCard({ plan, planState }: { plan: PlanViewModel | null; planState: LoadState }) {
+  const t = useTranslations("Dashboard.settings.plan");
   if (planState === "loading") {
     return (
       <article className="rounded border border-line bg-card p-5 shadow-sm">
-        <p className="text-sm text-ink-400">Loading plan and usage...</p>
+        <p className="text-sm text-ink-400">{t("loading")}</p>
       </article>
     );
   }
@@ -143,7 +146,7 @@ function PlanUsageCard({ plan, planState }: { plan: PlanViewModel | null; planSt
     if (planState === "error") {
       return (
         <article className="rounded border border-line bg-card p-5 shadow-sm">
-          <p className="text-sm text-ink-400">Plan and usage information is unavailable right now.</p>
+          <p className="text-sm text-ink-400">{t("unavailable")}</p>
         </article>
       );
     }
@@ -159,18 +162,18 @@ function PlanUsageCard({ plan, planState }: { plan: PlanViewModel | null; planSt
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
-            Plan and usage
+            {t("title")}
           </p>
-          <h3 className="mt-2 text-xl font-semibold capitalize text-ink">{plan.plan} plan</h3>
+          <h3 className="mt-2 text-xl font-semibold capitalize text-ink">{t("current")}: {plan.plan}</h3>
         </div>
         <CreditCard className="h-5 w-5 text-brand-ink" aria-hidden="true" />
       </div>
 
       <div className="mt-5">
         <div className="flex items-baseline justify-between gap-3">
-          <p className="text-sm font-semibold text-ink">Protected domains</p>
+          <p className="text-sm font-semibold text-ink">{t("domains")}</p>
           <p className="font-mono text-sm text-ink-500">
-            {plan.savedDomainsUsed} of {plan.savedDomainsLimit}
+            {plan.savedDomainsUsed} {t("of")} {plan.savedDomainsLimit}
           </p>
         </div>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-paper-soft" role="presentation">
@@ -178,26 +181,26 @@ function PlanUsageCard({ plan, planState }: { plan: PlanViewModel | null; planSt
         </div>
         {plan.savedDomainsRemaining === 0 ? (
           <p className="mt-2 text-sm font-semibold text-fail-ink">
-            The plan domain limit is in use; adding another domain requires an upgrade.
+            {t("limitNote")}
           </p>
         ) : null}
       </div>
 
       <div className="mt-5 grid gap-3 md:grid-cols-3">
         <CompactStat
-          label="Scan cadence"
+          label={t("stats.cadence")}
           value={plan.scanCadenceMinutes >= 60 ? `${Math.round(plan.scanCadenceMinutes / 60)}h` : `${plan.scanCadenceMinutes}m`}
-          detail="Scheduled record checks"
+          detail={t("stats.cadenceDetail")}
         />
         <CompactStat
-          label="Report retention"
+          label={t("stats.retention")}
           value={plan.reportRetentionDays > 0 ? `${plan.reportRetentionDays}d` : "—"}
-          detail="Aggregate report history"
+          detail={t("stats.retentionDetail")}
         />
         <CompactStat
-          label="Reporter access"
-          value={plan.reporter ? "Included" : "Not included"}
-          detail="DMARC aggregate intelligence"
+          label={t("stats.access")}
+          value={plan.reporter ? t("stats.included") : t("stats.notIncluded")}
+          detail={t("stats.accessDetail")}
         />
       </div>
     </article>
