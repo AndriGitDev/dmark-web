@@ -2,6 +2,11 @@ import { Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 
+export const metadata = {
+  title: "Page not found | dmark.is",
+  robots: { index: false, follow: false },
+};
+
 export default function NotFound() {
   const t = useTranslations("Errors.notFound");
   const te = useTranslations("Errors");
