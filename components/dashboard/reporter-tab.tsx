@@ -1,6 +1,7 @@
 "use client";
 
 import { BarChart3, FileText, Filter } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { ProtectedDomain, ReporterViewModel } from "@/lib/dashboard";
 import { CompactStat, EmptyState, PanelNotice, PanelSkeleton, RetryNotice } from "./ui";
 import type { LoadState } from "./types";
@@ -24,6 +25,8 @@ export function ReporterTab({
   onExport: () => void;
   onRetry: () => void;
 }) {
+  const t = useTranslations("Dashboard.reporter");
+  const tErrors = useTranslations("Dashboard.errors");
   if (!selectedDomain) {
     return <EmptyState icon={BarChart3} title="Domain not found" detail="Select an existing protected domain before opening Reporter." />;
   }
@@ -31,8 +34,8 @@ export function ReporterTab({
   return (
     <div className="grid gap-6">
       <div>
-        <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-brand-ink">Reporter</p>
-        <h2 className="mt-2 text-3xl font-bold tracking-tight text-ink">DMARC aggregate intelligence</h2>
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-brand-ink">{t("title")}</p>
+        <h2 className="mt-2 text-3xl font-bold tracking-tight text-ink">{t("subtitle")}</h2>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-ink-500">
           Sender inventory, alignment rates, and enforcement signals for {selectedDomain.domain}.
         </p>
@@ -40,16 +43,16 @@ export function ReporterTab({
 
       {reporterState === "loading" ? <PanelSkeleton rows={4} /> : null}
       {reporterState === "error" ? (
-        <RetryNotice text={reporterError || "Reporter data could not be loaded."} onRetry={onRetry} />
+        <RetryNotice text={reporterError || tErrors("reporter")} onRetry={onRetry} />
       ) : null}
 
       {reporter ? (
         <>
           <section className="grid gap-4 md:grid-cols-5">
-            <CompactStat label="Report volume" value={reporter.reportVolume} detail="Current reporting window" />
-            <CompactStat label="Aligned messages" value={`${reporter.alignedPercentage}%`} detail="SPF or DKIM aligned" />
+            <CompactStat label={t("summary.total")} value={reporter.reportVolume} detail="Current reporting window" />
+            <CompactStat label={t("summary.compliant")} value={`${reporter.alignedPercentage}%`} detail="SPF or DKIM aligned" />
             <CompactStat label="Reporter orgs" value={`${reporter.reporterOrgCount}`} detail="Aggregate senders" />
-            <CompactStat label="Failures" value={reporter.failures} detail="Unaligned reports" />
+            <CompactStat label={t("summary.threat")} value={reporter.failures} detail="Unaligned reports" />
             <CompactStat label="Reject candidates" value={`${reporter.rejectCandidates}`} detail="Ready to review" />
           </section>
 
@@ -59,9 +62,9 @@ export function ReporterTab({
             <div className="flex flex-col justify-between gap-3 border-b border-line p-5 sm:flex-row sm:items-center">
               <div>
                 <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
-                  Sender inventory
+                  {t("table.senderInventory")}
                 </p>
-                <h3 className="mt-2 text-xl font-semibold text-ink">Top sources by message volume</h3>
+                <h3 className="mt-2 text-xl font-semibold text-ink">{t("table.topSources")}</h3>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button
@@ -70,7 +73,7 @@ export function ReporterTab({
                   className="inline-flex min-h-10 items-center justify-center gap-2 rounded border border-line-strong px-4 text-sm font-semibold text-ink-700 transition hover:border-brand hover:text-brand"
                 >
                   <Filter className="h-4 w-4" aria-hidden="true" />
-                  {sourceFilter === "all" ? "Unknown only" : "All senders"}
+                  {sourceFilter === "all" ? t("filterUnknown") : t("filterAll")}
                 </button>
                 <button
                   type="button"
@@ -78,7 +81,7 @@ export function ReporterTab({
                   className="inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white transition hover:bg-midnight"
                 >
                   <FileText className="h-4 w-4" aria-hidden="true" />
-                  Export CSV
+                  {t("export")}
                 </button>
               </div>
             </div>
@@ -96,20 +99,20 @@ export function ReporterTab({
                               : "border-pass/30 bg-pass-soft text-pass-ink"
                           }`}
                         >
-                          {source.unknown ? "Unknown" : "Expected"}
+                          {source.unknown ? t("table.unknown") : t("table.expected")}
                         </span>
                       </div>
                       <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
                         <div>
-                          <dt className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-ink-400">Volume</dt>
+                          <dt className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-ink-400">{t("table.volume")}</dt>
                           <dd className="mt-1 font-semibold text-ink">{source.volume}</dd>
                         </div>
                         <div>
-                          <dt className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-ink-400">Aligned</dt>
+                          <dt className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-ink-400">{t("table.spf")} / DKIM</dt>
                           <dd className="mt-1 font-semibold text-ink">{source.aligned}%</dd>
                         </div>
                         <div>
-                          <dt className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-ink-400">Trend</dt>
+                          <dt className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-ink-400">{t("table.trend")}</dt>
                           <dd className="mt-1 font-semibold capitalize text-ink">{source.trend}</dd>
                         </div>
                       </dl>
@@ -120,11 +123,11 @@ export function ReporterTab({
                 <table className="w-full min-w-[720px] text-left text-sm">
                   <thead className="bg-paper text-xs uppercase tracking-[0.12em] text-ink-400">
                     <tr>
-                      <th className="px-5 py-3 font-semibold">Provider</th>
-                      <th className="px-5 py-3 font-semibold">Volume</th>
-                      <th className="px-5 py-3 font-semibold">Aligned</th>
-                      <th className="px-5 py-3 font-semibold">Classification</th>
-                      <th className="px-5 py-3 font-semibold">Trend</th>
+                      <th className="px-5 py-3 font-semibold">{t("table.sender")}</th>
+                      <th className="px-5 py-3 font-semibold">{t("table.volume")}</th>
+                      <th className="px-5 py-3 font-semibold">{t("table.spf")} / DKIM</th>
+                      <th className="px-5 py-3 font-semibold">{t("table.status")}</th>
+                      <th className="px-5 py-3 font-semibold">{t("table.trend")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-line">
@@ -141,7 +144,7 @@ export function ReporterTab({
                                 : "border-pass/30 bg-pass-soft text-pass-ink"
                             }`}
                           >
-                            {source.unknown ? "Unknown" : "Expected"}
+                            {source.unknown ? t("table.unknown") : t("table.expected")}
                           </span>
                         </td>
                         <td className="px-5 py-4 text-ink-500">{source.trend}</td>
@@ -153,7 +156,7 @@ export function ReporterTab({
               </>
             ) : (
               <div className="p-5">
-                <PanelNotice text={reporter.setupGuidance || "Reporter is configured, but no sender inventory has been received yet."} />
+                <PanelNotice text={reporter.setupGuidance || t("table.noSenders")} />
               </div>
             )}
           </article>

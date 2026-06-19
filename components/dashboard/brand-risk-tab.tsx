@@ -1,6 +1,7 @@
 "use client";
 
 import { Filter, ShieldAlert } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { BrandRiskViewModel, ProtectedDomain } from "@/lib/dashboard";
 import { brandRiskSeverityTone } from "./tones";
 import { EmptyState, PanelNotice, PanelSkeleton, RetryNotice } from "./ui";
@@ -23,6 +24,8 @@ export function BrandRiskTab({
   onToggleInactive: () => void;
   onRetry: () => void;
 }) {
+  const t = useTranslations("Dashboard.brandRisk");
+  const tErrors = useTranslations("Dashboard.errors");
   if (!selectedDomain) {
     return <EmptyState icon={ShieldAlert} title="Domain not found" detail="Select an existing protected domain before opening Brand Risk." />;
   }
@@ -31,7 +34,7 @@ export function BrandRiskTab({
     <div className="grid gap-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-brand-ink">Brand Risk</p>
+          <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-brand-ink">{t("title")}</p>
           <h2 className="mt-2 text-3xl font-bold tracking-tight text-ink">{selectedDomain.domain}</h2>
         </div>
         <button
@@ -45,12 +48,12 @@ export function BrandRiskTab({
           aria-pressed={includeInactive}
         >
           <Filter className="h-4 w-4" aria-hidden="true" />
-          {includeInactive ? "Hide inactive" : "Include inactive"}
+          {includeInactive ? t("activeOnly") : t("all")}
         </button>
       </div>
 
       {brandRiskState === "loading" ? <PanelSkeleton rows={4} /> : null}
-      {brandRiskState === "error" ? <RetryNotice text={brandRiskError || "Brand Risk data could not be loaded."} onRetry={onRetry} /> : null}
+      {brandRiskState === "error" ? <RetryNotice text={brandRiskError || tErrors("brandRisk")} onRetry={onRetry} /> : null}
 
       {brandRisk ? (
         <>
@@ -58,12 +61,12 @@ export function BrandRiskTab({
             <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
               <div>
                 <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
-                  Email-auth findings
+                  {t("emailAuthFindings")}
                 </p>
-                <h3 className="mt-2 text-xl font-semibold text-ink">Authentication posture</h3>
+                <h3 className="mt-2 text-xl font-semibold text-ink">{t("authPosture")}</h3>
               </div>
               <span className="rounded border border-line bg-paper px-3 py-1.5 text-xs font-semibold text-ink-500">
-                {brandRisk.findings.length} finding{brandRisk.findings.length === 1 ? "" : "s"}
+                {brandRisk.findings.length} {brandRisk.findings.length === 1 ? t("finding") : t("findings")}
               </span>
             </div>
 
@@ -88,7 +91,7 @@ export function BrandRiskTab({
                 ))}
               </div>
             ) : (
-              <PanelNotice text="No email-auth Brand Risk findings were returned for this domain." />
+              <PanelNotice text={t("noFindings")} />
             )}
           </article>
 
@@ -96,12 +99,12 @@ export function BrandRiskTab({
             <div className="flex flex-col justify-between gap-3 border-b border-line p-5 sm:flex-row sm:items-center">
               <div>
                 <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
-                  Defender lookalikes
+                  {t("lookalikes")}
                 </p>
-                <h3 className="mt-2 text-xl font-semibold text-ink">Lookalike-domain evidence</h3>
+                <h3 className="mt-2 text-xl font-semibold text-ink">{t("lookalikeEvidence")}</h3>
               </div>
               <span className="rounded border border-line bg-paper px-3 py-1.5 text-xs font-semibold text-ink-500">
-                {brandRisk.lookalikes.filter((candidate) => candidate.activeEvidence).length} active
+                {brandRisk.lookalikes.filter((candidate) => candidate.activeEvidence).length} {t("activeEvidence")}
               </span>
             </div>
 
@@ -110,11 +113,11 @@ export function BrandRiskTab({
                 <table className="w-full min-w-[900px] text-left text-sm">
                   <thead className="bg-paper text-xs uppercase tracking-[0.12em] text-ink-400">
                     <tr>
-                      <th className="px-5 py-3 font-semibold">Domain</th>
-                      <th className="px-5 py-3 font-semibold">Kind</th>
-                      <th className="px-5 py-3 font-semibold">DNS evidence</th>
-                      <th className="px-5 py-3 font-semibold">Severity</th>
-                      <th className="px-5 py-3 font-semibold">Recommended action</th>
+                      <th className="px-5 py-3 font-semibold">{t("table.domain")}</th>
+                      <th className="px-5 py-3 font-semibold">{t("table.kind")}</th>
+                      <th className="px-5 py-3 font-semibold">{t("table.evidence")}</th>
+                      <th className="px-5 py-3 font-semibold">{t("table.severity")}</th>
+                      <th className="px-5 py-3 font-semibold">{t("table.action")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-line">
@@ -125,7 +128,7 @@ export function BrandRiskTab({
                           <p className="mt-1 max-w-[18rem] text-sm leading-6 text-ink-500">{candidate.reason}</p>
                           {!candidate.activeEvidence ? (
                             <span className="mt-2 inline-flex rounded border border-line bg-paper px-2.5 py-1 text-xs font-semibold text-ink-500">
-                              Inactive candidate
+                              {t("inactiveCandidate")}
                             </span>
                           ) : null}
                         </td>
@@ -166,7 +169,7 @@ export function BrandRiskTab({
               </div>
             ) : (
               <div className="p-5">
-                <PanelNotice text="Brand Risk has no active lookalike DNS or MX evidence for this domain." />
+                <PanelNotice text={t("noEvidence")} />
               </div>
             )}
           </article>

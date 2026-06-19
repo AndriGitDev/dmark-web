@@ -2,3 +2,7 @@
 .next/
 node_modules/
 out/
+
+# Playwright test artifacts
+/test-results/
+/playwright-report/

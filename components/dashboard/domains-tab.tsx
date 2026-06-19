@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Copy, Download, Globe2, Plus, RefreshCw, Zap } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   buildSPFRoutePanelModel,
   type ChangePlanViewModel,
@@ -11,7 +12,7 @@ import {
   type SPFRouteSource,
   type SPFRouteViewModel,
 } from "@/lib/dashboard";
-import { changeStatusTone, formatStatus, spfRouteToneClass, statusTone } from "./tones";
+import { changeStatusTone, spfRouteToneClass, statusTone, useFormatStatus } from "./tones";
 import { CompactStat, EmptyState, PanelNotice, PanelSkeleton, RetryNotice } from "./ui";
 import type { LoadState } from "./types";
 
@@ -68,12 +69,16 @@ export function DomainsTab({
   onAddDomain: () => void;
   recheckingDomainID: string | null;
 }) {
+  const t = useTranslations("Dashboard.domains");
+  const tc = useTranslations("Common");
+  const formatStatus = useFormatStatus();
+
   return (
     <div className="grid gap-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-brand-ink">Protected domains</p>
-          <h2 className="mt-2 text-3xl font-bold tracking-tight text-ink">Record monitoring and remediation</h2>
+          <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-brand-ink">{t("title")}</p>
+          <h2 className="mt-2 text-3xl font-bold tracking-tight text-ink">{t("subtitle")}</h2>
         </div>
         <button
           type="button"
@@ -81,7 +86,7 @@ export function DomainsTab({
           className="inline-flex min-h-11 items-center justify-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white transition hover:bg-brand"
         >
           <Download className="h-4 w-4" aria-hidden="true" />
-          Export domains
+          {t("export")}
         </button>
       </div>
 
@@ -103,7 +108,7 @@ export function DomainsTab({
                     </span>
                   </div>
                   <p className="mt-2 text-sm text-ink-400">
-                    {domain.owner} · checked {domain.lastChecked}
+                    {domain.owner} · {t("checkedPrefix")} {domain.lastChecked}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -112,7 +117,7 @@ export function DomainsTab({
                     onClick={() => onSelectDomain(domain.id)}
                     className="inline-flex min-h-10 items-center justify-center rounded border border-line-strong px-3 text-sm font-semibold text-ink-700 transition hover:border-brand hover:text-brand"
                   >
-                    Inspect
+                    {tc("inspect")}
                   </button>
                   <button
                     type="button"
@@ -125,16 +130,16 @@ export function DomainsTab({
                     ) : (
                       <Zap className="h-4 w-4" aria-hidden="true" />
                     )}
-                    {recheckingDomainID === domain.id ? "Checking..." : "Recheck"}
+                    {recheckingDomainID === domain.id ? tc("scanning") : tc("recheck")}
                   </button>
                 </div>
               </div>
               <div className="mt-5 grid gap-3 md:grid-cols-5">
-                <CompactStat label="Score" value={`${domain.score}`} />
-                <CompactStat label="DMARC" value={`p=${domain.dmarcPolicy}`} />
-                <CompactStat label="SPF" value={`${domain.spfLookups}/10`} />
-                <CompactStat label="DKIM" value={`${domain.dkimCoverage}%`} />
-                <CompactStat label="Unknown" value={`${domain.unknownSenders}`} />
+                <CompactStat label={t("stats.score")} value={`${domain.score}`} />
+                <CompactStat label={t("stats.dmarc")} value={`p=${domain.dmarcPolicy}`} />
+                <CompactStat label={t("stats.spf")} value={`${domain.spfLookups}/10`} />
+                <CompactStat label={t("stats.dkim")} value={`${domain.dkimCoverage}%`} />
+                <CompactStat label={t("stats.unknown")} value={`${domain.unknownSenders}`} />
               </div>
               <p className="mt-4 rounded border border-line bg-paper px-4 py-3 text-sm leading-6 text-ink-500">
                 {domain.nextAction}
@@ -145,9 +150,9 @@ export function DomainsTab({
       ) : (
         <EmptyState
           icon={Globe2}
-          title="No protected domains"
-          detail="No domains matched the current search or the protected-domain list is empty."
-          actionLabel="Add a domain"
+          title={t("empty.title")}
+          detail={t("empty.detail")}
+          actionLabel={t("addFirst")}
           onAction={onAddDomain}
         />
       )}
@@ -194,18 +199,19 @@ function DNSGuidancePanel({
   onCopy: (value: string, label: string) => void;
   onRetry: () => void;
 }) {
+  const t = useTranslations("Dashboard.domains.guidance");
   return (
     <article className="rounded border border-line bg-card p-5 shadow-sm">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
         <div>
           <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
-            DNS provider guidance
+            {t("title")}
           </p>
           <h3 className="mt-2 text-xl font-semibold text-ink">
-            {dnsGuidance ? `Provider steps for ${dnsGuidance.domain}` : "Provider-specific DNS steps"}
+            {dnsGuidance ? t("titleWithDomain", { domain: dnsGuidance.domain }) : t("fallbackTitle")}
           </h3>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-500">
-            DNS provider detection is shown as detected, ambiguous, or unknown before instructions are presented so operators do not get false certainty.
+            {t("description")}
           </p>
         </div>
         {dnsGuidance ? (
@@ -216,22 +222,22 @@ function DNSGuidancePanel({
       </div>
 
       {state === "loading" ? <PanelSkeleton rows={3} /> : null}
-      {state === "error" ? <RetryNotice text={error || "DNS provider guidance unavailable."} onRetry={onRetry} /> : null}
-      {state === "ready" && !dnsGuidance ? <PanelNotice text="DNS provider guidance was not returned for this domain." /> : null}
+      {state === "error" ? <RetryNotice text={error || t("unavailable")} onRetry={onRetry} /> : null}
+      {state === "ready" && !dnsGuidance ? <PanelNotice text={t("noGuidance")} /> : null}
 
       {dnsGuidance ? (
         <div className="mt-5 grid gap-4">
           <div className="grid gap-3 md:grid-cols-3">
-            <CompactStat label="Provider" value={dnsGuidance.providerName || "Provider unknown"} />
-            <CompactStat label="Detection" value={dnsGuidance.statusLabel} />
-            <CompactStat label="Confidence" value={dnsGuidance.confidenceLabel} />
+            <CompactStat label={t("provider")} value={dnsGuidance.providerName || t("providerUnknown")} />
+            <CompactStat label={t("detection")} value={dnsGuidance.statusLabel} />
+            <CompactStat label={t("confidence")} value={dnsGuidance.confidenceLabel} />
           </div>
 
           {dnsGuidance.resolverError ? <PanelNotice text={`Resolver fallback: ${dnsGuidance.resolverError}`} /> : null}
 
           {dnsGuidance.evidenceNameservers.length ? (
             <div className="rounded border border-line bg-paper p-4">
-              <p className="text-sm font-semibold text-ink">Nameserver evidence</p>
+              <p className="text-sm font-semibold text-ink">{t("nameservers")}</p>
               <p className="mt-2 font-mono text-xs text-ink-500">{dnsGuidance.evidenceNameservers.join(", ")}</p>
             </div>
           ) : null}
@@ -254,7 +260,7 @@ function DNSGuidancePanel({
                     className="inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-3 text-sm font-semibold text-white transition hover:bg-midnight"
                   >
                     <Copy className="h-4 w-4" aria-hidden="true" />
-                    Copy DNS record
+                    {t("copy")}
                   </button>
                 </div>
                 {instruction.steps.length ? (
@@ -300,6 +306,7 @@ function SPFRoutePanel({
   onCopy: (value: string, label: string) => void;
   onRetry: () => void;
 }) {
+  const t = useTranslations("Dashboard.domains.route");
   const panel = spfRoute ? buildSPFRoutePanelModel(spfRoute) : null;
   const [sourceDrafts, setSourceDrafts] = useState<SPFRouteSource[]>(() =>
     spfRoute?.enabledSources.length ? spfRoute.enabledSources : [{ kind: "include", value: "", label: "" }],
@@ -326,11 +333,11 @@ function SPFRoutePanel({
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
         <div>
           <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
-            SPF route
+            {t("title")}
           </p>
-          <h3 className="mt-2 text-xl font-semibold text-ink">{panel?.heading || "SPF route"}</h3>
+          <h3 className="mt-2 text-xl font-semibold text-ink">{panel?.heading || t("title")}</h3>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-500">
-            Manual sync queues a backend job through the dashboard proxy; Bunny DNS credentials stay server-side.
+            {t("description")}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -346,27 +353,27 @@ function SPFRoutePanel({
             className="inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-brand disabled:cursor-not-allowed disabled:opacity-70"
           >
             <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} aria-hidden="true" />
-            {syncing ? "Queueing sync..." : "Sync SPF route"}
+            {syncing ? t("syncing") : t("sync")}
           </button>
         </div>
       </div>
 
       {state === "loading" ? <PanelSkeleton rows={4} /> : null}
-      {state === "error" ? <RetryNotice text={error || "SPF route state unavailable."} onRetry={onRetry} /> : null}
-      {state === "ready" && !panel ? <PanelNotice text="No SPF route has been configured for this domain yet." /> : null}
+      {state === "error" ? <RetryNotice text={error || t("unavailable")} onRetry={onRetry} /> : null}
+      {state === "ready" && !panel ? <PanelNotice text={t("noRoute")} /> : null}
 
       {panel ? (
         <div className="mt-5 grid gap-4">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <CompactStat label="Route target" value={panel.routeTarget} />
-            <CompactStat label="Last sync" value={panel.lastSyncLabel} />
-            <CompactStat label="Sources" value={`${panel.sourceLabels.length}`} />
-            <CompactStat label="Evidence" value={`${panel.evidenceLabels.length}`} />
+            <CompactStat label={t("stats.target")} value={panel.routeTarget} />
+            <CompactStat label={t("stats.lastSync")} value={panel.lastSyncLabel} />
+            <CompactStat label={t("stats.sources")} value={`${panel.sourceLabels.length}`} />
+            <CompactStat label={t("stats.evidence")} value={`${panel.evidenceLabels.length}`} />
           </div>
 
           <div className="grid gap-3 lg:grid-cols-2">
             <div className="rounded border border-line bg-paper p-4">
-              <p className="text-sm font-semibold text-ink">Customer CNAME delegation</p>
+              <p className="text-sm font-semibold text-ink">{t("cname.title")}</p>
               <code className="mt-3 block overflow-x-auto rounded border border-line bg-card px-3 py-2 font-mono text-xs text-ink-700">
                 {panel.cnameInstruction}
               </code>
@@ -376,16 +383,16 @@ function SPFRoutePanel({
                 className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-3 text-sm font-semibold text-white transition hover:bg-midnight"
               >
                 <Copy className="h-4 w-4" aria-hidden="true" />
-                Copy CNAME
+                {t("cname.copy")}
               </button>
             </div>
 
             <div className="rounded border border-line bg-paper p-4">
-              <p className="text-sm font-semibold text-ink">Generated SPF preview</p>
+              <p className="text-sm font-semibold text-ink">{t("preview.title")}</p>
               <code className="mt-3 block overflow-x-auto rounded border border-line bg-card px-3 py-2 font-mono text-xs text-ink-700">
                 {panel.generatedSPFPreview}
               </code>
-              <p className="mt-3 text-xs leading-5 text-ink-400">Last published: {panel.lastPublishedSPF}</p>
+              <p className="mt-3 text-xs leading-5 text-ink-400">{t("preview.lastPublished", { value: panel.lastPublishedSPF })}</p>
             </div>
           </div>
 
@@ -395,8 +402,8 @@ function SPFRoutePanel({
             <div className="rounded border border-line p-4">
               <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                 <div>
-                  <p className="text-sm font-semibold text-ink">SPF source management</p>
-                  <p className="mt-1 text-xs leading-5 text-ink-400">Manage include, ip4, and ip6 sources; credentials stay behind the dashboard proxy.</p>
+                  <p className="text-sm font-semibold text-ink">{t("management.title")}</p>
+                  <p className="mt-1 text-xs leading-5 text-ink-400">{t("management.description")}</p>
                 </div>
                 <button
                   type="button"
@@ -404,39 +411,39 @@ function SPFRoutePanel({
                   className="inline-flex min-h-10 items-center justify-center gap-2 rounded border border-line-strong px-3 text-sm font-semibold text-ink-700 transition hover:border-brand hover:text-brand"
                 >
                   <Plus className="h-4 w-4" aria-hidden="true" />
-                  Add source
+                  {t("management.add")}
                 </button>
               </div>
               <div className="mt-3 grid gap-3">
                 {sourceDrafts.map((source, index) => (
                   <div key={`${source.kind}-${source.value}-${index}`} className="grid gap-2 rounded bg-paper p-3 md:grid-cols-[8rem_1fr_1fr_auto]">
                     <label className="grid gap-1 text-xs font-semibold text-ink-500">
-                      Kind
+                      {t("management.fields.kind")}
                       <select
                         value={source.kind}
                         onChange={(event) => updateSourceDraft(index, { kind: event.target.value })}
                         className="min-h-10 rounded border border-line-strong bg-card px-2 text-sm font-semibold text-ink"
                       >
-                        <option value="include">include</option>
-                        <option value="ip4">ip4</option>
-                        <option value="ip6">ip6</option>
+                        <option value="include">{t("management.fields.include")}</option>
+                        <option value="ip4">{t("management.fields.ip4")}</option>
+                        <option value="ip6">{t("management.fields.ip6")}</option>
                       </select>
                     </label>
                     <label className="grid gap-1 text-xs font-semibold text-ink-500">
-                      Value
+                      {t("management.fields.value")}
                       <input
                         value={source.value}
                         onChange={(event) => updateSourceDraft(index, { value: event.target.value })}
-                        placeholder="_spf.provider.example or 203.0.113.10"
+                        placeholder={t("management.fields.valuePlaceholder")}
                         className="min-h-10 rounded border border-line-strong bg-card px-3 text-sm text-ink"
                       />
                     </label>
                     <label className="grid gap-1 text-xs font-semibold text-ink-500">
-                      Label
+                      {t("management.fields.label")}
                       <input
                         value={source.label}
                         onChange={(event) => updateSourceDraft(index, { label: event.target.value })}
-                        placeholder="Provider name"
+                        placeholder={t("management.fields.labelPlaceholder")}
                         className="min-h-10 rounded border border-line-strong bg-card px-3 text-sm text-ink"
                       />
                     </label>
@@ -446,7 +453,7 @@ function SPFRoutePanel({
                       disabled={sourceDrafts.length === 1}
                       className="self-end rounded border border-line-strong px-3 py-2 text-sm font-semibold text-ink-700 transition hover:border-fail/40 hover:text-fail-ink disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      Remove
+                      {t("management.remove")}
                     </button>
                   </div>
                 ))}
@@ -457,12 +464,12 @@ function SPFRoutePanel({
                 disabled={savingSources || !spfRoute || !sourceDrafts.some((source) => source.value.trim())}
                 className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-brand disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {savingSources ? "Saving sources..." : "Save sources"}
+                {savingSources ? t("management.saving") : t("management.save")}
               </button>
             </div>
 
             <div className="rounded border border-line p-4">
-              <p className="text-sm font-semibold text-ink">Evidence summary</p>
+              <p className="text-sm font-semibold text-ink">{t("evidence.title")}</p>
               {panel.evidenceLabels.length ? (
                 <ul className="mt-3 grid gap-2 text-sm text-ink-500">
                   {panel.evidenceLabels.map((evidence) => (
@@ -472,18 +479,18 @@ function SPFRoutePanel({
                   ))}
                 </ul>
               ) : (
-                <p className="mt-3 text-sm text-ink-400">No SPF evidence was returned yet.</p>
+                <p className="mt-3 text-sm text-ink-400">{t("evidence.empty")}</p>
               )}
             </div>
           </div>
 
           <div className="rounded border border-line p-4">
-            <p className="text-sm font-semibold text-ink">Sync history</p>
+            <p className="text-sm font-semibold text-ink">{t("history.title")}</p>
             <p className="mt-1 text-xs leading-5 text-ink-400">
-              Recent route publication activity recorded by the backend; provider internals are never shown.
+              {t("history.description")}
             </p>
-            {historyState === "loading" ? <p className="mt-3 text-sm text-ink-400">Loading sync history...</p> : null}
-            {historyState === "error" ? <p className="mt-3 text-sm text-ink-400">Sync history is unavailable right now.</p> : null}
+            {historyState === "loading" ? <p className="mt-3 text-sm text-ink-400">{t("history.loading")}</p> : null}
+            {historyState === "error" ? <p className="mt-3 text-sm text-ink-400">{t("history.unavailable")}</p> : null}
             {history && history.events.length ? (
               <ol className="mt-3 grid gap-2">
                 {history.events.map((event, index) => (
@@ -507,7 +514,7 @@ function SPFRoutePanel({
               </ol>
             ) : null}
             {historyState === "ready" && history && history.events.length === 0 ? (
-              <p className="mt-3 text-sm text-ink-400">No route activity has been recorded yet.</p>
+              <p className="mt-3 text-sm text-ink-400">{t("history.empty")}</p>
             ) : null}
           </div>
         </div>
@@ -531,36 +538,37 @@ function DNSChangePlan({
   onCopy: (value: string, label: string) => void;
   onRetry: () => void;
 }) {
+  const t = useTranslations("Dashboard.domains.changePlan");
   return (
     <article className="rounded border border-line bg-card p-5 shadow-sm">
       <div>
         <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
-          Change plan
+          {t("title")}
         </p>
         <h3 className="mt-2 text-xl font-semibold text-ink">
-          {selectedDomain ? `DNS records for ${selectedDomain.domain}` : "DNS records"}
+          {selectedDomain ? t("titleWithDomain", { domain: selectedDomain.domain }) : t("fallbackTitle")}
         </h3>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-500">
-          Review staged DNS changes with evidence, risk notes, and rollback guidance before publishing.
+          {t("description")}
         </p>
       </div>
 
       {state === "loading" ? <PanelSkeleton rows={3} /> : null}
-      {state === "error" ? <RetryNotice text={error || "Change plan unavailable."} onRetry={onRetry} /> : null}
+      {state === "error" ? <RetryNotice text={error || t("unavailable")} onRetry={onRetry} /> : null}
       {state === "ready" && changePlan && changePlan.changes.length === 0 ? (
-        <PanelNotice text={changePlan.nextAction || "No DNS changes are currently staged for this domain."} />
+        <PanelNotice text={changePlan.nextAction || t("noChanges")} />
       ) : null}
 
       {changePlan ? (
         <div className="mt-5 grid gap-3 md:grid-cols-2">
-          {changePlan.journeyState ? <CompactStat label="Journey state" value={changePlan.journeyState.replaceAll("_", " ")} /> : null}
+          {changePlan.journeyState ? <CompactStat label={t("stats.journeyState")} value={changePlan.journeyState.replaceAll("_", " ")} /> : null}
           {changePlan.policy ? (
             <CompactStat
-              label="Published policy"
+              label={t("stats.publishedPolicy")}
               value={`p=${changePlan.policy}${changePlan.policyPercent && changePlan.policyPercent !== 100 ? ` · pct=${changePlan.policyPercent}` : ""}`}
             />
           ) : null}
-          {changePlan.nextAction ? <CompactStat label="Next action" value={changePlan.nextAction} /> : null}
+          {changePlan.nextAction ? <CompactStat label={t("stats.nextAction")} value={changePlan.nextAction} /> : null}
         </div>
       ) : null}
 
@@ -571,7 +579,7 @@ function DNSChangePlan({
           }`}
         >
           <p className={`text-sm font-semibold ${changePlan.journeyReadyForNext ? "text-pass-ink" : "text-ink"}`}>
-            {changePlan.journeyReadyForNext ? "Ready for the next enforcement step" : "Not ready for the next enforcement step yet"}
+            {changePlan.journeyReadyForNext ? t("ready") : t("notReady")}
           </p>
           <p className="mt-1 text-sm leading-6 text-ink-500">{changePlan.journeyReason}</p>
           {changePlan.journeyBlockingSignals?.length ? (
@@ -592,12 +600,12 @@ function DNSChangePlan({
           <table className="w-full min-w-[940px] text-left text-sm">
             <thead className="bg-paper text-xs uppercase tracking-[0.12em] text-ink-400">
               <tr>
-                <th className="px-4 py-3 font-semibold">Change</th>
-                <th className="px-4 py-3 font-semibold">Record</th>
-                <th className="px-4 py-3 font-semibold">Evidence</th>
-                <th className="px-4 py-3 font-semibold">Risk</th>
-                <th className="px-4 py-3 font-semibold">Rollback</th>
-                <th className="px-4 py-3 font-semibold">Copy</th>
+                <th className="px-4 py-3 font-semibold">{t("table.change")}</th>
+                <th className="px-4 py-3 font-semibold">{t("table.record")}</th>
+                <th className="px-4 py-3 font-semibold">{t("table.evidence")}</th>
+                <th className="px-4 py-3 font-semibold">{t("table.risk")}</th>
+                <th className="px-4 py-3 font-semibold">{t("table.rollback")}</th>
+                <th className="px-4 py-3 font-semibold">{t("table.copy")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -627,7 +635,7 @@ function DNSChangePlan({
                       className="inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-3 text-sm font-semibold text-white transition hover:bg-midnight"
                     >
                       <Copy className="h-4 w-4" aria-hidden="true" />
-                      Copy
+                      {t("table.copy")}
                     </button>
                   </td>
                 </tr>
