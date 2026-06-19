@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/routing";
 import { Activity, Building2, ClipboardList, HeartPulse, Lock, Route, ShieldAlert } from "lucide-react";
 import { isAdminOwnerSessionAllowed } from "@/lib/admin-access";
 import { isAuthentikOIDCEnabled } from "@/lib/authentik-access";
@@ -21,14 +23,22 @@ import {
   type SPFRoutePublicationAuditPanelModel,
 } from "@/lib/admin-shell";
 
-export const metadata: Metadata = {
-  title: "Admin | dmark.is",
-  description: "Owner-only Dmark operator control plane.",
-  robots: {
-    index: false,
-    follow: false,
-  },
-};
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{locale: string}>;
+}): Promise<Metadata> {
+  const {locale} = await params;
+  const t = await getTranslations({locale, namespace: 'Metadata'});
+  return {
+    title: `Admin | ${t("title")}`,
+    description: "Owner-only Dmark operator control plane.",
+    robots: {
+      index: false,
+      follow: false,
+    },
+  };
+}
 
 export const dynamic = "force-dynamic";
 
@@ -44,10 +54,12 @@ const sectionIcons: Record<AdminShellSection["id"], typeof ClipboardList> = {
 type AdminPageSearchParams = Record<string, string | string[] | undefined>;
 
 type AdminPageProps = {
+  params: Promise<{ locale: string }>;
   searchParams?: Promise<AdminPageSearchParams>;
 };
 
-export default async function AdminPage({ searchParams }: AdminPageProps) {
+export default async function AdminPage({ params, searchParams }: AdminPageProps) {
+  const { locale } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const requestHeaders = await headers();
   const model = buildAdminShellModel({ allowed: isAdminOwnerSessionAllowed(requestHeaders) });
@@ -72,6 +84,20 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   ]);
 
   return (
+    <AdminContent model={model} providerHealth={providerHealth} operationalEvents={operationalEvents} publicationAudit={publicationAudit} selectedRouteID={selectedRouteID} />
+  );
+}
+
+function AdminContent({ model, providerHealth, operationalEvents, publicationAudit, selectedRouteID }: {
+  model: any;
+  providerHealth: ProviderHealthPanelModel;
+  operationalEvents: OperationalEventsPanelModel;
+  publicationAudit: SPFRoutePublicationAuditPanelModel;
+  selectedRouteID: string;
+}) {
+  const t = useTranslations("Admin.shell");
+
+  return (
     <main className="min-h-screen bg-slate-950 px-5 py-10 text-white sm:px-8">
       <section className="mx-auto max-w-6xl">
         <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 shadow-[0_30px_120px_rgba(2,6,23,0.45)] sm:p-10">
@@ -85,16 +111,16 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-300">{model.description}</p>
             </div>
             <div className="rounded-2xl border border-emerald-300/20 bg-emerald-300/10 p-5 text-sm leading-6 text-emerald-50">
-              <p className="font-semibold">Fail-closed owner boundary</p>
+              <p className="font-semibold">{t("failClosed")}</p>
               <p className="mt-2 text-emerald-100/85">
-                This page is rendered only after the server-side owner session guard passes. Browser code never receives admin tokens or owner session secrets.
+                {t("failClosedDescription")}
               </p>
             </div>
           </div>
         </div>
 
         <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Admin control plane sections">
-          {model.sections.map((section) => (
+          {model.sections.map((section: any) => (
             <AdminSectionCard key={section.id} section={section} />
           ))}
         </section>
@@ -106,9 +132,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         </section>
 
         <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-sm leading-6 text-slate-300">
-          <p className="font-semibold text-white">Operator note</p>
+          <p className="font-semibold text-white">{t("operatorNote")}</p>
           <p className="mt-2">
-            Backend admin calls must stay behind the server-side <code className="rounded bg-white/10 px-1.5 py-0.5">/api/admin</code> proxy and the global admin principal. Keep the customer dashboard at <Link className="text-cyan-200 underline-offset-4 hover:underline" href="/dashboard">/dashboard</Link> separate.
+            {t("operatorNoteDescription")} <Link className="text-cyan-200 underline-offset-4 hover:underline" href="/dashboard">/dashboard</Link>.
           </p>
         </div>
       </section>
@@ -117,6 +143,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 }
 
 function AdminLocked({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) {
+  const t = useTranslations("Admin.locked");
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#e0f2fe_0,#f8fafc_34%,#ffffff_70%)] px-5 py-10 text-navy sm:px-8">
       <section className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-4xl place-items-center">
@@ -129,14 +156,14 @@ function AdminLocked({ eyebrow, title, description }: { eyebrow: string; title: 
           <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">{description}</p>
           {isAuthentikOIDCEnabled() ? (
             <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm font-semibold text-slate-700">Owner identity provider</p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">Use Authentik SSO for the global admin control plane.</p>
+              <p className="text-sm font-semibold text-slate-700">{t("identity")}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-500">{t("sso")}</p>
               <Link className="mt-4 inline-flex min-h-11 items-center rounded-md bg-slate-950 px-5 font-semibold text-white transition hover:bg-slate-800" href="/api/auth/login">
-                Sign in with Authentik
+                {t("button")}
               </Link>
             </div>
           ) : null}
-          <p className="mt-6 text-sm text-slate-500">Public scanning and client organization dashboards remain outside this owner-only global admin surface.</p>
+          <p className="mt-6 text-sm text-slate-500">{t("outside")}</p>
         </div>
       </section>
     </main>

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { headers } from "next/headers";
 import { Lock, MailCheck, ShieldCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/routing";
 import { DashboardLockedCTALink } from "@/components/dashboard-locked-analytics";
 import { DmarkDashboard } from "@/components/dmark-dashboard";
 import { isDashboardAccessEnabled } from "@/lib/dashboard-access";
@@ -23,22 +25,32 @@ import {
   type DashboardInitialState,
 } from "@/lib/dashboard";
 
-export const metadata: Metadata = {
-  title: "Dashboard | dmark.is",
-  description: "Dmark domain trust operations dashboard for DMARC, SPF, Reporter, alerts, and remediation.",
-  robots: {
-    index: false,
-    follow: false,
-  },
-};
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{locale: string}>;
+}): Promise<Metadata> {
+  const {locale} = await params;
+  const t = await getTranslations({locale, namespace: 'Metadata'});
+  return {
+    title: `Dashboard | ${t("title")}`,
+    description: "Dmark domain trust operations dashboard for DMARC, SPF, Reporter, alerts, and remediation.",
+    robots: {
+      index: false,
+      follow: false,
+    },
+  };
+}
 
 export const dynamic = "force-dynamic";
 
 type DashboardPageProps = {
+  params: Promise<{ locale: string }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+export default async function DashboardPage({ params, searchParams }: DashboardPageProps) {
+  const { locale } = await params;
   if (!isDashboardAccessEnabled()) {
     return <DashboardLocked />;
   }
@@ -63,19 +75,20 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 }
 
 function DashboardLocked() {
+  const t = useTranslations("Dashboard.locked");
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#e0f2fe_0,#f8fafc_34%,#ffffff_70%)] px-5 py-10 text-navy sm:px-8">
       <section className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-4xl place-items-center">
         <div className="w-full rounded-2xl border border-slate-200 bg-white/90 p-8 shadow-[0_30px_90px_rgba(15,23,42,0.12)] backdrop-blur sm:p-12">
           <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-trust">
             <Lock className="h-4 w-4" aria-hidden="true" />
-            Private beta
+            {t("badge")}
           </div>
           <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">
-            The Dmark dashboard is locked until launch.
+            {t("title")}
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-            Public scans remain open, but the operations dashboard is invite-only while Dmark is being hardened for early customers.
+            {t("description")}
           </p>
           <div className="mt-8 grid gap-3 sm:grid-cols-2">
             <DashboardLockedCTALink
@@ -84,7 +97,7 @@ function DashboardLocked() {
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-trust px-5 font-semibold text-white transition hover:bg-trust-hover"
             >
               <MailCheck className="h-4 w-4" aria-hidden="true" />
-              Run a public scan
+              {t("scan")}
             </DashboardLockedCTALink>
             <DashboardLockedCTALink
               href="/#pricing"
@@ -92,11 +105,11 @@ function DashboardLocked() {
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-5 font-semibold text-navy transition hover:bg-slate-50"
             >
               <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-              Request early access
+              {t("access")}
             </DashboardLockedCTALink>
           </div>
           <p className="mt-6 text-sm text-slate-500">
-            Internal access can be enabled server-side with <code className="rounded bg-slate-100 px-1.5 py-0.5">DMARK_DASHBOARD_ACCESS=open</code>.
+            {t("internal")} <code className="rounded bg-slate-100 px-1.5 py-0.5">DMARK_DASHBOARD_ACCESS=open</code>.
           </p>
         </div>
       </section>
@@ -105,6 +118,7 @@ function DashboardLocked() {
 }
 
 function DashboardLoginRequired({ loginStatus }: { loginStatus?: string }) {
+  const t = useTranslations("Dashboard.login");
   const recoveryMessage = dashboardLoginRecoveryMessage(loginStatus);
 
   return (
@@ -113,25 +127,25 @@ function DashboardLoginRequired({ loginStatus }: { loginStatus?: string }) {
         <div className="w-full rounded-2xl border border-slate-200 bg-white/90 p-8 shadow-[0_30px_90px_rgba(15,23,42,0.12)] backdrop-blur sm:p-12">
           <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-trust">
             <Lock className="h-4 w-4" aria-hidden="true" />
-            Customer login
+            {t("badge")}
           </div>
-          <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">Sign in to Dmark dashboard</h1>
+          <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">{t("title")}</h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-            The customer dashboard is protected by the dedicated dmark-dashboard Authentik application. Public scans remain available without login.
+            {t("description")}
           </p>
           {recoveryMessage ? (
             <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950" role="status">
               <p className="font-semibold">{recoveryMessage}</p>
               <p className="mt-2">
-                If this keeps happening, clear site data for dmark.is and auth.kastro.is, then start from /dashboard.
+                {t("recovery.clear")}
               </p>
             </div>
           ) : null}
           <Link className="mt-8 inline-flex min-h-12 items-center justify-center rounded-md bg-trust px-5 font-semibold text-white transition hover:bg-trust-hover" href="/api/dashboard/auth/login">
-            Sign in with Authentik
+            {t("button")}
           </Link>
           <p className="mt-6 text-sm text-slate-500">
-            Customer dashboard sessions are scoped to dashboard routes only. Public scans remain available without a session.
+            {t("scoped")}
           </p>
         </div>
       </section>
@@ -145,13 +159,14 @@ function firstSearchParam(value: string | string[] | undefined): string {
 }
 
 function dashboardLoginRecoveryMessage(loginStatus?: string): string {
+  const t = useTranslations("Dashboard.login.recovery");
   switch (loginStatus) {
     case "authentik-failed":
-      return "Your sign-in session expired. Please try again.";
+      return t("expired");
     case "authentik-forbidden":
-      return "This account is not enabled for the Dmark dashboard.";
+      return t("forbidden");
     case "authentik-unconfigured":
-      return "Dashboard sign-in is not configured yet.";
+      return t("unconfigured");
     default:
       return "";
   }

@@ -1,0 +1,661 @@
+{
+  "Common": {
+    "adding": "Adding",
+    "addDomain": "Add domain",
+    "retry": "Retry",
+    "loading": "Loading...",
+    "inspect": "Inspect",
+    "recheck": "Recheck",
+    "scan": "Scan",
+    "scanning": "Scanning",
+    "scanDomain": "Scan domain",
+    "try": "Try",
+    "pressSlash": "press /",
+    "noLogin": "no login",
+    "online": "online",
+    "close": "Close",
+    "submitRequest": "Submit request",
+    "earlyAccess": "Early access",
+    "requestEarlyAccess": "Request early access",
+    "readyWhenYouAre": "Ready when you are",
+    "footerDescription": "DMARC/SPF diagnostics, flattening, reporting, and managed rollout for Icelandic businesses.",
+    "kastroProduct": "A Kastro made product.",
+    "threat": "Threat",
+    "howItWorks": "How it works",
+    "features": "Features",
+    "pricing": "Pricing",
+    "managed": "Managed service",
+    "core": "Core",
+    "emailAuth": "Email authentication",
+    "domain": "Domain"
+  },
+  "Marketing": {
+    "skip": "Skip to scanner",
+    "hero": {
+      "badge": "dmark.is · Icelandic email security",
+      "title": "Scan the DNS records attackers use to <brand>borrow your brand.</brand>",
+      "text": "Run a public DMARC and SPF diagnostic, see exactly why spoofed mail can pass, then request early access for beta automation, reporting, and a safe path to p=reject.",
+      "cta_scan": "Scan my domain",
+      "cta_saas": "Request early access",
+      "signals": {
+        "live": {
+          "label": "Public scanner is live",
+          "value": "0 logins",
+          "detail": "The first risk picture needs only public DNS."
+        },
+        "beta": {
+          "label": "Beta automation",
+          "value": "Early access",
+          "detail": "SPF flattening and reporting stay gated until live-provider proof is complete."
+        },
+        "operator": {
+          "label": "Operator-managed rollout",
+          "value": "Kastro",
+          "detail": "Kastro verifies DNS changes before they go live."
+        },
+        "target": {
+          "label": "DMARC target",
+          "value": "p=reject",
+          "detail": "Progress through monitor, quarantine, reject without breaking legitimate mail."
+        }
+      }
+    },
+    "header": {
+      "logo_aria": "dmark.is home",
+      "logo_sr": "Email authentication",
+      "threat": "Threat",
+      "workflow": "How it works",
+      "features": "Features",
+      "pricing": "Pricing",
+      "saas": "Early access",
+      "cta_scan": "Scan a domain",
+      "cta_scan_short": "Scan"
+    },
+    "threat": {
+      "eyebrow": "02 — The threat",
+      "title": "Anyone can send email as your domain. Until you tell receivers not to let them.",
+      "text": "Email was built on trust, not identity. Without an enforced DMARC policy, a stranger can put your address in the From field and reach your customers. Flip the switch to see the difference."
+    },
+    "workflow": {
+      "eyebrow": "03 — The path",
+      "title": "From a public scan to an enforced policy — without breaking mail.",
+      "text": "DMARK is built for the messy middle: legacy vendors, SPF lookup limits, report XML nobody reads, and DNS providers where one bad edit takes mail down.",
+      "steps": {
+        "discover": {
+          "title": "Discover",
+          "detail": "Find SPF, DMARC, DKIM, forwarding, and unknown senders — without asking anyone for credentials.",
+          "tag": "No login"
+        },
+        "stabilize": {
+          "title": "Stabilize",
+          "detail": "Flatten SPF, remove stale includes, and document every DNS change before it ships.",
+          "tag": "Reversible"
+        },
+        "enforce": {
+          "title": "Enforce",
+          "detail": "Advance DMARC from none to quarantine to reject with report-backed confidence.",
+          "tag": "p=reject"
+        }
+      },
+      "ladder": {
+        "title": "The enforcement ladder",
+        "detail": "Most domains never leave the first rung.",
+        "none": "p=none — watch only",
+        "quarantine": "p=quarantine — suspicious mail diverted",
+        "reject": "p=reject — spoofed mail blocked"
+      }
+    },
+    "features": {
+      "eyebrow": "04 — Premium tier",
+      "title": "Move from exposed DNS records to enforced domain trust.",
+      "text": "The paid product is in early access: scanner evidence is public today, while SPF automation and reporting remain gated until their launch checks are boring.",
+      "list": {
+        "flattening": {
+          "title": "SPF flattening in beta",
+          "detail": "Keep Microsoft 365, Google Workspace, marketing tools, and local senders below the 10-lookup limit once the route is provisioned."
+        },
+        "reporting": {
+          "title": "Readable reporting roadmap",
+          "detail": "Turn XML into sender inventory, pass/fail trends, and the next safe enforcement decision as reporting gates finish."
+        },
+        "rollout": {
+          "title": "Provider-aware rollout",
+          "detail": "Copy-paste changes tailored for Icelandic DNS providers and reviewed for operational risk."
+        }
+      }
+    },
+    "proof": {
+      "eyebrow": "05 — Operational proof",
+      "title": "Every recommendation should explain itself.",
+      "text": "The product view translates DMARC aggregate reports, SPF chains, and DNS records into the next action a business can safely approve.",
+      "console": {
+        "badge": "dmark audit console",
+        "stats": "p=none, 13 SPF lookups, 4 unknown senders",
+        "items": [
+          { "title": "Flatten SPF includes", "detail": "Remove stale HubSpot include", "state": "Ready" },
+          { "title": "Quarantine rollout", "detail": "Start at pct=25 for seven days", "state": "Review" },
+          { "title": "Unknown sender", "detail": "ASN 1299 fails alignment", "state": "Block" }
+        ]
+      }
+    },
+    "pricing": {
+      "eyebrow": "06 — Pricing",
+      "title": "Start with proof. Pay when remediation is worth it.",
+      "text": "The scanner stays public. The paid tiers are for teams who want automation, reporting, and safe implementation help.",
+      "tiers": {
+        "core": "Core",
+        "scan": {
+          "name": "Skoðun",
+          "description": "Public diagnostic for teams that need a fast read on DMARC and SPF exposure.",
+          "price": "0 ISK",
+          "points": ["Ungated domain scanner", "Basic SPF and DMARC status", "One-time technical breakdown"],
+          "cta": "Scan now"
+        },
+        "saas": {
+          "name": "Sjálfvirkni",
+          "description": "Early access while DNS publication and reporting gates finish.",
+          "price": "4,900 ISK/mo",
+          "points": ["SPF flattening beta", "Readable reporting roadmap", "Guided p=reject progression"],
+          "cta": "Request early access"
+        },
+        "managed": {
+          "name": "Kastro Managed",
+          "description": "Done-for-you implementation for directors who want DNS changes handled safely.",
+          "price": "45,000 ISK setup + MRR",
+          "points": ["Implementation plan", "DNS provider coordination", "Post-change verification"],
+          "cta": "Book Kastro setup"
+        }
+      }
+    },
+    "footer_cta": {
+      "eyebrow": "Ready when you are",
+      "title": "Show the spoofing gap before an attacker does.",
+      "cta_scan": "Scan a domain",
+      "cta_saas": "Request early access"
+    },
+    "footer": {
+      "text": "DMARC/SPF diagnostics, flattening, reporting, and managed rollout for Icelandic businesses.",
+      "credit": "A <kastro>Kastro</kastro> made product.",
+      "cta_scan": "Scan domain",
+      "cta_saas": "Request early access"
+    },
+    "scanner": {
+      "badge": "dmark · public scan",
+      "online": "online",
+      "label": "Check any domain — no login",
+      "shortcut": "press /",
+      "input_label": "Domain",
+      "placeholder": "yourcompany.is",
+      "scan": "Scan",
+      "scanning": "Scanning",
+      "try": "Try",
+      "steps": {
+        "dns": { "title": "DNS authority", "detail": "NS + TXT records" },
+        "spf": { "title": "SPF chain", "detail": "include · a · mx · redirect" },
+        "dmarc": { "title": "DMARC policy", "detail": "p · pct · rua · aspf" },
+        "spoof": { "title": "Spoof exposure", "detail": "alignment + audit grade" }
+      }
+    },
+    "results": {
+      "badge": "Scan result",
+      "spoofable_default": "This domain can still be abused by unauthorised senders until SPF and DMARC enforcement are corrected.",
+      "secure_default": "This domain has enforcing DMARC posture. Keep monitoring for sender and DNS drift.",
+      "stats": {
+        "status": "Status",
+        "risk": "Risk",
+        "risk_high": "critical",
+        "risk_low": "low",
+        "time": "Time",
+        "checked_at": "Checked {date}"
+      },
+      "findings": {
+        "spf": "SPF status",
+        "dmarc": "DMARC status"
+      },
+      "sequence": {
+        "label": "Recommended sequence"
+      },
+      "cta_unlock": "Unlock continuous remediation",
+      "cta_another": "Scan another"
+    },
+    "demo": {
+      "toggle_off": "Without DMARK",
+      "toggle_on": "With DMARK · p=reject",
+      "inbox_label": "Inbox — bjorn@northwind.is",
+      "inbox_count_on": "1 message · 1 rejected",
+      "inbox_count_off": "2 messages",
+      "caption_on": "p=reject — the unaligned message never reaches the inbox.",
+      "caption_off": "p=none — both messages are delivered. The fake one looks identical.",
+      "steps": [
+        { "title": "An attacker sends mail “from” your domain", "detail": "No password needed. SMTP lets anyone write your address in the From field." },
+        { "title": "Your domain has p=none or none at all", "detail": "Receivers have no instruction to reject unaligned mail, so it sails through." },
+        { "title": "It lands in the inbox, looking legitimate", "detail": "Your logo, your name, your customer — a convincing invoice or password reset." }
+      ],
+      "footer": {
+        "title": "DMARK closes the gap.",
+        "text": "We get you to an enforced p=reject safely — without breaking the legitimate mail your business depends on."
+      },
+      "mail": {
+        "sender": "Northwind Billing",
+        "pass": "✓ DKIM PASS",
+        "fail": "✕ SPF FAIL · UNALIGNED",
+        "via": " · sent via {ip}",
+        "rejected": "Rejected at receiver",
+        "safe": {
+          "subject": "Your March statement is ready",
+          "body": "Hi Björn — your monthly statement is attached…"
+        },
+        "exposed": {
+          "subject": "URGENT: Update your payment details now",
+          "body": "Your account is on hold. Confirm your card to avoid suspension…"
+        }
+      }
+    },
+    "checkout": {
+      "badge_managed": "Managed setup",
+      "badge_saas": "Subscription request",
+      "title": "Provision dmark for your domain",
+      "close_aria": "Close",
+      "success_title": "Upgrade requested.",
+      "success_text": "Our team is provisioning your isolated environment. You will receive your kennitala claim/invoice via email shortly.",
+      "close": "Close",
+      "fields": {
+        "name": "Name",
+        "domain": "Company Domain",
+        "email": "Contact Email"
+      },
+      "submit": "Submit request"
+    }
+  },
+  "Metadata": {
+    "title": "dmark.is | Icelandic DMARC and SPF protection",
+    "description": "Run a public DMARC and SPF scanner for Icelandic domains, then request early access for beta SPF automation and reporting.",
+    "ogTitle": "dmark.is | Icelandic DMARC and SPF protection",
+    "ogDescription": "Scan public DNS for DMARC and SPF risk, understand spoofing exposure, and plan a safe path toward p=reject."
+  },
+  "Dashboard": {
+    "statuses": {
+      "needs-work": "Needs work",
+      "monitoring": "Monitoring",
+      "protected": "Protected"
+    },
+    "locked": {
+      "badge": "Private beta",
+      "title": "The Dmark dashboard is locked until launch.",
+      "description": "Public scans remain open, but the operations dashboard is invite-only while Dmark is being hardened for early customers.",
+      "scan": "Run a public scan",
+      "access": "Request early access",
+      "internal": "Internal access can be enabled server-side with"
+    },
+    "login": {
+      "badge": "Customer login",
+      "title": "Sign in to Dmark dashboard",
+      "description": "The customer dashboard is protected by the dedicated dmark-dashboard Authentik application. Public scans remain available without login.",
+      "button": "Sign in with Authentik",
+      "scoped": "Customer dashboard sessions are scoped to dashboard routes only. Public scans remain available without a session.",
+      "recovery": {
+        "expired": "Your sign-in session expired. Please try again.",
+        "forbidden": "This account is not enabled for the Dmark dashboard.",
+        "unconfigured": "Dashboard sign-in is not configured yet.",
+        "clear": "If this keeps happening, clear site data for dmark.is and auth.kastro.is, then start from /dashboard."
+      }
+    },
+    "errors": {
+      "reporter": "Reporter data could not be loaded.",
+      "changePlan": "Change plan could not be loaded.",
+      "spfRoute": "SPF route data could not be loaded.",
+      "dnsGuidance": "DNS provider guidance could not be loaded.",
+      "brandRisk": "Brand Risk data could not be loaded.",
+      "settingsSave": "Settings could not be saved.",
+      "threshold": "Alignment threshold must be between 1 and 100.",
+      "reporterExport": "Reporter CSV could not be exported.",
+      "trend": "Trend data unavailable."
+    },
+    "actions": {
+      "copySuccess": "{label} copied.",
+      "copyError": "Could not copy {label}.",
+      "exportSuccess": "{filename} exported.",
+      "rechecking": "Rechecking {domain}...",
+      "recheckResult": "{domain} recheck {status}.",
+      "recheckError": "{domain} recheck failed.",
+      "spfSyncing": "Queueing SPF route sync for {domain}...",
+      "spfSyncResult": "SPF route sync {status} for {domain}.",
+      "spfSyncError": "{domain} SPF route sync could not be queued.",
+      "spfSaving": "Saving SPF source management for {domain}...",
+      "spfSaveSuccess": "SPF source management saved for {domain}; sync queued by backend.",
+      "spfSaveError": "{domain} SPF sources could not be saved.",
+      "alertAction": "{title} {action}.",
+      "alertError": "{title} could not be {action}.",
+      "settingsSaved": "Dashboard settings saved.",
+      "reporterUnknownOnly": "Showing unknown senders only.",
+      "reporterAll": "Showing all senders.",
+      "brandRiskInactive": "Including inactive lookalike candidates.",
+      "brandRiskActiveOnly": "Showing active lookalike evidence only."
+    },
+    "shell": {
+      "openNav": "Open navigation",
+      "closeNav": "Close navigation",
+      "commandCenter": "Dmark command center",
+      "title": "Domain trust dashboard",
+      "searchPlaceholder": "Search domains, owners, next actions",
+      "searchPlaceholderMobile": "Search domains",
+      "marketing": "Marketing",
+      "domainToProtect": "Domain to protect",
+      "sessionExpired": "Your session has expired. Sign in again to keep working with live data.",
+      "signInAgain": "Sign in again",
+      "addDomain": "Add domain"
+    },
+    "sidebar": {
+      "overview": "Overview",
+      "domains": "Domains",
+      "reporter": "Reporter",
+      "brandRisk": "Brand Risk",
+      "alerts": "Alerts",
+      "settings": "Settings",
+      "trustOps": "Live trust operations",
+      "trustOpsSubtitle": "Trust operations",
+      "trustOpsDescription": "Review domain posture, sender evidence, and DNS changes from one workspace."
+    },
+    "overview": {
+      "empty": {
+        "title": "No protected domains",
+        "detail": "Add protected domains, then refresh this dashboard to load live posture and Reporter data.",
+        "action": "Add your first domain"
+      },
+      "fleetHealth": "Fleet health",
+      "livePosture": "Live domain posture",
+      "reporterDetail": "Reporter detail",
+      "focusDomain": "Focus domain",
+      "commandCenter": {
+        "badge": "Operator view",
+        "recheck": "Recheck DNS",
+        "checking": "Checking...",
+        "reports": "Reports",
+        "brandRisk": "Brand Risk",
+        "trustScore": "Trust score",
+        "trustScoreDetail": "Weighted DNS posture",
+        "alignment": "Alignment",
+        "alignmentDetail": "Last reporting window",
+        "unknownSenders": "Unknown senders",
+        "unknownSendersDetail": "Needs classification",
+        "scoreTrend": "Score trend",
+        "alignmentTrend": "Alignment trend",
+        "loadingTrend": "Loading trend...",
+        "trendUnavailable": "Trend data unavailable.",
+        "noHistory": "Not enough check history for a trend yet.",
+        "noVolume": "No aggregate-report volume in this window yet."
+      },
+      "enforcementLadder": {
+        "title": "Enforcement ladder"
+      },
+      "remediationQueue": {
+        "title": "Remediation queue",
+        "heading": "Recommended next actions",
+        "noRecommendations": "No remediation recommendations are available for the current domain set.",
+        "effort": "Effort"
+      },
+      "auditTrail": {
+        "title": "Audit trail",
+        "heading": "Recent activity"
+      }
+    },
+    "domains": {
+      "title": "Protected domains",
+      "subtitle": "Record monitoring and remediation",
+      "export": "Export domains",
+      "addFirst": "Add a domain",
+      "noResults": "No domains found matching that query.",
+      "empty": {
+        "title": "No protected domains",
+        "detail": "No domains matched the current search or the protected-domain list is empty."
+      },
+      "stats": {
+        "score": "Score",
+        "dmarc": "DMARC",
+        "spf": "SPF",
+        "dkim": "DKIM",
+        "unknown": "Unknown"
+      },
+      "guidance": {
+        "title": "DNS provider guidance",
+        "titleWithDomain": "Provider steps for {domain}",
+        "fallbackTitle": "Provider-specific DNS steps",
+        "description": "DNS provider detection is shown as detected, ambiguous, or unknown before instructions are presented so operators do not get false certainty.",
+        "nameservers": "Nameserver evidence",
+        "copy": "Copy DNS record",
+        "unavailable": "DNS provider guidance unavailable.",
+        "noGuidance": "DNS provider guidance was not returned for this domain.",
+        "provider": "Provider",
+        "providerUnknown": "Provider unknown",
+        "detection": "Detection",
+        "confidence": "Confidence"
+      },
+      "route": {
+        "title": "SPF route",
+        "description": "Manual sync queues a backend job through the dashboard proxy; Bunny DNS credentials stay server-side.",
+        "sync": "Sync SPF route",
+        "syncing": "Queueing sync...",
+        "unavailable": "SPF route state unavailable.",
+        "noRoute": "No SPF route has been configured for this domain yet.",
+        "stats": {
+          "target": "Route target",
+          "lastSync": "Last sync",
+          "sources": "Sources",
+          "evidence": "Evidence"
+        },
+        "cname": {
+          "title": "Customer CNAME delegation",
+          "copy": "Copy CNAME"
+        },
+        "preview": {
+          "title": "Generated SPF preview",
+          "lastPublished": "Last published: {value}"
+        },
+        "management": {
+          "title": "SPF source management",
+          "description": "Manage include, ip4, and ip6 sources; credentials stay behind the dashboard proxy.",
+          "add": "Add source",
+          "save": "Save sources",
+          "saving": "Saving sources...",
+          "remove": "Remove",
+          "fields": {
+            "kind": "Kind",
+            "value": "Value",
+            "label": "Label",
+            "valuePlaceholder": "_spf.provider.example or 203.0.113.10",
+            "labelPlaceholder": "Provider name",
+            "include": "include",
+            "ip4": "ip4",
+            "ip6": "ip6"
+          }
+        },
+        "evidence": {
+          "title": "Evidence summary",
+          "empty": "No SPF evidence was returned yet."
+        },
+        "history": {
+          "title": "Sync history",
+          "description": "Recent route publication activity recorded by the backend; provider internals are never shown.",
+          "loading": "Loading sync history...",
+          "unavailable": "Sync history is unavailable right now.",
+          "empty": "No route activity has been recorded yet."
+        }
+      },
+      "changePlan": {
+        "title": "Change plan",
+        "titleWithDomain": "DNS records for {domain}",
+        "fallbackTitle": "DNS records",
+        "description": "Review staged DNS changes with evidence, risk notes, and rollback guidance before publishing.",
+        "unavailable": "Change plan unavailable.",
+        "noChanges": "No DNS changes are currently staged for this domain.",
+        "ready": "Ready for the next enforcement step",
+        "notReady": "Not ready for the next enforcement step yet",
+        "table": {
+          "change": "Change",
+          "record": "Record",
+          "evidence": "Evidence",
+          "risk": "Risk",
+          "rollback": "Rollback",
+          "copy": "Copy"
+        },
+        "stats": {
+          "journeyState": "Journey state",
+          "publishedPolicy": "Published policy",
+          "nextAction": "Next action"
+        }
+      }
+    },
+    "reporter": {
+      "title": "Sender reporter",
+      "subtitle": "Analyze mail volume and alignment in real-time.",
+      "filterUnknown": "Unknown only",
+      "filterAll": "Show all",
+      "export": "Export CSV",
+      "summary": {
+        "title": "Period summary",
+        "total": "Total volume",
+        "compliant": "Compliant mail",
+        "threat": "Threats/Errors"
+      },
+      "table": {
+        "sender": "Sender / Source",
+        "senderInventory": "Sender inventory",
+        "topSources": "Top sources by message volume",
+        "volume": "Volume",
+        "status": "Status",
+        "spf": "SPF",
+        "dkim": "DKIM",
+        "action": "Action",
+        "noSenders": "No senders found.",
+        "expected": "Expected",
+        "unknown": "Unknown",
+        "trend": "Trend"
+      }
+    },
+    "brandRisk": {
+      "title": "Brand risk",
+      "subtitle": "Monitor lookalike domains and spoofing attempts.",
+      "activeOnly": "Show active",
+      "all": "Show all",
+      "score": "Risk score",
+      "status": "Status",
+      "lastActive": "Last active",
+      "active": "Active",
+      "inactive": "Inactive",
+      "noThreats": "No brand risk threats found.",
+      "emailAuthFindings": "Email-auth findings",
+      "authPosture": "Authentication posture",
+      "finding": "finding",
+      "findings": "findings",
+      "noFindings": "No email-auth Brand Risk findings were returned for this domain.",
+      "lookalikes": "Defender lookalikes",
+      "lookalikeEvidence": "Lookalike-domain evidence",
+      "activeEvidence": "active",
+      "inactiveCandidate": "Inactive candidate",
+      "noEvidence": "Brand Risk has no active lookalike DNS or MX evidence for this domain.",
+      "table": {
+        "domain": "Domain",
+        "kind": "Kind",
+        "evidence": "DNS evidence",
+        "severity": "Severity",
+        "action": "Recommended action"
+      }
+    },
+    "alerts": {
+      "title": "Alerts and operations",
+      "subtitle": "Requires operator attention to ensure mail delivery.",
+      "actionRequired": "Action required",
+      "raised": "Raised {value}",
+      "openDomains": "Open domains",
+      "resolve": "Resolve",
+      "mute": "Mute",
+      "noAlerts": "No active alerts.",
+      "empty": {
+        "title": "No active alerts",
+        "detail": "Everything looks good. No critical domain or SPF issues are currently flagged.",
+        "action": "Review protected domains"
+      }
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Automation and notification controls.",
+      "rollout": {
+        "title": "DMARC rollout policy",
+        "description": "Set the confidence level before DMARK recommends full p=reject enforcement.",
+        "threshold": "Alignment threshold before p=reject",
+        "thresholdDetail": "Confidence level before recommending full enforcement.",
+        "autoRemediate": {
+          "label": "Automatic remediation",
+          "detail": "DMARK will automatically sync DNS changes when ready."
+        },
+        "weeklySummary": {
+          "label": "Weekly reports",
+          "detail": "Receive a weekly summary of alignment and risks."
+        },
+        "pauseOnUnknownSpike": "Pause automation when unknown senders spike",
+        "monthlyReports": "Auto-generate monthly executive reports",
+        "save": "Save changes",
+        "saving": "Saving..."
+      },
+      "notifications": {
+        "title": "Notification channels",
+        "channels": {
+          "email": "Email",
+          "slack": "Slack",
+          "teams": "Teams"
+        }
+      },
+      "plan": {
+        "title": "Subscription",
+        "usage": "Usage",
+        "domains": "Domains",
+        "lookups": "SPF lookups",
+        "lookupsDetail": "Flattened records",
+        "of": "of",
+        "current": "Current plan",
+        "unavailable": "Plan and usage information is unavailable right now.",
+        "loading": "Loading plan and usage...",
+        "limitNote": "The plan domain limit is in use; adding another domain requires an upgrade.",
+        "stats": {
+          "cadence": "Scan cadence",
+          "cadenceDetail": "Scheduled record checks",
+          "retention": "Report retention",
+          "retentionDetail": "Aggregate report history",
+          "access": "Reporter access",
+          "accessDetail": "DMARC aggregate intelligence",
+          "included": "Included",
+          "notIncluded": "Not included"
+        }
+      }
+    }
+  },
+  "Admin": {
+    "locked": {
+      "eyebrow": "Owner access",
+      "title": "Owner control plane is locked.",
+      "description": "Public scanning and client organization dashboards remain outside this owner-only surface.",
+      "identity": "Owner identity provider",
+      "sso": "Use Authentik SSO for the global admin control plane.",
+      "button": "Sign in with Authentik",
+      "outside": "Public scanning and client organization dashboards remain outside this owner-only global admin surface."
+    },
+    "shell": {
+      "failClosed": "Fail-closed owner boundary",
+      "failClosedDescription": "This page is rendered only after the server-side owner session guard passes. Browser code never receives admin tokens or owner session secrets.",
+      "operatorNote": "Operator note",
+      "operatorNoteDescription": "Backend admin calls must stay behind the server-side /api/admin proxy and the global admin principal. Keep the customer dashboard at /dashboard separate."
+    }
+  },
+  "Errors": {
+    "somethingBroke": "Something broke",
+    "unexpectedError": "This page hit an unexpected error.",
+    "errorDetail": "The error has not affected your domains or DNS records. Try again, or head back to the scanner.",
+    "tryAgain": "Try again",
+    "backToScanner": "Back to the scanner",
+    "notFound": {
+      "title": "Page not found",
+      "heading": "This page does not exist.",
+      "detail": "The address may have changed, or the link was mistyped. The public scanner is always available from the front page."
+    }
+  }
+}
