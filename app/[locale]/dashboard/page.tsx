@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { Lock, MailCheck, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { DashboardLockedCTALink } from "@/components/dashboard-locked-analytics";
 import { DmarkDashboard } from "@/components/dmark-dashboard";
@@ -51,6 +51,7 @@ type DashboardPageProps = {
 
 export default async function DashboardPage({ params, searchParams }: DashboardPageProps) {
   const { locale } = await params;
+  setRequestLocale(locale);
   if (!isDashboardAccessEnabled()) {
     return <DashboardLocked />;
   }
@@ -119,7 +120,8 @@ function DashboardLocked() {
 
 function DashboardLoginRequired({ loginStatus }: { loginStatus?: string }) {
   const t = useTranslations("Dashboard.login");
-  const recoveryMessage = dashboardLoginRecoveryMessage(loginStatus);
+  const recoveryKey = dashboardLoginRecoveryKey(loginStatus);
+  const recoveryMessage = recoveryKey ? t(`recovery.${recoveryKey}`) : "";
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#e0f2fe_0,#f8fafc_34%,#ffffff_70%)] px-5 py-10 text-navy sm:px-8">
@@ -158,17 +160,16 @@ function firstSearchParam(value: string | string[] | undefined): string {
   return value || "";
 }
 
-function dashboardLoginRecoveryMessage(loginStatus?: string): string {
-  const t = useTranslations("Dashboard.login.recovery");
+function dashboardLoginRecoveryKey(loginStatus?: string): "expired" | "forbidden" | "unconfigured" | null {
   switch (loginStatus) {
     case "authentik-failed":
-      return t("expired");
+      return "expired";
     case "authentik-forbidden":
-      return t("forbidden");
+      return "forbidden";
     case "authentik-unconfigured":
-      return t("unconfigured");
+      return "unconfigured";
     default:
-      return "";
+      return null;
   }
 }
 

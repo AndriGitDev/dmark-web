@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { useTranslations } from "next-intl";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { Activity, Building2, ClipboardList, HeartPulse, Lock, Route, ShieldAlert } from "lucide-react";
 import { isAdminOwnerSessionAllowed } from "@/lib/admin-access";
@@ -17,6 +17,7 @@ import {
   unavailableOperationalEventsPanel,
   unavailableProviderHealthPanel,
   unavailableSPFRoutePublicationAuditPanel,
+  type AdminShellModel,
   type AdminShellSection,
   type OperationalEventsPanelModel,
   type ProviderHealthPanelModel,
@@ -60,6 +61,7 @@ type AdminPageProps = {
 
 export default async function AdminPage({ params, searchParams }: AdminPageProps) {
   const { locale } = await params;
+  setRequestLocale(locale);
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const requestHeaders = await headers();
   const model = buildAdminShellModel({ allowed: isAdminOwnerSessionAllowed(requestHeaders) });
@@ -89,7 +91,7 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
 }
 
 function AdminContent({ model, providerHealth, operationalEvents, publicationAudit, selectedRouteID }: {
-  model: any;
+  model: AdminShellModel;
   providerHealth: ProviderHealthPanelModel;
   operationalEvents: OperationalEventsPanelModel;
   publicationAudit: SPFRoutePublicationAuditPanelModel;
@@ -120,7 +122,7 @@ function AdminContent({ model, providerHealth, operationalEvents, publicationAud
         </div>
 
         <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Admin control plane sections">
-          {model.sections.map((section: any) => (
+          {model.sections.map((section) => (
             <AdminSectionCard key={section.id} section={section} />
           ))}
         </section>

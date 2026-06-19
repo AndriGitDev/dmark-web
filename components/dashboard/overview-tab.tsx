@@ -190,6 +190,7 @@ function CommandCenter({
   recheckingDomainID: string | null;
 }) {
   const t = useTranslations("Dashboard.overview.commandCenter");
+  const tLadder = useTranslations("Dashboard.overview.enforcementLadder");
   const formatStatus = useFormatStatus();
   const isRechecking = recheckingDomainID === selectedDomain.id;
   const scorePoints = (trends?.scorePoints || []).map((point) => ({ value: point.score, label: point.date }));
@@ -295,7 +296,7 @@ function CommandCenter({
 
         <div className="border-t border-line bg-paper p-5 lg:border-l lg:border-t-0">
           <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
-            {useTranslations("Dashboard.overview.enforcementLadder")("title")}
+            {tLadder("title")}
           </p>
           <div className="mt-5 grid gap-3">
             {["none", "quarantine", "reject"].map((policy, index) => {

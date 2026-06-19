@@ -311,6 +311,13 @@
       "reporterExport": "Reporter CSV could not be exported.",
       "trend": "Trend data unavailable."
     },
+    "forms": {
+      "addDomain": {
+        "errorEmpty": "Enter a domain first.",
+        "success": "{domain} was added. Run a recheck to populate live posture.",
+        "errorFailed": "Domain could not be added."
+      }
+    },
     "actions": {
       "copySuccess": "{label} copied.",
       "copyError": "Could not copy {label}.",
@@ -349,7 +356,7 @@
       "overview": "Overview",
       "domains": "Domains",
       "reporter": "Reporter",
-      "brandRisk": "Brand Risk",
+      "brand-risk": "Brand Risk",
       "alerts": "Alerts",
       "settings": "Settings",
       "trustOps": "Live trust operations",
@@ -402,6 +409,7 @@
     "domains": {
       "title": "Protected domains",
       "subtitle": "Record monitoring and remediation",
+      "checkedPrefix": "checked",
       "export": "Export domains",
       "addFirst": "Add a domain",
       "noResults": "No domains found matching that query.",
@@ -602,7 +610,7 @@
         "channels": {
           "email": "Email",
           "slack": "Slack",
-          "teams": "Teams"
+          "webhook": "Webhook"
         }
       },
       "plan": {

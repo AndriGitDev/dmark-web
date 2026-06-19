@@ -108,7 +108,7 @@ export function DomainsTab({
                     </span>
                   </div>
                   <p className="mt-2 text-sm text-ink-400">
-                    {domain.owner} · {domain.lastChecked}
+                    {domain.owner} · {t("checkedPrefix")} {domain.lastChecked}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
