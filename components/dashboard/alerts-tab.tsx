@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowUpRight, Check, CheckCircle2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { DashboardAlert } from "@/lib/dashboard";
 import { severityTone } from "./tones";
 import { EmptyState } from "./ui";
@@ -14,19 +15,20 @@ export function AlertsTab({
   onOpenDomains: () => void;
   onResolveAlert: (alertID: string, action: "acknowledged" | "muted") => void;
 }) {
+  const t = useTranslations("Dashboard.alerts");
   return (
     <div className="grid gap-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-brand-ink">Alert queue</p>
-          <h2 className="mt-2 text-3xl font-bold tracking-tight text-ink">Changes that need operator review</h2>
+          <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-brand-ink">{t("title")}</p>
+          <h2 className="mt-2 text-3xl font-bold tracking-tight text-ink">{t("subtitle")}</h2>
         </div>
         <button
           type="button"
           onClick={onOpenDomains}
           className="inline-flex min-h-11 items-center justify-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white transition hover:bg-midnight"
         >
-          Review domains
+          {t("openDomains")}
           <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
@@ -54,14 +56,14 @@ export function AlertsTab({
                     className="inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-3 text-sm font-semibold text-white transition hover:bg-brand"
                   >
                     <Check className="h-4 w-4" aria-hidden="true" />
-                    Acknowledge
+                    {t("resolve")}
                   </button>
                   <button
                     type="button"
                     onClick={() => onResolveAlert(alert.id, "muted")}
                     className="inline-flex min-h-10 items-center justify-center rounded border border-line-strong px-3 text-sm font-semibold text-ink-700 transition hover:border-brand hover:text-brand"
                   >
-                    Mute
+                    {t("mute")}
                   </button>
                 </div>
               </div>
@@ -71,8 +73,10 @@ export function AlertsTab({
       ) : (
         <EmptyState
           icon={CheckCircle2}
-          title="No active alerts"
-          detail="Acknowledged and muted alerts stay in the audit trail. New DNS drift or sender findings will reappear here."
+          title={t("empty.title")}
+          detail={t("empty.detail")}
+          actionLabel={t("empty.action")}
+          onAction={onOpenDomains}
         />
       )}
     </div>

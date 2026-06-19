@@ -1,0 +1,661 @@
+{
+  "Common": {
+    "adding": "Bætir við",
+    "addDomain": "Bæta við léni",
+    "retry": "Reyna aftur",
+    "loading": "Hleður...",
+    "inspect": "Skoða",
+    "recheck": "Endurskoða",
+    "scan": "Skanna",
+    "scanning": "Skannar",
+    "scanDomain": "Skanna lén",
+    "try": "Prófa",
+    "pressSlash": "ýttu á /",
+    "noLogin": "engin innskráning",
+    "online": "í sambandi",
+    "close": "Loka",
+    "submitRequest": "Senda beiðni",
+    "earlyAccess": "Snemmbúinn aðgangur",
+    "requestEarlyAccess": "Óska eftir snemmbúnum aðgangi",
+    "readyWhenYouAre": "Tilbúin þegar þú ert tilbúin",
+    "footerDescription": "DMARC/SPF greiningar, samþjöppun, skýrslugjöf og stýrð innleiðing fyrir íslensk fyrirtæki.",
+    "kastroProduct": "Kastro vara.",
+    "threat": "Ógnin",
+    "howItWorks": "Hvernig það virkar",
+    "features": "Eiginleikar",
+    "pricing": "Verðskrá",
+    "managed": "Stýrð þjónusta",
+    "core": "Kjarni",
+    "emailAuth": "Tölvupóstauðkenning",
+    "domain": "Lén"
+  },
+  "Marketing": {
+    "skip": "Hoppa í skanna",
+    "hero": {
+      "badge": "dmark.is · Íslensk tölvupóstöryggi",
+      "title": "Skannaðu DNS færslurnar sem árásaraðilar nota til að <brand>herma eftir vörumerkinu þínu.</brand>",
+      "text": "Keyrðu opinbera DMARC og SPF greiningu, sjáðu nákvæmlega hvers vegna sviksamlegur póstur getur komist í gegn, og óskaðu eftir snemmbúnum aðgangi að sjálfvirkni, skýrslugjöf og öruggri leið að p=reject.",
+      "cta_scan": "Skanna lénið mitt",
+      "cta_saas": "Óska eftir snemmbúnum aðgangi",
+      "signals": {
+        "live": {
+          "label": "Opinber skanni er virkur",
+          "value": "engin innskráning",
+          "detail": "Fyrsta áhættumatið þarf aðeins opinberar DNS færslur."
+        },
+        "beta": {
+          "label": "Beta sjálfvirkni",
+          "value": "Snemmbúinn aðgangur",
+          "detail": "SPF samþjöppun og skýrslugjöf eru læst þar til prófunum lýkur."
+        },
+        "operator": {
+          "label": "Stýrð innleiðing",
+          "value": "Kastro",
+          "detail": "Kastro staðfestir DNS breytingar áður en þær eru gerðar virkar."
+        },
+        "target": {
+          "label": "DMARC markmið",
+          "value": "p=reject",
+          "detail": "Leiðin frá eftirliti yfir í höfnun án þess að trufla lögmætan póst."
+        }
+      }
+    },
+    "header": {
+      "logo_aria": "dmark.is heim",
+      "logo_sr": "Tölvupóstauðkenning",
+      "threat": "Ógnin",
+      "workflow": "Hvernig það virkar",
+      "features": "Eiginleikar",
+      "pricing": "Verðskrá",
+      "saas": "Snemmbúinn aðgangur",
+      "cta_scan": "Skanna lén",
+      "cta_scan_short": "Skanna"
+    },
+    "threat": {
+      "eyebrow": "02 — Ógnin",
+      "title": "Hver sem er getur sent tölvupóst í nafni lénsins þíns. Þar til þú segir móttakendum að leyfa það ekki.",
+      "text": "Tölvupóstur var byggður á trausti, ekki auðkenni. Án virkrar DMARC stefnu getur ókunnugur sett netfangið þitt í From-reitinn og náð til viðskiptavina þinna. Breyttu stillingunni til að sjá muninn."
+    },
+    "workflow": {
+      "eyebrow": "03 — Leiðin",
+      "title": "Frá opinberri skönnun til virkrar stefnu — án þess að trufla póstflæði.",
+      "text": "DMARK é byggt fyrir flókinn raunveruleika: gamlan hugbúnað, SPF takmörk, XML skýrslur sem enginn les, og hýsingaraðila þar sem ein mistök geta stöðvað póstflæði.",
+      "steps": {
+        "discover": {
+          "title": "Uppgötva",
+          "detail": "Finndu SPF, DMARC, DKIM, áframsendingar og óþekkta sendendur — án þess að spyrja nokkurn um skilríki.",
+          "tag": "Engin innskráning"
+        },
+        "stabilize": {
+          "title": "Stöðugleiki",
+          "detail": "Samþjappaðu SPF, fjarlægðu úreltar færslur og skjalfestu hverja DNS breytingu áður en hún tekur gildi.",
+          "tag": "Afturkallanlegt"
+        },
+        "enforce": {
+          "title": "Fullgilda",
+          "detail": "Færðu DMARC úr eftirliti yfir í sóttkví og loks í höfnun með skýrslubakað sjálfstraust.",
+          "tag": "p=reject"
+        }
+      },
+      "ladder": {
+        "title": "Stiginn að vörn",
+        "detail": "Flest lén komast aldrei af fyrsta þrepinu.",
+        "none": "p=none — aðeins fylgst með",
+        "quarantine": "p=quarantine — grunsamlegum pósti beint annað",
+        "reject": "p=reject — fölsuðum pósti hafnað"
+      }
+    },
+    "features": {
+      "eyebrow": "04 — Premium áskrift",
+      "title": "Farðu úr óvörðum DNS færslum yfir í virkt traust.",
+      "text": "Greidda varan er í snemmbúnum aðgangi: skanninn er opinn öllum í dag, á meðan SPF sjálfvirkni og skýrslugjöf bíða útgáfu.",
+      "list": {
+        "flattening": {
+          "title": "SPF samþjöppun í beta",
+          "detail": "Haltu Microsoft 365, Google Workspace, markaðstólum og staðbundnum sendendum undir 10-uppflettna takmarkinu."
+        },
+        "reporting": {
+          "title": "Skýr skýrslugjöf",
+          "detail": "Breyttu XML yfir í yfirlit sendenda, stöðu tölvupósts og næstu öruggu skref í átt að fullri vörn."
+        },
+        "rollout": {
+          "title": "Sérsniðin innleiðing",
+          "detail": "DNS breytingar sniðnar að íslenskum hýsingaraðilum og yfirfarnar með tilliti til rekstraráhættu."
+        }
+      }
+    },
+    "proof": {
+      "eyebrow": "05 — Rekstraröryggi",
+      "title": "Sérhver ráðlegging ætti að skýra sig sjálf.",
+      "text": "Vörusýnin þýðir DMARC skýrslur, SPF keðjur og DNS færslur yfir í næstu skref sem fyrirtæki geta örugglega samþykkt.",
+      "console": {
+        "badge": "dmark eftirlitsborð",
+        "stats": "p=none, 13 SPF uppflettingar, 4 óþekktir sendendur",
+        "items": [
+          { "title": "Samþjappa SPF", "detail": "Fjarlægja gamla HubSpot færslu", "state": "Tilbúið" },
+          { "title": "Innleiðing sóttkvíar", "detail": "Byrja með pct=25 í sjö daga", "state": "Í skoðun" },
+          { "title": "Óþekktur sendandi", "detail": "ASN 1299 stenst ekki samræmi", "state": "Loka" }
+        ]
+      }
+    },
+    "pricing": {
+      "eyebrow": "06 — Verðskrá",
+      "title": "Byrjaðu með sönnun. Borgaðu þegar úrbætur skipta máli.",
+      "text": "Skanninn verður áfram opinn öllum. Greiddu áskriftirnar eru fyrir teymi sem vilja sjálfvirkni, skýrslugjöf og hjálp við örugga innleiðingu.",
+      "tiers": {
+        "core": "Kjarni",
+        "scan": {
+          "name": "Skoðun",
+          "description": "Opinber greining fyrir teymi sem þurfa fljótt yfirlit yfir DMARC og SPF stöðu.",
+          "price": "0 ISK",
+          "points": ["Opinn lénaskanni", "Grunnstaða SPF og DMARC", "Einskiptis tæknileg greining"],
+          "cta": "Skanna núna"
+        },
+        "saas": {
+          "name": "Sjálfvirkni",
+          "description": "Snemmbúinn aðgangur á meðan sjálfvirkni og skýrslugjöf eru í þróun.",
+          "price": "4.900 ISK/mán",
+          "points": ["SPF samþjöppun í beta", "Skýr vegvísir skýrslugjafar", "Leiðsögn í átt að p=reject"],
+          "cta": "Óska eftir aðgangi"
+        },
+        "managed": {
+          "name": "Kastro Managed",
+          "description": "Heildarlausn fyrir stjórnendur sem vilja að DNS breytingar séu meðhöndlaðar á öruggan hátt.",
+          "price": "45.000 ISK uppsetning + MRR",
+          "points": ["Innleiðingaráætlun", "Samskipti við hýsingaraðila", "Staðfesting eftir breytingar"],
+          "cta": "Bóka uppsetningu"
+        }
+      }
+    },
+    "footer_cta": {
+      "eyebrow": "Tilbúin þegar þú ert tilbúin",
+      "title": "Sýndu öryggisgatið áður en árásarmaður gerir það.",
+      "cta_scan": "Skanna lén",
+      "cta_saas": "Óska eftir aðgangi"
+    },
+    "footer": {
+      "text": "DMARC/SPF greiningar, samþjöppun, skýrslugjöf og stýrð innleiðing fyrir íslensk fyrirtæki.",
+      "credit": "Kastro <kastro>vara</kastro>.",
+      "cta_scan": "Skanna lén",
+      "cta_saas": "Óska eftir aðgangi"
+    },
+    "scanner": {
+      "badge": "dmark · opinber skönnun",
+      "online": "í sambandi",
+      "label": "Athugaðu hvaða lén sem er — engin innskráning",
+      "shortcut": "ýttu á /",
+      "input_label": "Lén",
+      "placeholder": "fyrirtaeki.is",
+      "scan": "Skanna",
+      "scanning": "Skannar",
+      "try": "Prófa",
+      "steps": {
+        "dns": { "title": "DNS vald", "detail": "NS + TXT færslur" },
+        "spf": { "title": "SPF keðja", "detail": "include · a · mx · redirect" },
+        "dmarc": { "title": "DMARC stefna", "detail": "p · pct · rua · aspf" },
+        "spoof": { "title": "Hætta á fölsun", "detail": "samræmi + einkunn" }
+      }
+    },
+    "results": {
+      "badge": "Niðurstaða skönnunar",
+      "spoofable_default": "Þetta lén er enn hægt að misnota þar til SPF og DMARC vörn er komin í lag.",
+      "secure_default": "Þetta lén er með virka DMARC vörn. Haltu áfram að fylgjast með breytingum.",
+      "stats": {
+        "status": "Staða",
+        "risk": "Áhætta",
+        "risk_high": "alvarleg",
+        "risk_low": "lág",
+        "time": "Tími",
+        "checked_at": "Athugaðu {date}"
+      },
+      "findings": {
+        "spf": "SPF staða",
+        "dmarc": "DMARC staða"
+      },
+      "sequence": {
+        "label": "Ráðlögð röð"
+      },
+      "cta_unlock": "Virkja samfelldar úrbætur",
+      "cta_another": "Skanna annað"
+    },
+    "demo": {
+      "toggle_off": "Án DMARK",
+      "toggle_on": "Með DMARK · p=reject",
+      "inbox_label": "Innhólf — bjorn@northwind.is",
+      "inbox_count_on": "1 skilaboð · 1 hafnað",
+      "inbox_count_off": "2 skilaboð",
+      "caption_on": "p=reject — falsaða póstinn nær aldrei í innhólfið.",
+      "caption_off": "p=none — bæði skilaboðin skila sér. Það falsaða lítur eins út.",
+      "steps": [
+        { "title": "Árásarmaður sendir póst „frá“ léninu þínu", "detail": "Ekkert lykilorð þarf. SMTP leyfir hverjum sem er að skrifa netfangið þitt í From-reitinn." },
+        { "title": "Lénið þitt er með p=none eða enga stefnu", "detail": "Móttakendur hafa engar leiðbeiningar um að hafna óstaðfestum pósti, svo hann fer í gegn." },
+        { "title": "Hann lendir í innhólfinu og lítur út fyrir að vera ósvikinn", "detail": "Þitt lógó, þitt nafn, þinn viðskiptavinur — sannfærandi reikningur eða endurstilling lykilorðs." }
+      ],
+      "footer": {
+        "title": "DMARK lokar gatinu.",
+        "text": "Við komum þér örugglega í p=reject — án þess að trufla mikilvægan tölvupóst sem fyrirtækið treystir á."
+      },
+      "mail": {
+        "sender": "Northwind Bókhald",
+        "pass": "✓ DKIM STANDST",
+        "fail": "✕ SPF FEILL · ÓSAMRÆMI",
+        "via": " · sent í gegnum {ip}",
+        "rejected": "Hafnað hjá móttakanda",
+        "safe": {
+          "subject": "Yfirlit fyrir mars er tilbúið",
+          "body": "Hæ Björn — mánaðaryfirlitið þitt er í viðhengi..."
+        },
+        "exposed": {
+          "subject": "ÁRÍÐANDI: Uppfærðu greiðsluupplýsingar núna",
+          "body": "Aðgangurinn þinn er í bið. Staðfestu kortið þitt til að forðast lokun..."
+        }
+      }
+    },
+    "checkout": {
+      "badge_managed": "Stýrð uppsetning",
+      "badge_saas": "Áskriftarbeiðni",
+      "title": "Virkja dmark fyrir lénið þitt",
+      "close_aria": "Loka",
+      "success_title": "Beiðni móttekin.",
+      "success_text": "Teymið okkar er að undirbúa umhverfið þitt. Þú munt fá kennitölu-kröfu/reikning í tölvupósti innan skamms.",
+      "close": "Loka",
+      "fields": {
+        "name": "Nafn",
+        "domain": "Lén fyrirtækis",
+        "email": "Netfang tengiliðar"
+      },
+      "submit": "Senda beiðni"
+    }
+  },
+  "Metadata": {
+    "title": "dmark.is | Íslensk DMARC og SPF vörn",
+    "description": "Keyrðu opinberan DMARC og SPF skanna fyrir íslensk lén, og óskaðu efter snemmbúnum aðgangi að SPF sjálfvirkni og skýrslugjöf.",
+    "ogTitle": "dmark.is | Íslensk DMARC og SPF vörn",
+    "ogDescription": "Skannaðu DNS fyrir DMARC og SPF áhættu, skildu útsetningu fyrir svikum og skipuleggðu örugga leið í átt að p=reject."
+  },
+  "Dashboard": {
+    "statuses": {
+      "needs-work": "Þarfnast vinnu",
+      "monitoring": "Í vöktun",
+      "protected": "Varið"
+    },
+    "locked": {
+      "badge": "Lokuð beta",
+      "title": "Dmark stjórnborðið er læst til útgáfu.",
+      "description": "Opinberar skannanir eru opnar, en stjórnborðið er aðeins fyrir boðsgesti á meðan Dmark é hert fyrir fyrstu viðskiptavinina.",
+      "scan": "Keyra opinbera skönnun",
+      "access": "Óska eftir snemmbúnum aðgangi",
+      "internal": "Innri aðgangur er virkjaður á netþjóni."
+    },
+    "login": {
+      "badge": "Innskráning viðskiptavina",
+      "title": "Skráðu þig inn á Dmark stjórnborðið",
+      "description": "Stjórnborð viðskiptavina er varið með Authentik. Opinberar skannanir eru í boði án innskráningar.",
+      "button": "Skrá inn með Authentik",
+      "scoped": "Lotur stjórnborðs eru takmarkaðar við stjórnborðsleiðir. Opinberar skannanir eru í boði án lotu.",
+      "recovery": {
+        "expired": "Innskráningarlotan þín rann út. Vinsamlegast reyndu aftur.",
+        "forbidden": "Þessi aðgangur hefur ekki heimild fyrir Dmark stjórnborðinu.",
+        "unconfigured": "Innskráning á stjórnborð hefur ekki verið stillt ennþá.",
+        "clear": "Ef þetta heldur áfram skaltu hreinsa gögn síðunnar fyrir dmark.is og auth.kastro.is, og byrja aftur á /dashboard."
+      }
+    },
+    "errors": {
+      "reporter": "Ekki tókst að hlaða gögnum frá Reporter.",
+      "changePlan": "Ekki tókst að hlaða breytingaáætlun.",
+      "spfRoute": "Ekki tókst að hlaða SPF leið.",
+      "dnsGuidance": "Ekki tókst að hlaða leiðbeiningum fyrir DNS.",
+      "brandRisk": "Ekki tókst að hlaða gögnum um vörumerkjaáhættu.",
+      "settingsSave": "Ekki tókst að vista stillingar.",
+      "threshold": "Samræmisþröskuldur verður að vera á milli 1 og 100.",
+      "reporterExport": "Ekki tókst að flytja út Reporter CSV.",
+      "trend": "Gögnum um þróun ekki tiltæk."
+    },
+    "actions": {
+      "copySuccess": "{label} afritað.",
+      "copyError": "Ekki tókst að afrita {label}.",
+      "exportSuccess": "{filename} flutt út.",
+      "rechecking": "Endurskoðar {domain}...",
+      "recheckResult": "Endurskoðun á {domain} lauk með stöðunni {status}.",
+      "recheckError": "Endurskoðun á {domain} mistókst.",
+      "spfSyncing": "Set SPF samstillingu í biðröð fyrir {domain}...",
+      "spfSyncResult": "SPF samstilling lauk með stöðunni {status} fyrir {domain}.",
+      "spfSyncError": "Ekki tókst að setja SPF samstillingu í biðröð fyrir {domain}.",
+      "spfSaving": "Vistar SPF upprunastýringu fyrir {domain}...",
+      "spfSaveSuccess": "SPF upprunastýring vistuð fyrir {domain}; samstilling í biðröð.",
+      "spfSaveError": "Ekki tókst að vista SPF uppruna fyrir {domain}.",
+      "alertAction": "{title} {action}.",
+      "alertError": "Ekki tókst að framkvæma {action} á {title}.",
+      "settingsSaved": "Stillingar stjórnborðs vistaðar.",
+      "reporterUnknownOnly": "Sýnir aðeins óþekkta sendendur.",
+      "reporterAll": "Sýnir alla sendendur.",
+      "brandRiskInactive": "Sýnir einnig óvirka kandídata.",
+      "brandRiskActiveOnly": "Sýnir aðeins virk vörumerki."
+    },
+    "shell": {
+      "openNav": "Opna valmynd",
+      "closeNav": "Loka valmynd",
+      "commandCenter": "Dmark stjórnstöð",
+      "title": "Stjórnborð lénatryggðar",
+      "searchPlaceholder": "Leita að lénum, eigendum, næstu skrefum",
+      "searchPlaceholderMobile": "Leita að lénum",
+      "marketing": "Markaðssíða",
+      "domainToProtect": "Lén til að verja",
+      "sessionExpired": "Lotan þín er runnin út. Skráðu þig inn aftur til að halda áfram.",
+      "signInAgain": "Skrá inn aftur",
+      "addDomain": "Bæta við léni"
+    },
+    "sidebar": {
+      "overview": "Yfirlit",
+      "domains": "Lén",
+      "reporter": "Skýrslur",
+      "brandRisk": "Vörumerkjaáhætta",
+      "alerts": "Viðvaranir",
+      "settings": "Stillingar",
+      "trustOps": "Rekstraröryggi",
+      "trustOpsSubtitle": "Stjórnstöð fyrir traust",
+      "trustOpsDescription": "Farðu yfir stöðu léna, sendendur og DNS breytingar á einum stað."
+    },
+    "overview": {
+      "empty": {
+        "title": "Engin lén í vörslu",
+        "detail": "Bættu við lénum til að sjá lifandi stöðu og gögn.",
+        "action": "Bæta við fyrsta léninu"
+      },
+      "fleetHealth": "Staða safnsins",
+      "livePosture": "Lifandi staða léna",
+      "reporterDetail": "Skýrslur í smáatriðum",
+      "focusDomain": "Lén í brennidepli",
+      "commandCenter": {
+        "badge": "Rekstrarsýn",
+        "recheck": "Endurskoða DNS",
+        "checking": "Athugar...",
+        "reports": "Skýrslur",
+        "brandRisk": "Vörumerkjaáhætta",
+        "trustScore": "Traustseinkunn",
+        "trustScoreDetail": "Vegin DNS staða",
+        "alignment": "Samræmi",
+        "alignmentDetail": "Síðasta skýrslutímabil",
+        "unknownSenders": "Óþekktir sendendur",
+        "unknownSendersDetail": "Vantar flokkun",
+        "scoreTrend": "Þróun einkunnar",
+        "alignmentTrend": "Þróun samræmis",
+        "loadingTrend": "Hleður þróun...",
+        "trendUnavailable": "Þróunargögn ekki tiltæk.",
+        "noHistory": "Ekki nógu mikil saga fyrir þróun ennþá.",
+        "noVolume": "Ekkert skýrslumagn á þessu tímabili."
+      },
+      "enforcementLadder": {
+        "title": "Stiginn að vörn"
+      },
+      "remediationQueue": {
+        "title": "Úrbætur í bið",
+        "heading": "Ráðlögð næstu skref",
+        "noRecommendations": "Engar ráðleggingar um úrbætur fyrir núverandi lén.",
+        "effort": "Fyrirhöfn"
+      },
+      "auditTrail": {
+        "title": "Aðgerðaskrá",
+        "heading": "Nýlegar aðgerðir"
+      }
+    },
+    "domains": {
+      "title": "Lén í vörslu",
+      "subtitle": "Eftirlit og úrbætur á færslum",
+      "export": "Flytja út lén",
+      "addFirst": "Bæta við léni",
+      "noResults": "Engin lén fundust fyrir þessa leit.",
+      "empty": {
+        "title": "Engin lén í vörslu",
+        "detail": "Engin lén fundust eða listinn er tómur."
+      },
+      "stats": {
+        "score": "Einkunn",
+        "dmarc": "DMARC",
+        "spf": "SPF",
+        "dkim": "DKIM",
+        "unknown": "Óþekkt"
+      },
+      "guidance": {
+        "title": "Leiðbeiningar fyrir DNS",
+        "titleWithDomain": "DNS skref fyrir {domain}",
+        "fallbackTitle": "DNS skref",
+        "description": "DNS hýsingaraðili er greindur sjálfkrafa og leiðbeiningar sýndar í samræmi við það.",
+        "nameservers": "Nafnaþjónar",
+        "copy": "Afrita DNS færslu",
+        "unavailable": "Leiðbeiningar fyrir DNS ekki tiltækar.",
+        "noGuidance": "Engar DNS leiðbeiningar fundust fyrir þetta lén.",
+        "provider": "Hýsingaraðili",
+        "providerUnknown": "Hýsingaraðili óþekktur",
+        "detection": "Greining",
+        "confidence": "Vissa"
+      },
+      "route": {
+        "title": "SPF leið",
+        "description": "Samstilling setur vinnu í biðröð í bakenda; lyklar eru geymdir á öruggan hátt.",
+        "sync": "Samstilla SPF leið",
+        "syncing": "Set í biðröð...",
+        "unavailable": "Staða SPF leiðar ekki tiltæk.",
+        "noRoute": "Engin SPF leið hefur verið stillt fyrir þetta lén.",
+        "stats": {
+          "target": "Markmið leiðar",
+          "lastSync": "Síðasta samstilling",
+          "sources": "Upprunar",
+          "evidence": "Sannanir"
+        },
+        "cname": {
+          "title": "CNAME tenging",
+          "copy": "Afrita CNAME"
+        },
+        "preview": {
+          "title": "Forsýn á SPF",
+          "lastPublished": "Síðast útgefið: {value}"
+        },
+        "management": {
+          "title": "Stýring SPF uppruna",
+          "description": "Stýrðu include, ip4 og ip6 upprunum.",
+          "add": "Bæta við uppruna",
+          "save": "Vista uppruna",
+          "saving": "Vistar uppruna...",
+          "remove": "Fjarlægja",
+          "fields": {
+            "kind": "Tegund",
+            "value": "Gildi",
+            "label": "Heiti",
+            "valuePlaceholder": "_spf.provider.example eða 203.0.113.10",
+            "labelPlaceholder": "Heiti þjónustu",
+            "include": "include",
+            "ip4": "ip4",
+            "ip6": "ip6"
+          }
+        },
+        "evidence": {
+          "title": "Samantekt sannana",
+          "empty": "Engar SPF sannanir fundust ennþá."
+        },
+        "history": {
+          "title": "Breytingasaga",
+          "description": "Nýleg virkni við útgáfu SPF leiðar.",
+          "loading": "Hleður sögu...",
+          "unavailable": "Breytingasaga ekki tiltæk í augnablikinu.",
+          "empty": "Engin virkni skráð ennþá."
+        }
+      },
+      "changePlan": {
+        "title": "Breytingaáætlun",
+        "titleWithDomain": "DNS færslur fyrir {domain}",
+        "fallbackTitle": "DNS færslur",
+        "description": "Farðu yfir áætlaðar DNS breytingar, áhættumat og leiðbeiningar um afturköllun áður en þær eru gefnar út.",
+        "unavailable": "Breytingaáætlun ekki tiltæk.",
+        "noChanges": "Engar DNS breytingar eru á áætlun fyrir þetta lén.",
+        "ready": "Tilbúið fyrir næsta skref",
+        "notReady": "Ekki tilbúið fyrir næsta skref ennþá",
+        "table": {
+          "change": "Breyting",
+          "record": "Færsla",
+          "evidence": "Sönnun",
+          "risk": "Áhætta",
+          "rollback": "Afturköllun",
+          "copy": "Afrita"
+        },
+        "stats": {
+          "journeyState": "Staða ferlis",
+          "publishedPolicy": "Útgefin stefna",
+          "nextAction": "Næsta skref"
+        }
+      }
+    },
+    "reporter": {
+      "title": "Skýrslugjöf sendenda",
+      "subtitle": "Greindu tölvupóstflæði og samræmi í rauntíma.",
+      "filterUnknown": "Aðeins óþekktir",
+      "filterAll": "Sýna alla",
+      "export": "Flytja út CSV",
+      "summary": {
+        "title": "Samantekt tímabils",
+        "total": "Samtals póstur",
+        "compliant": "Samræmdur póstur",
+        "threat": "Ógnir/Villa"
+      },
+      "table": {
+        "sender": "Sendandi / Heimild",
+        "senderInventory": "Yfirlit sendenda",
+        "topSources": "Helstu upprunar eftir magni",
+        "volume": "Magn",
+        "status": "Staða",
+        "spf": "SPF",
+        "dkim": "DKIM",
+        "action": "Aðgerð",
+        "noSenders": "Engir sendendur fundust.",
+        "expected": "Væntanlegur",
+        "unknown": "Óþekktur",
+        "trend": "Þróun"
+      }
+    },
+    "brandRisk": {
+      "title": "Vörumerkjaáhætta",
+      "subtitle": "Fylgstu með líkum lénum og fölsunartilraunum.",
+      "activeOnly": "Sýna virk",
+      "all": "Sýna öll",
+      "score": "Áhættueinkunn",
+      "status": "Staða",
+      "lastActive": "Síðast virkt",
+      "active": "Virkt",
+      "inactive": "Óvirkt",
+      "noThreats": "Engin vörumerkjaáhætta fannst.",
+      "emailAuthFindings": "Niðurstöður tölvupóstauðkenningar",
+      "authPosture": "Staða auðkenningar",
+      "finding": "niðurstaða",
+      "findings": "niðurstöður",
+      "noFindings": "Engar niðurstöður fundust fyrir þetta lén.",
+      "lookalikes": "Lík lén",
+      "lookalikeEvidence": "Sannanir fyrir líkum lénum",
+      "activeEvidence": "virkt",
+      "inactiveCandidate": "Óvirkur kandídat",
+      "noEvidence": "Engar sannanir fundust fyrir þetta lén.",
+      "table": {
+        "domain": "Lén",
+        "kind": "Tegund",
+        "evidence": "DNS sannanir",
+        "severity": "Alvarleiki",
+        "action": "Ráðlögð aðgerð"
+      }
+    },
+    "alerts": {
+      "title": "Viðvaranir og rekstur",
+      "subtitle": "Krefst athygli rekstraraðila til að tryggja póstflæði.",
+      "actionRequired": "Aðgerð krafist",
+      "raised": "Hefið {value}",
+      "openDomains": "Opna lénayfirlit",
+      "resolve": "Staðfesta",
+      "mute": "Fresta",
+      "noAlerts": "Engar virkar viðvaranir.",
+      "empty": {
+        "title": "Engar virkar viðvaranir",
+        "detail": "Allt lítur vel út. Engin vandamál fundust með lén eða SPF.",
+        "action": "Skoða lén í vörslu"
+      }
+    },
+    "settings": {
+      "title": "Stillingar",
+      "subtitle": "Stýring á sjálfvirkni og tilkynningum.",
+      "rollout": {
+        "title": "DMARC innleiðing",
+        "description": "Veldu hversu mikið traust þarf að vera til staðar áður en mælt er með p=reject.",
+        "threshold": "Samræmisþröskuldur fyrir p=reject",
+        "thresholdDetail": "Vinnslustig áður en mælt er með fullri vörn.",
+        "autoRemediate": {
+          "label": "Sjálfvirkar úrbætur",
+          "detail": "DMARK mun sjálfkrafa samstilla DNS breytingar þegar þær eru tilbúnar."
+        },
+        "weeklySummary": {
+          "label": "Vikulegar skýrslur",
+          "detail": "Fáðu vikulega samantekt á samræmi og áhættum."
+        },
+        "pauseOnUnknownSpike": "Gera hlé á sjálfvirkni ef óþekktum sendendum fjölgar mikið",
+        "monthlyReports": "Útbúa mánaðarlegt yfirlit sjálfkrafa",
+        "save": "Vista breytingar",
+        "saving": "Vistar..."
+      },
+      "notifications": {
+        "title": "Tilkynningaleiðir",
+        "channels": {
+          "email": "Tölvupóstur",
+          "slack": "Slack",
+          "teams": "Teams"
+        }
+      },
+      "plan": {
+        "title": "Áskrift",
+        "usage": "Notkun",
+        "domains": "Lén",
+        "lookups": "SPF uppflettingar",
+        "lookupsDetail": "Samþjappaðar færslur",
+        "of": "af",
+        "current": "Núverandi áskrift",
+        "unavailable": "Upplýsingar um áskrift ekki tiltækar í augnablikinu.",
+        "loading": "Hleður áskriftarupplýsingum...",
+        "limitNote": "Lénatakmarki áskriftar hefur verið náð; uppfæra þarf áskrift til að bæta við fleiri lénum.",
+        "stats": {
+          "cadence": "Tíðni athugana",
+          "cadenceDetail": "Áætlaðar DNS athuganir",
+          "retention": "Geymsla skýrslna",
+          "retentionDetail": "Saga skýrslna",
+          "access": "Aðgangur að Reporter",
+          "accessDetail": "DMARC greiningarskýrslur",
+          "included": "Innifalið",
+          "notIncluded": "Ekki innifalið"
+        }
+      }
+    }
+  },
+  "Admin": {
+    "locked": {
+      "eyebrow": "Aðgangur eiganda",
+      "title": "Stjórnborð eiganda er læst.",
+      "description": "Opinberar skannanir og stjórnborð viðskiptavina eru utan þessa svæðis.",
+      "identity": "Auðkennisveita eiganda",
+      "sso": "Notaðu Authentik SSO fyrir aðalstjórnborðið.",
+      "button": "Skrá inn með Authentik",
+      "outside": "Opinberar skannanir og stjórnborð viðskiptavina eru utan þessa svæðis sem er aðeins fyrir eigendur."
+    },
+    "shell": {
+      "failClosed": "Örugg mörk eiganda",
+      "failClosedDescription": "Þessi síða é aðeins sýnd eftir að staðfesting eiganda hefur farið fram á netþjóni. Vafrinn fær aldrei aðgang að lyklum eða lotum eiganda.",
+      "operatorNote": "Athugasemd til rekstraraðila",
+      "operatorNoteDescription": "Köll í bakenda verða að vera á bak við /api/admin umboðið. Haltu stjórnborði viðskiptavina á /dashboard aðskildu."
+    }
+  },
+  "Errors": {
+    "somethingBroke": "Eitthvað fór úrskeiðis",
+    "unexpectedError": "Óvænt villa kom upp á þessari síðu.",
+    "errorDetail": "Villan hefur ekki áhrif á lénin þín eða DNS færslur. Reyndu aftur, eða farðu aftur í skannann.",
+    "tryAgain": "Reyna aftur",
+    "backToScanner": "Aftur í skannann",
+    "notFound": {
+      "title": "Síða fannst ekki",
+      "heading": "Þessi síða er ekki til.",
+      "detail": "Netfangið gæti hafa breyst eða hlekkurinn verið rangt sleginn inn. Opinberi skanninn er alltaf í boði á forsíðunni."
+    }
+  }
+}

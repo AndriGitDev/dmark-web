@@ -10,8 +10,9 @@ import {
   ShieldAlert,
   Sparkles,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { DashboardViewModel, ProtectedDomain, TrendsViewModel } from "@/lib/dashboard";
-import { formatStatus, metricTone, statusTone } from "./tones";
+import { metricTone, statusTone, useFormatStatus } from "./tones";
 import { CompactStat, EmptyState, PanelNotice, dashboardIcon } from "./ui";
 import { Sparkline, sparklineTone } from "./sparkline";
 import type { LoadState } from "./types";
@@ -40,13 +41,16 @@ export function OverviewTab({
   onRecheckDomain: (domain: ProtectedDomain) => void;
   recheckingDomainID: string | null;
 }) {
+  const t = useTranslations("Dashboard.overview");
+  const formatStatus = useFormatStatus();
+
   if (!selectedDomain) {
     return (
       <EmptyState
         icon={Globe2}
-        title="No protected domains"
-        detail="Add protected domains, then refresh this dashboard to load live posture and Reporter data."
-        actionLabel="Add your first domain"
+        title={t("empty.title")}
+        detail={t("empty.detail")}
+        actionLabel={t("empty.action")}
         onAction={onAddDomain}
       />
     );
@@ -101,16 +105,16 @@ export function OverviewTab({
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
             <div>
               <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
-                Fleet health
+                {t("fleetHealth")}
               </p>
-              <h2 className="mt-2 text-2xl font-bold tracking-tight text-ink">Live domain posture</h2>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight text-ink">{t("livePosture")}</h2>
             </div>
             <button
               type="button"
               onClick={() => onOpenTab("reporter")}
               className="inline-flex min-h-10 items-center justify-center gap-2 rounded border border-line-strong px-4 text-sm font-semibold text-ink-700 transition hover:border-brand hover:text-brand"
             >
-              Reporter detail
+              {t("reporterDetail")}
               <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
@@ -140,7 +144,7 @@ export function OverviewTab({
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
-                Focus domain
+                {t("focusDomain")}
               </p>
               <h2 className="mt-2 text-2xl font-bold tracking-tight text-ink">{selectedDomain.domain}</h2>
             </div>
@@ -185,6 +189,8 @@ function CommandCenter({
   onRecheckDomain: (domain: ProtectedDomain) => void;
   recheckingDomainID: string | null;
 }) {
+  const t = useTranslations("Dashboard.overview.commandCenter");
+  const formatStatus = useFormatStatus();
   const isRechecking = recheckingDomainID === selectedDomain.id;
   const scorePoints = (trends?.scorePoints || []).map((point) => ({ value: point.score, label: point.date }));
   const alignmentPoints = (trends?.alignmentPoints || []).map((point) => ({ value: point.alignedPercentage, label: point.date }));
@@ -196,7 +202,7 @@ function CommandCenter({
           <div className="flex flex-wrap items-center gap-3">
             <span className="inline-flex items-center gap-2 rounded border border-brand/30 bg-brand-soft px-3 py-1.5 font-mono text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-brand-ink">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-              Operator view
+              {t("badge")}
             </span>
             <span className={`rounded border px-3 py-1.5 text-xs font-semibold ${statusTone(selectedDomain.status)}`}>
               {formatStatus(selectedDomain.status)}
@@ -215,7 +221,7 @@ function CommandCenter({
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-brand disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <RefreshCw className={`h-4 w-4 ${isRechecking ? "animate-spin" : ""}`} aria-hidden="true" />
-                {isRechecking ? "Checking..." : "Recheck DNS"}
+                {isRechecking ? t("checking") : t("recheck")}
               </button>
               <button
                 type="button"
@@ -223,7 +229,7 @@ function CommandCenter({
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded border border-line-strong px-4 text-sm font-semibold text-ink-700 transition hover:border-brand hover:text-brand"
               >
                 <BarChart3 className="h-4 w-4" aria-hidden="true" />
-                Reports
+                {t("reports")}
               </button>
               <button
                 type="button"
@@ -231,21 +237,21 @@ function CommandCenter({
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded border border-line-strong px-4 text-sm font-semibold text-ink-700 transition hover:border-brand hover:text-brand"
               >
                 <ShieldAlert className="h-4 w-4" aria-hidden="true" />
-                Brand Risk
+                {t("brandRisk")}
               </button>
             </div>
           </div>
           <div className="mt-6 grid gap-3 md:grid-cols-3">
-            <CompactStat label="Trust score" value={`${selectedDomain.score}`} detail="Weighted DNS posture" />
-            <CompactStat label="Alignment" value={`${selectedDomain.alignmentRate}%`} detail="Last reporting window" />
-            <CompactStat label="Unknown senders" value={`${selectedDomain.unknownSenders}`} detail="Needs classification" />
+            <CompactStat label={t("trustScore")} value={`${selectedDomain.score}`} detail={t("trustScoreDetail")} />
+            <CompactStat label={t("alignment")} value={`${selectedDomain.alignmentRate}%`} detail={t("alignmentDetail")} />
+            <CompactStat label={t("unknownSenders")} value={`${selectedDomain.unknownSenders}`} detail={t("unknownSendersDetail")} />
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             <div className="rounded border border-line bg-paper px-4 py-3">
               <div className="flex items-baseline justify-between gap-3">
                 <p className="font-mono text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ink-400">
-                  Score trend
+                  {t("scoreTrend")}
                 </p>
                 <p className="font-mono text-[0.65rem] text-ink-400">{trends ? `${trends.days}d` : ""}</p>
               </div>
@@ -258,14 +264,14 @@ function CommandCenter({
                 />
               ) : (
                 <p className="mt-2 text-xs leading-5 text-ink-400">
-                  {trendsState === "loading" ? "Loading trend..." : trendsState === "error" ? "Trend data unavailable." : "Not enough check history for a trend yet."}
+                  {trendsState === "loading" ? t("loadingTrend") : trendsState === "error" ? t("trendUnavailable") : t("noHistory")}
                 </p>
               )}
             </div>
             <div className="rounded border border-line bg-paper px-4 py-3">
               <div className="flex items-baseline justify-between gap-3">
                 <p className="font-mono text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-ink-400">
-                  Alignment trend
+                  {t("alignmentTrend")}
                 </p>
                 <p className="font-mono text-[0.65rem] text-ink-400">
                   {alignmentPoints.length ? `${alignmentPoints[alignmentPoints.length - 1].value}%` : ""}
@@ -280,7 +286,7 @@ function CommandCenter({
                 />
               ) : (
                 <p className="mt-2 text-xs leading-5 text-ink-400">
-                  {trendsState === "loading" ? "Loading trend..." : "No aggregate-report volume in this window yet."}
+                  {trendsState === "loading" ? t("loadingTrend") : t("noVolume")}
                 </p>
               )}
             </div>
@@ -289,7 +295,7 @@ function CommandCenter({
 
         <div className="border-t border-line bg-paper p-5 lg:border-l lg:border-t-0">
           <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
-            Enforcement ladder
+            {useTranslations("Dashboard.overview.enforcementLadder")("title")}
           </p>
           <div className="mt-5 grid gap-3">
             {["none", "quarantine", "reject"].map((policy, index) => {
@@ -322,13 +328,14 @@ function CommandCenter({
 }
 
 function RecommendationsPanel({ dashboard }: { dashboard: DashboardViewModel }) {
+  const t = useTranslations("Dashboard.overview.remediationQueue");
   return (
     <article className="rounded border border-line bg-card p-5 shadow-sm">
       <div>
         <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
-          Remediation queue
+          {t("title")}
         </p>
-        <h2 className="mt-2 text-xl font-semibold text-ink">Recommended next actions</h2>
+        <h2 className="mt-2 text-xl font-semibold text-ink">{t("heading")}</h2>
       </div>
       {dashboard.recommendations.length ? (
         <div className="mt-5 grid gap-3">
@@ -344,25 +351,26 @@ function RecommendationsPanel({ dashboard }: { dashboard: DashboardViewModel }) 
                 </span>
               </div>
               <p className="mt-3 text-sm leading-6 text-ink-500">{item.impact}</p>
-              <p className="mt-3 text-xs font-semibold text-ink-400">Effort: {item.effort}</p>
+              <p className="mt-3 text-xs font-semibold text-ink-400">{t("effort")}: {item.effort}</p>
             </div>
           ))}
         </div>
       ) : (
-        <PanelNotice text="No remediation recommendations are available for the current domain set." />
+        <PanelNotice text={t("noRecommendations")} />
       )}
     </article>
   );
 }
 
 function ActivityPanel({ dashboard }: { dashboard: DashboardViewModel }) {
+  const t = useTranslations("Dashboard.overview.auditTrail");
   return (
     <article className="rounded border border-line bg-card p-5 shadow-sm">
       <div>
         <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-ink-400">
-          Audit trail
+          {t("title")}
         </p>
-        <h2 className="mt-2 text-xl font-semibold text-ink">Recent activity</h2>
+        <h2 className="mt-2 text-xl font-semibold text-ink">{t("heading")}</h2>
       </div>
       <div className="mt-5 grid gap-4">
         {dashboard.activityEvents.map((event) => {

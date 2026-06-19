@@ -1,10 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { motion } from "framer-motion";
 import { Menu, Plus, RefreshCw, Search, X } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
 import {
   acknowledgeDashboardAlert,
   createDashboardDomain,
@@ -71,6 +72,9 @@ export function DmarkDashboard({
   initialSettings,
   initialNotice = "Dashboard ready.",
 }: DmarkDashboardProps) {
+  const t = useTranslations("Dashboard");
+  const tc = useTranslations("Common");
+
   const [activeTab, setActiveTab] = useState<TabID>("overview");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -149,7 +153,7 @@ export function DmarkDashboard({
         noteDashboardError(error);
         setReporter(null);
         setReporterState("error");
-        setReporterError(errorMessage(error, "Reporter data could not be loaded."));
+        setReporterError(errorMessage(error, t("errors.reporter")));
       }
     }
 
@@ -158,7 +162,7 @@ export function DmarkDashboard({
     return () => {
       ignore = true;
     };
-  }, [activeTab, selectedDomain, reporterFilter, reloadNonce]);
+  }, [activeTab, selectedDomain, reporterFilter, reloadNonce, t]);
 
   useEffect(() => {
     if (!selectedDomain || (activeTab !== "domains" && activeTab !== "overview")) return;
@@ -179,7 +183,7 @@ export function DmarkDashboard({
         noteDashboardError(error);
         setChangePlan(null);
         setChangePlanState("error");
-        setChangePlanError(errorMessage(error, "Change plan could not be loaded."));
+        setChangePlanError(errorMessage(error, t("errors.changePlan")));
       }
     }
 
@@ -188,7 +192,7 @@ export function DmarkDashboard({
     return () => {
       ignore = true;
     };
-  }, [activeTab, selectedDomain, reloadNonce]);
+  }, [activeTab, selectedDomain, reloadNonce, t]);
 
   useEffect(() => {
     if (!selectedDomain || (activeTab !== "domains" && activeTab !== "overview")) return;
@@ -209,7 +213,7 @@ export function DmarkDashboard({
         noteDashboardError(error);
         setSpfRoute(null);
         setSpfRouteState("error");
-        setSpfRouteError(errorMessage(error, "SPF route data could not be loaded."));
+        setSpfRouteError(errorMessage(error, t("errors.spfRoute")));
       }
     }
 
@@ -218,7 +222,7 @@ export function DmarkDashboard({
     return () => {
       ignore = true;
     };
-  }, [activeTab, selectedDomain, reloadNonce]);
+  }, [activeTab, selectedDomain, reloadNonce, t]);
 
   useEffect(() => {
     if (!selectedDomain || (activeTab !== "domains" && activeTab !== "overview")) return;
@@ -239,7 +243,7 @@ export function DmarkDashboard({
         noteDashboardError(error);
         setDNSGuidance(null);
         setDNSGuidanceState("error");
-        setDNSGuidanceError(errorMessage(error, "DNS provider guidance could not be loaded."));
+        setDNSGuidanceError(errorMessage(error, t("errors.dnsGuidance")));
       }
     }
 
@@ -248,7 +252,7 @@ export function DmarkDashboard({
     return () => {
       ignore = true;
     };
-  }, [activeTab, selectedDomain, reloadNonce]);
+  }, [activeTab, selectedDomain, reloadNonce, t]);
 
   useEffect(() => {
     if (!selectedDomain || activeTab !== "brand-risk") return;
@@ -269,7 +273,7 @@ export function DmarkDashboard({
         noteDashboardError(error);
         setBrandRisk(null);
         setBrandRiskState("error");
-        setBrandRiskError(errorMessage(error, "Brand Risk data could not be loaded."));
+        setBrandRiskError(errorMessage(error, t("errors.brandRisk")));
       }
     }
 
@@ -278,7 +282,7 @@ export function DmarkDashboard({
     return () => {
       ignore = true;
     };
-  }, [activeTab, selectedDomain, includeInactiveBrandRisk, reloadNonce]);
+  }, [activeTab, selectedDomain, includeInactiveBrandRisk, reloadNonce, t]);
 
   useEffect(() => {
     if (!selectedDomain || activeTab !== "overview") return;
@@ -386,7 +390,7 @@ export function DmarkDashboard({
     event.preventDefault();
     const domain = newDomain.trim();
     if (!domain) {
-      setAddDomainError("Enter a domain first.");
+      setAddDomainError(t("forms.addDomain.errorEmpty"));
       return;
     }
 
@@ -401,11 +405,11 @@ export function DmarkDashboard({
       setSelectedDomainID(created.id);
       setNewDomain("");
       setActiveTab("domains");
-      announce(`${created.domain} was added. Run a recheck to populate live posture.`);
+      announce(t("forms.addDomain.success", { domain: created.domain }));
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_add_domain" });
     } catch (error) {
       noteDashboardError(error);
-      const message = errorMessage(error, "Domain could not be added.");
+      const message = errorMessage(error, t("forms.addDomain.errorFailed"));
       setAddDomainError(message);
       announce(message);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_add_domain" });
@@ -422,9 +426,9 @@ export function DmarkDashboard({
   async function copyText(value: string, label: string) {
     try {
       await navigator.clipboard.writeText(value);
-      announce(`${label} copied.`);
+      announce(t("actions.copySuccess", { label }));
     } catch {
-      announce(`Could not copy ${label.toLowerCase()}.`);
+      announce(t("actions.copyError", { label: label.toLowerCase() }));
     }
   }
 
@@ -435,7 +439,7 @@ export function DmarkDashboard({
     link.download = filename;
     link.click();
     URL.revokeObjectURL(url);
-    announce(`${filename} exported.`);
+    announce(t("actions.exportSuccess", { filename }));
   }
 
   function exportDomains(rows: ProtectedDomain[]) {
@@ -462,18 +466,18 @@ export function DmarkDashboard({
   async function recheckDomain(domain: ProtectedDomain) {
     trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("start"), source: "dashboard_domain_recheck" });
     setRecheckingDomainID(domain.id);
-    announce(`Rechecking ${domain.domain}...`);
+    announce(t("actions.rechecking", { domain: domain.domain }));
 
     try {
       const result = await recheckDashboardDomain(domain.id);
       const refreshed = await getDashboardData().catch(() => null);
       if (refreshed) setDashboard(refreshed);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_domain_recheck" });
-      announce(`${domain.domain} recheck ${result.status}.`);
+      announce(t("actions.recheckResult", { domain: domain.domain, status: result.status }));
     } catch (error) {
       noteDashboardError(error);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_domain_recheck" });
-      announce(errorMessage(error, `${domain.domain} recheck failed.`));
+      announce(errorMessage(error, t("actions.recheckError", { domain: domain.domain })));
     } finally {
       setRecheckingDomainID(null);
     }
@@ -485,7 +489,7 @@ export function DmarkDashboard({
     trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("start"), source: "dashboard_spf_route" });
     setSyncingSPFRoute(true);
     setSpfRouteError("");
-    announce(`Queueing SPF route sync for ${selectedDomain.domain}...`);
+    announce(t("actions.spfSyncing", { domain: selectedDomain.domain }));
 
     try {
       const result = await syncSPFRoute(selectedDomain.id);
@@ -493,11 +497,11 @@ export function DmarkDashboard({
       if (refreshed) setSpfRoute(refreshed);
       setSpfRouteState(refreshed ? "ready" : spfRouteState);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_spf_route" });
-      announce(`SPF route sync ${result.status} for ${selectedDomain.domain}.`);
+      announce(t("actions.spfSyncResult", { domain: selectedDomain.domain, status: result.status }));
     } catch (error) {
       noteDashboardError(error);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_spf_route" });
-      const message = errorMessage(error, `${selectedDomain.domain} SPF route sync could not be queued.`);
+      const message = errorMessage(error, t("actions.spfSyncError", { domain: selectedDomain.domain }));
       setSpfRouteError(message);
       announce(message);
     } finally {
@@ -511,18 +515,18 @@ export function DmarkDashboard({
     trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("start"), source: "dashboard_spf_route" });
     setSavingSPFRouteSources(true);
     setSpfRouteError("");
-    announce(`Saving SPF source management for ${selectedDomain.domain}...`);
+    announce(t("actions.spfSaving", { domain: selectedDomain.domain }));
 
     try {
       const refreshed = await saveSPFRouteSources(selectedDomain.id, sources);
       setSpfRoute(refreshed);
       setSpfRouteState("ready");
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_spf_route" });
-      announce(`SPF source management saved for ${selectedDomain.domain}; sync queued by backend.`);
+      announce(t("actions.spfSaveSuccess", { domain: selectedDomain.domain }));
     } catch (error) {
       noteDashboardError(error);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_spf_route" });
-      const message = errorMessage(error, `${selectedDomain.domain} SPF sources could not be saved.`);
+      const message = errorMessage(error, t("actions.spfSaveError", { domain: selectedDomain.domain }));
       setSpfRouteError(message);
       announce(message);
     } finally {
@@ -542,11 +546,11 @@ export function DmarkDashboard({
       }
       setActiveAlerts((current) => current.filter((item) => item.id !== alertID));
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_alerts" });
-      announce(`${alert?.title || "Alert"} ${action}.`);
+      announce(t("actions.alertAction", { title: alert?.title || "Alert", action }));
     } catch (error) {
       noteDashboardError(error);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_alerts" });
-      announce(errorMessage(error, `${alert?.title || "Alert"} could not be ${action}.`));
+      announce(errorMessage(error, t("actions.alertError", { title: alert?.title || "Alert", action })));
     }
   }
 
@@ -562,12 +566,12 @@ export function DmarkDashboard({
       const saved = await saveDashboardSettings(next);
       setSettings(saved);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_settings" });
-      announce("Automation setting saved.");
+      announce(t("actions.settingsSaved"));
     } catch (error) {
       noteDashboardError(error);
       setSettings(previous);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_settings" });
-      const message = errorMessage(error, "Settings could not be saved.");
+      const message = errorMessage(error, t("errors.settingsSave"));
       setSettingsError(message);
       announce(message);
     } finally {
@@ -578,8 +582,8 @@ export function DmarkDashboard({
   async function saveSettingsPatch(next: SettingsState) {
     const threshold = Math.round(next.alignmentThreshold);
     if (!Number.isFinite(threshold) || threshold < 1 || threshold > 100) {
-      setSettingsError("Alignment threshold must be between 1 and 100.");
-      announce("Alignment threshold must be between 1 and 100.");
+      setSettingsError(t("errors.threshold"));
+      announce(t("errors.threshold"));
       return;
     }
 
@@ -594,10 +598,10 @@ export function DmarkDashboard({
       const saved = await saveDashboardSettings(normalized);
       setSettings(saved);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("success"), source: "dashboard_settings" });
-      announce("Dashboard settings saved.");
+      announce(t("actions.settingsSaved"));
     } catch (error) {
       noteDashboardError(error);
-      const message = errorMessage(error, "Settings could not be saved.");
+      const message = errorMessage(error, t("errors.settingsSave"));
       setSettings(previous);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_settings" });
       setSettingsError(message);
@@ -630,7 +634,7 @@ export function DmarkDashboard({
     } catch (error) {
       noteDashboardError(error);
       trackPrivacyEvent("dashboard_interaction", { status: privacyStatusForOutcome("error"), source: "dashboard_export" });
-      announce(errorMessage(error, "Reporter CSV could not be exported."));
+      announce(errorMessage(error, t("errors.reporterExport")));
     }
   }
 
@@ -649,15 +653,15 @@ export function DmarkDashboard({
                 type="button"
                 className="grid h-10 w-10 place-items-center rounded border border-line text-ink-500 lg:hidden"
                 onClick={() => setMobileNavOpen(true)}
-                aria-label="Open navigation"
+                aria-label={t("shell.openNav")}
               >
                 <Menu className="h-5 w-5" aria-hidden="true" />
               </button>
               <div>
                 <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-brand-ink">
-                  Dmark command center
+                  {t("shell.commandCenter")}
                 </p>
-                <h1 className="text-lg font-semibold tracking-tight sm:text-xl">Domain trust dashboard</h1>
+                <h1 className="text-lg font-semibold tracking-tight sm:text-xl">{t("shell.title")}</h1>
               </div>
             </div>
 
@@ -666,7 +670,7 @@ export function DmarkDashboard({
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search domains, owners, next actions"
+                placeholder={t("shell.searchPlaceholder")}
                 className="min-h-10 w-full bg-transparent text-sm outline-none placeholder:text-ink-300"
               />
             </label>
@@ -676,11 +680,11 @@ export function DmarkDashboard({
                 href="/"
                 className="hidden min-h-10 items-center justify-center rounded border border-line-strong px-4 text-sm font-semibold text-ink-700 transition hover:border-brand hover:text-brand sm:inline-flex"
               >
-                Marketing
+                {t("shell.marketing")}
               </Link>
-              <form className="hidden items-center gap-2 xl:flex" onSubmit={addDomain} aria-label="Add protected domain">
+              <form className="hidden items-center gap-2 xl:flex" onSubmit={addDomain} aria-label={t("shell.addDomain")}>
                 <label className="sr-only" htmlFor="new-domain">
-                  Domain to protect
+                  {t("shell.domainToProtect")}
                 </label>
                 <input
                   id="new-domain"
@@ -696,7 +700,7 @@ export function DmarkDashboard({
                   className="inline-flex min-h-10 items-center justify-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-brand disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {addingDomain ? <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
-                  {addingDomain ? "Adding" : "Add domain"}
+                  {addingDomain ? tc("adding") : tc("addDomain")}
                 </button>
               </form>
               <button
@@ -705,11 +709,11 @@ export function DmarkDashboard({
                 onClick={() => {
                   const input = document.getElementById("new-domain-mobile");
                   input?.scrollIntoView({ behavior: "smooth", block: "center" });
-                  window.setTimeout(() => input?.focus(), 300);
+                  window.setTimeout(() => (input as HTMLInputElement | null)?.focus(), 300);
                 }}
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
-                Add domain
+                {tc("addDomain")}
               </button>
             </div>
           </div>
@@ -722,13 +726,13 @@ export function DmarkDashboard({
               role="alert"
             >
               <p className="text-sm font-semibold leading-6 text-warn-ink">
-                Your session has expired. Sign in again to keep working with live data.
+                {t("shell.sessionExpired")}
               </p>
               <Link
                 href="/api/dashboard/auth/login"
                 className="inline-flex min-h-10 shrink-0 items-center justify-center rounded bg-brand-ink px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-brand"
               >
-                Sign in again
+                {t("shell.signInAgain")}
               </Link>
             </div>
           ) : null}
@@ -738,14 +742,14 @@ export function DmarkDashboard({
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search domains"
+              placeholder={t("shell.searchPlaceholderMobile")}
               className="w-full bg-transparent text-sm outline-none"
             />
           </label>
 
-          <form className="mb-5 flex flex-col gap-2 rounded border border-line bg-card p-3 shadow-sm xl:hidden" onSubmit={addDomain} aria-label="Add protected domain">
+          <form className="mb-5 flex flex-col gap-2 rounded border border-line bg-card p-3 shadow-sm xl:hidden" onSubmit={addDomain} aria-label={t("shell.addDomain")}>
             <label className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-400" htmlFor="new-domain-mobile">
-              Add protected domain
+              {t("shell.addDomain")}
             </label>
             <div className="flex flex-col gap-2 sm:flex-row">
               <input
@@ -762,7 +766,7 @@ export function DmarkDashboard({
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white shadow-glow transition hover:bg-brand disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {addingDomain ? <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
-                {addingDomain ? "Adding" : "Add domain"}
+                {addingDomain ? tc("adding") : tc("addDomain")}
               </button>
             </div>
             {addDomainError ? <p className="text-sm font-medium text-fail-ink">{addDomainError}</p> : null}
@@ -824,7 +828,7 @@ export function DmarkDashboard({
               onToggleFilter={() => {
                 const next = reporterFilter === "all" ? "unknown" : "all";
                 setReporterFilter(next);
-                announce(next === "unknown" ? "Showing unknown senders only." : "Showing all senders.");
+                announce(next === "unknown" ? t("actions.reporterUnknownOnly") : t("actions.reporterAll"));
               }}
               onExport={exportReporterCSV}
               onRetry={retryPanelLoads}
@@ -839,7 +843,7 @@ export function DmarkDashboard({
               includeInactive={includeInactiveBrandRisk}
               onToggleInactive={() => {
                 setIncludeInactiveBrandRisk((current) => !current);
-                announce(!includeInactiveBrandRisk ? "Including inactive lookalike candidates." : "Showing active lookalike evidence only.");
+                announce(!includeInactiveBrandRisk ? t("actions.brandRiskInactive") : t("actions.brandRiskActiveOnly"));
               }}
               onRetry={retryPanelLoads}
             />
@@ -878,7 +882,7 @@ export function DmarkDashboard({
           <button
             type="button"
             className="absolute inset-0 bg-midnight/65 backdrop-blur-sm"
-            aria-label="Close navigation"
+            aria-label={t("shell.closeNav")}
             onClick={() => setMobileNavOpen(false)}
           />
           <div className="relative h-full w-80 max-w-[86vw] bg-card shadow-2xl">
@@ -886,7 +890,7 @@ export function DmarkDashboard({
               type="button"
               className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded border border-line text-ink-500"
               onClick={() => setMobileNavOpen(false)}
-              aria-label="Close navigation"
+              aria-label={t("shell.closeNav")}
             >
               <X className="h-5 w-5" aria-hidden="true" />
             </button>

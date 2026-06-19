@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import type {
   AlertSeverity,
   BrandRiskSeverity,
@@ -83,8 +84,11 @@ export function spfRouteToneClass(tone: "green" | "amber" | "red" | "blue") {
   }
 }
 
-export function formatStatus(status: DomainStatus) {
-  if (status === "needs-work") return "Needs work";
-  if (status === "monitoring") return "Monitoring";
-  return "Protected";
+export function useFormatStatus() {
+  const t = useTranslations("Dashboard.statuses");
+  return (status: DomainStatus) => {
+    if (status === "needs-work") return t("needs-work");
+    if (status === "monitoring") return t("monitoring");
+    return t("protected");
+  };
 }
