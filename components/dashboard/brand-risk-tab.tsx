@@ -25,6 +25,7 @@ export function BrandRiskTab({
   onRetry: () => void;
 }) {
   const t = useTranslations("Dashboard.brandRisk");
+  const tErrors = useTranslations("Dashboard.errors");
   if (!selectedDomain) {
     return <EmptyState icon={ShieldAlert} title="Domain not found" detail="Select an existing protected domain before opening Brand Risk." />;
   }
@@ -52,7 +53,7 @@ export function BrandRiskTab({
       </div>
 
       {brandRiskState === "loading" ? <PanelSkeleton rows={4} /> : null}
-      {brandRiskState === "error" ? <RetryNotice text={brandRiskError || useTranslations("Dashboard.errors")("brandRisk")} onRetry={onRetry} /> : null}
+      {brandRiskState === "error" ? <RetryNotice text={brandRiskError || tErrors("brandRisk")} onRetry={onRetry} /> : null}
 
       {brandRisk ? (
         <>

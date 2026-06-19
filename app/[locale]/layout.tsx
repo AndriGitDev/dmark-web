@@ -1,9 +1,15 @@
-import {NextIntlClientProvider} from 'next-intl';
-import {getMessages, getTranslations} from 'next-intl/server';
+import {NextIntlClientProvider, hasLocale} from 'next-intl';
+import {getMessages, getTranslations, setRequestLocale} from 'next-intl/server';
+import {notFound} from 'next/navigation';
 import type { Metadata } from "next";
 import { JetBrains_Mono, Schibsted_Grotesk } from "next/font/google";
 import { PrivacyAnalytics } from "@/components/privacy-analytics";
+import {routing} from "@/i18n/routing";
 import "../globals.css";
+
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({locale}));
+}
 
 const schibsted = Schibsted_Grotesk({
   subsets: ["latin"],
@@ -74,6 +80,10 @@ export default async function RootLayout({
   params: Promise<{locale: string}>;
 }>) {
   const {locale} = await params;
+  if (!hasLocale(routing.locales, locale)) {
+    notFound();
+  }
+  setRequestLocale(locale);
   const messages = await getMessages();
 
   return (

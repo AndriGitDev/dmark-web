@@ -26,6 +26,7 @@ export function ReporterTab({
   onRetry: () => void;
 }) {
   const t = useTranslations("Dashboard.reporter");
+  const tErrors = useTranslations("Dashboard.errors");
   if (!selectedDomain) {
     return <EmptyState icon={BarChart3} title="Domain not found" detail="Select an existing protected domain before opening Reporter." />;
   }
@@ -42,7 +43,7 @@ export function ReporterTab({
 
       {reporterState === "loading" ? <PanelSkeleton rows={4} /> : null}
       {reporterState === "error" ? (
-        <RetryNotice text={reporterError || useTranslations("Dashboard.errors")("reporter")} onRetry={onRetry} />
+        <RetryNotice text={reporterError || tErrors("reporter")} onRetry={onRetry} />
       ) : null}
 
       {reporter ? (

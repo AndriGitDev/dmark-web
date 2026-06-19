@@ -115,7 +115,7 @@ export function SettingsTab({
                     <span className="grid h-9 w-9 place-items-center rounded bg-paper-soft text-ink-500">
                       <Bell className="h-4 w-4" aria-hidden="true" />
                     </span>
-                    <span className="text-sm font-semibold capitalize text-ink">{t(`notifications.channels.${channel as "email" | "slack"}`)}</span>
+                    <span className="text-sm font-semibold capitalize text-ink">{t(`notifications.channels.${channel}`)}</span>
                   </span>
                   <input
                     type="checkbox"

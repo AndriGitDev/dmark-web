@@ -311,6 +311,13 @@
       "reporterExport": "Ekki tókst að flytja út Reporter CSV.",
       "trend": "Gögnum um þróun ekki tiltæk."
     },
+    "forms": {
+      "addDomain": {
+        "errorEmpty": "Sláðu inn lén fyrst.",
+        "success": "{domain} var bætt við. Keyrðu endurskoðun til að sækja virka stöðu.",
+        "errorFailed": "Ekki tókst að bæta við léni."
+      }
+    },
     "actions": {
       "copySuccess": "{label} afritað.",
       "copyError": "Ekki tókst að afrita {label}.",
@@ -349,7 +356,7 @@
       "overview": "Yfirlit",
       "domains": "Lén",
       "reporter": "Skýrslur",
-      "brandRisk": "Vörumerkjaáhætta",
+      "brand-risk": "Vörumerkjaáhætta",
       "alerts": "Viðvaranir",
       "settings": "Stillingar",
       "trustOps": "Rekstraröryggi",
@@ -402,6 +409,7 @@
     "domains": {
       "title": "Lén í vörslu",
       "subtitle": "Eftirlit og úrbætur á færslum",
+      "checkedPrefix": "skoðað",
       "export": "Flytja út lén",
       "addFirst": "Bæta við léni",
       "noResults": "Engin lén fundust fyrir þessa leit.",
@@ -602,7 +610,7 @@
         "channels": {
           "email": "Tölvupóstur",
           "slack": "Slack",
-          "teams": "Teams"
+          "webhook": "Vefkrókur"
         }
       },
       "plan": {
