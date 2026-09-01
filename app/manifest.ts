@@ -1,11 +1,13 @@
 import type { MetadataRoute } from "next";
 
+export const dynamic = "force-static";
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "dmark.is",
     short_name: "dmark",
-    description: "Public DMARC and SPF scanner for Icelandic domains, with beta automation and reporting on request.",
-    start_url: "/",
+    description: "Interactive DMARC and SPF education for Icelandic domains, with real-world review available from Kastro.",
+    start_url: "/is/",
     scope: "/",
     display: "standalone",
     background_color: "#F4F8FA",

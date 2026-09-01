@@ -1,16 +1,18 @@
 import type { MetadataRoute } from "next";
 
-function publicOrigin(): string {
-  const origin = (process.env.DMARK_PUBLIC_ORIGIN || "").trim();
-  return origin || "https://dmark.is";
-}
+export const dynamic = "force-static";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
-      url: `${publicOrigin()}/`,
+      url: "https://dmark.is/is/",
       changeFrequency: "weekly",
       priority: 1,
+    },
+    {
+      url: "https://dmark.is/en/",
+      changeFrequency: "weekly",
+      priority: 0.8,
     },
   ];
 }

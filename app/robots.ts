@@ -1,9 +1,6 @@
 import type { MetadataRoute } from "next";
 
-function publicOrigin(): string {
-  const origin = (process.env.DMARK_PUBLIC_ORIGIN || "").trim();
-  return origin || "https://dmark.is";
-}
+export const dynamic = "force-static";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -11,9 +8,8 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/dashboard", "/admin", "/api/"],
       },
     ],
-    sitemap: `${publicOrigin()}/sitemap.xml`,
+    sitemap: "https://dmark.is/sitemap.xml",
   };
 }

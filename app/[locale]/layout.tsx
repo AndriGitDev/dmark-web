@@ -36,7 +36,7 @@ export async function generateMetadata({
     title: t("title"),
     description: t("description"),
     alternates: {
-      canonical: "/",
+      canonical: `/${locale}`,
       languages: {
         is: "/is",
         en: "/en",
@@ -89,7 +89,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} className={`${schibsted.variable} ${jetbrains.variable}`}>
       <body>
-        <NextIntlClientProvider messages={messages}>
+        <NextIntlClientProvider messages={{Marketing: messages.Marketing, Errors: messages.Errors}}>
           {children}
         </NextIntlClientProvider>
         <PrivacyAnalytics />
