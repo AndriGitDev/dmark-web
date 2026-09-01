@@ -2,6 +2,7 @@ import {NextIntlClientProvider, hasLocale} from 'next-intl';
 import {getMessages, getTranslations, setRequestLocale} from 'next-intl/server';
 import {notFound} from 'next/navigation';
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { JetBrains_Mono, Schibsted_Grotesk } from "next/font/google";
 import { PrivacyAnalytics } from "@/components/privacy-analytics";
 import {routing} from "@/i18n/routing";
@@ -93,6 +94,7 @@ export default async function RootLayout({
           {children}
         </NextIntlClientProvider>
         <PrivacyAnalytics />
+        <Analytics />
       </body>
     </html>
   );
