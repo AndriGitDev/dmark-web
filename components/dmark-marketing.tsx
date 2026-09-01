@@ -28,19 +28,18 @@ import {
   ShieldAlert,
   ShieldCheck,
   Sparkles,
-  X,
 } from "lucide-react";
-import type { ScanPayload, UpgradePayload, UpgradeResponse } from "@/lib/scan";
+import type { ScanPayload } from "@/lib/scan";
 import { trackPrivacyEvent } from "@/lib/privacy-events";
 import {
   buildDmarcFinding,
   buildScanEvidenceSummary,
   buildScanRemediationPlan,
   buildSpfFinding,
+  mockScan,
   validateScannableDomain,
 } from "@/lib/scan";
 
-type ModalPlan = UpgradePayload["plan"] | null;
 type CTAOrigin = "nav" | "pricing" | "footer" | "result_upsell";
 
 const scanSteps = [
@@ -122,12 +121,12 @@ function toneClasses(tone: string) {
 
 export function DmarkMarketing() {
   const t = useTranslations("Marketing");
+  const locale = useLocale();
   const [domain, setDomain] = useState("");
   const [scanState, setScanState] = useState<"idle" | "scanning" | "results" | "error">("idle");
   const [activeStep, setActiveStep] = useState(-1);
   const [result, setResult] = useState<ScanPayload | null>(null);
   const [error, setError] = useState("");
-  const [modalPlan, setModalPlan] = useState<ModalPlan>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -153,14 +152,14 @@ export function DmarkMarketing() {
     const validation = validateScannableDomain(sample || domain);
 
     if (validation.error) {
-      trackPrivacyEvent("scan_validation_error", { status: "ERROR", source: "public_scanner" });
+      trackPrivacyEvent("scan_validation_error", { status: "ERROR", source: "demo_scanner" });
       setError(validation.error);
       setScanState("error");
       setActiveStep(-1);
       return;
     }
 
-    trackPrivacyEvent("scan_start", { source: "public_scanner" });
+    trackPrivacyEvent("scan_start", { source: "demo_scanner" });
     setError("");
     setDomain(validation.domain);
     setResult(null);
@@ -168,25 +167,15 @@ export function DmarkMarketing() {
     setScanState("scanning");
 
     try {
-      const response = await fetch("/api/scan", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ domain: validation.domain }),
-      });
-
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => ({}))) as { error?: string };
-        throw new Error(payload.error || "Scan failed.");
-      }
-
-      const payload = (await response.json()) as ScanPayload;
-      trackPrivacyEvent("scan_complete", { status: payload.status, source: "public_scanner" });
+      await new Promise((resolve) => window.setTimeout(resolve, 1_250));
+      const payload = mockScan(validation.domain);
+      trackPrivacyEvent("scan_complete", { status: payload.status, source: "demo_scanner" });
       setResult(payload);
       setDomain(payload.domain);
       setScanState("results");
       setActiveStep(scanSteps.length - 1);
     } catch (scanError) {
-      trackPrivacyEvent("scan_error", { status: "ERROR", source: "public_scanner" });
+      trackPrivacyEvent("scan_error", { status: "ERROR", source: "demo_scanner" });
       setError(scanError instanceof Error ? scanError.message : "Scan failed.");
       setScanState("error");
       setActiveStep(-1);
@@ -195,12 +184,12 @@ export function DmarkMarketing() {
 
   useEffect(() => {
     if (scanState !== "results" || !result) return;
-    trackPrivacyEvent("recommendation_view", { status: result.status, source: "public_scanner" });
+    trackPrivacyEvent("recommendation_view", { status: result.status, source: "demo_scanner" });
   }, [scanState, result]);
 
-  function openUpgradeModal(plan: NonNullable<ModalPlan>, source: CTAOrigin) {
+  function openKastroService(source: CTAOrigin) {
     trackPrivacyEvent("cta_click", { source });
-    setModalPlan(plan);
+    window.location.assign(`https://kastro.is/${locale}/services/dmark`);
   }
 
   function scrollToScanner(source?: "nav" | "pricing" | "footer") {
@@ -214,7 +203,7 @@ export function DmarkMarketing() {
       <a href="#scanner-panel" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-brand-ink focus:px-4 focus:py-3 focus:font-semibold focus:text-white">
         {t("skip")}
       </a>
-      <Header onScan={() => scrollToScanner("nav")} onUpgrade={() => openUpgradeModal("saas", "nav")} />
+      <Header onScan={() => scrollToScanner("nav")} onUpgrade={() => openKastroService("nav")} />
 
       <section id="top" className="relative border-b border-line bg-paper">
         <div className="absolute inset-0 dmark-grid" aria-hidden="true" />
@@ -237,7 +226,7 @@ export function DmarkMarketing() {
                 <button type="button" onClick={() => scrollToScanner("nav")} className="inline-flex min-h-[58px] items-center justify-center gap-3 rounded bg-brand-ink px-8 font-semibold text-white shadow-glow transition hover:-translate-y-0.5 hover:bg-brand-ink">
                   <Search className="h-5 w-5" aria-hidden="true" /> {t("hero.cta_scan")}
                 </button>
-                <button type="button" onClick={() => openUpgradeModal("saas", "nav")} className="inline-flex min-h-[58px] items-center justify-center gap-3 rounded border border-line-strong px-8 font-semibold text-ink transition hover:-translate-y-0.5 hover:border-ink">
+                <button type="button" onClick={() => openKastroService("nav")} className="inline-flex min-h-[58px] items-center justify-center gap-3 rounded border border-line-strong px-8 font-semibold text-ink transition hover:-translate-y-0.5 hover:border-ink">
                   <Sparkles className="h-5 w-5" aria-hidden="true" /> {t("hero.cta_saas")}
                 </button>
               </div>
@@ -258,7 +247,7 @@ export function DmarkMarketing() {
                   setResult(null);
                   setActiveStep(-1);
                 }}
-                onUpgrade={() => openUpgradeModal("saas", "result_upsell")}
+                onUpgrade={() => openKastroService("result_upsell")}
               />
             </div>
           </div>
@@ -370,7 +359,7 @@ export function DmarkMarketing() {
                     </li>
                   ))}
                 </ul>
-                <button type="button" onClick={() => (tier.mode === "scan" ? scrollToScanner("pricing") : openUpgradeModal(tier.mode, "pricing"))} className={`mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded px-5 font-semibold transition hover:-translate-y-0.5 ${tier.featured ? "bg-brand-ink text-white shadow-glow hover:bg-midnight" : "border border-line-strong text-ink hover:border-ink"}`}>
+                <button type="button" onClick={() => (tier.mode === "scan" ? scrollToScanner("pricing") : openKastroService("pricing"))} className={`mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded px-5 font-semibold transition hover:-translate-y-0.5 ${tier.featured ? "bg-brand-ink text-white shadow-glow hover:bg-midnight" : "border border-line-strong text-ink hover:border-ink"}`}>
                   {t(`pricing.tiers.${tier.key}.cta`)} <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </button>
               </article>
@@ -387,14 +376,12 @@ export function DmarkMarketing() {
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <button type="button" onClick={() => scrollToScanner("footer")} className="inline-flex min-h-12 items-center justify-center gap-2 rounded bg-white px-5 font-semibold text-ink transition hover:-translate-y-0.5"><Search className="h-4 w-4" /> {t("footer_cta.cta_scan")}</button>
-            <button type="button" onClick={() => openUpgradeModal("saas", "footer")} className="inline-flex min-h-12 items-center justify-center gap-2 rounded border border-white/25 px-5 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10"><Sparkles className="h-4 w-4" /> {t("footer_cta.cta_saas")}</button>
+            <button type="button" onClick={() => openKastroService("footer")} className="inline-flex min-h-12 items-center justify-center gap-2 rounded border border-white/25 px-5 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10"><Sparkles className="h-4 w-4" /> {t("footer_cta.cta_saas")}</button>
           </div>
         </div>
       </section>
 
-      <Footer onScan={() => scrollToScanner("footer")} onUpgrade={() => openUpgradeModal("saas", "footer")} />
-
-      <CheckoutModal key={`${modalPlan || "closed"}-${result?.domain || domain}`} plan={modalPlan} domain={result?.domain || domain} onClose={() => setModalPlan(null)} />
+      <Footer onScan={() => scrollToScanner("footer")} onUpgrade={() => openKastroService("footer")} />
     </main>
   );
 }
@@ -674,67 +661,4 @@ function Footer({ onScan, onUpgrade }: { onScan: () => void; onUpgrade: () => vo
       </div>
     </footer>
   );
-}
-
-function CheckoutModal({ plan, domain, onClose }: { plan: ModalPlan; domain: string; onClose: () => void }) {
-  const t = useTranslations("Marketing.checkout");
-  const [form, setForm] = useState({ name: "", domain, email: "" });
-  const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
-  const [error, setError] = useState("");
-  const [claim, setClaim] = useState<UpgradeResponse | null>(null);
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!plan) return;
-    trackPrivacyEvent("claim_start", { source: "upgrade_modal" });
-    setStatus("submitting");
-    setError("");
-
-    try {
-      const response = await fetch("/api/upgrade", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...form, plan }) });
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => ({}))) as { error?: string };
-        throw new Error(payload.error || "Upgrade request failed.");
-      }
-      const payload = (await response.json()) as UpgradeResponse;
-      trackPrivacyEvent("claim_complete", { status: "PASS", source: "upgrade_modal" });
-      setClaim(payload);
-      setStatus("success");
-    } catch (submitError) {
-      trackPrivacyEvent("claim_error", { status: "ERROR", source: "upgrade_modal" });
-      setError(submitError instanceof Error ? submitError.message : "Upgrade request failed.");
-      setStatus("error");
-    }
-  }
-
-  return (
-    <AnimatePresence>
-      {plan ? (
-        <motion.div className="fixed inset-0 z-50 grid place-items-center bg-midnight/65 p-4 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} role="dialog" aria-modal="true" aria-labelledby="upgrade-title">
-          <motion.div className="w-full max-w-xl rounded border border-line bg-card shadow-2xl" initial={{ opacity: 0, y: 18, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 18, scale: 0.98 }} transition={{ duration: 0.22 }}>
-            <div className="flex items-start justify-between gap-4 border-b border-line p-6">
-              <div><p className="font-mono text-xs font-semibold uppercase tracking-[0.22em] text-brand-ink">{plan === "managed" ? t("badge_managed") : t("badge_saas")}</p><h2 id="upgrade-title" className="mt-3 text-2xl font-bold tracking-tight text-ink">{t("title")}</h2></div>
-              <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded border border-line text-ink-500 transition hover:border-ink hover:text-ink" aria-label={t("close_aria")}><X className="h-5 w-5" /></button>
-            </div>
-            {status === "success" ? (
-              <div className="p-6"><div className="grid h-12 w-12 place-items-center rounded bg-pass-soft text-pass-ink"><CheckCircle2 className="h-6 w-6" /></div><h3 className="mt-5 text-xl font-bold text-ink">{t("success_title")}</h3><p className="mt-3 leading-7 text-ink-500">{claim?.audit?.cta || t("success_text")}</p><button type="button" onClick={onClose} className="mt-6 inline-flex min-h-11 items-center justify-center rounded bg-ink px-4 font-semibold text-white transition hover:bg-black">{t("close")}</button></div>
-            ) : (
-              <form onSubmit={handleSubmit} className="grid gap-4 p-6">
-                <Field label={t("fields.name")} value={form.name} onChange={(value) => setForm((current) => ({ ...current, name: value }))} autoComplete="name" />
-                <Field label={t("fields.domain")} value={form.domain} onChange={(value) => setForm((current) => ({ ...current, domain: value }))} autoComplete="off" />
-                <Field label={t("fields.email")} type="email" value={form.email} onChange={(value) => setForm((current) => ({ ...current, email: value }))} autoComplete="email" />
-                {status === "error" ? <p className="rounded border border-fail/30 bg-fail-soft px-4 py-3 text-sm font-semibold text-fail-ink">{error}</p> : null}
-                <button type="submit" disabled={status === "submitting"} className="inline-flex min-h-12 items-center justify-center gap-2 rounded bg-brand-ink px-5 font-semibold text-white shadow-glow transition hover:bg-brand-ink disabled:cursor-not-allowed disabled:bg-ink-300">{status === "submitting" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ServerCog className="h-4 w-4" />} {t("submit")}</button>
-              </form>
-            )}
-          </motion.div>
-        </motion.div>
-      ) : null}
-    </AnimatePresence>
-  );
-}
-
-function Field({ label, value, onChange, type = "text", autoComplete }: { label: string; value: string; onChange: (value: string) => void; type?: string; autoComplete?: string }) {
-  const id = label.toLowerCase().replace(/\s+/g, "-");
-  return <label className="grid gap-2 text-sm font-semibold text-ink" htmlFor={id}>{label}<input id={id} type={type} value={value} onChange={(event) => onChange(event.target.value)} required autoComplete={autoComplete} className="min-h-12 rounded border border-line-strong bg-paper px-4 font-mono text-sm font-normal text-ink outline-none transition placeholder:text-ink-300 focus:border-brand focus:ring-4 focus:ring-brand-soft" /></label>;
 }

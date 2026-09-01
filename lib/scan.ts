@@ -30,20 +30,6 @@ export type ScanPayload = {
   spoofable: boolean;
 };
 
-export type UpgradePayload = {
-  name: string;
-  domain: string;
-  email: string;
-  plan: "saas" | "managed";
-};
-
-export type UpgradeResponse = {
-  ok: boolean;
-  claimId?: string;
-  claimStatus?: string;
-  audit?: AuditPayload;
-};
-
 export type ScanRemediationStep = {
   title: string;
   detail: string;
@@ -143,15 +129,15 @@ export function buildDmarcFinding(result: ScanPayload): DmarcFinding {
 }
 
 export function buildScanEvidenceSummary(result: ScanPayload): ScanEvidenceSummary {
-  const live = result.source !== "demo";
+  const demo = result.source === "demo";
 
   return {
-    sourceLabel: live ? "Live DNS evidence" : "Demo fixture",
+    sourceLabel: demo ? "Illustrative browser demo" : "DNS evidence",
     checkedLabel: formatCheckedAt(result.checkedAt),
     durationLabel: typeof result.durationMs === "number" ? `${result.durationMs}ms` : "Not reported",
-    detail: live
-      ? "This result was mapped from the backend scanner response and should be treated as a point-in-time DNS observation."
-      : "This is a local demonstration result because the live scanner is not configured for this environment.",
+    detail: demo
+      ? "This result is generated locally for education. It is not based on a live DNS lookup."
+      : "Treat this as a point-in-time DNS observation and verify it before making changes.",
   };
 }
 
@@ -388,7 +374,7 @@ export function mockScan(domain: string): ScanPayload {
       safe: false,
       proofEligible: true,
       message: "DMARC is not enforcing, so spoofed mail can still reach recipients.",
-      cta: "Claim this audit and move toward p=reject.",
+      cta: "Discuss a real DNS review and a safe path toward p=reject.",
     },
   };
 }
