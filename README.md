@@ -68,4 +68,14 @@ DMARK_AUTHENTIK_ALLOWED_EMAILS=owner@example.is
 DMARK_AUTHENTIK_ALLOWED_GROUPS=dmark-admins
 ```
 
-Authentik application/provider setup is human-gated: keep the admin provider/app (`dmark-web-admin`, callback `/api/auth/callback`) separate from the customer dashboard provider/app (`dmark-dashboard`, callback `/api/dashboard/auth/callback`), then paste only the resulting values into Coolify/server env. Do not paste client secrets into chat or commit them.
+Authentik application/provider setup is human-gated: keep the admin provider/app (`dmark-web-admin`, callback `/api/auth/callback`) separate from the customer dashboard provider/app (`dmark-dashboard`, callback `/api/dashboard/auth/callback`), then store the resulting values as sensitive Vercel Production environment variables. Do not paste client secrets into chat or commit them.
+
+## Vercel deployment
+
+Production is hosted by the `kastro-projects/dmark-web` Vercel project using the Next.js framework preset and Node.js 24.x.
+
+- Keep all server-only credentials in Vercel Production environment variables.
+- `NIXPACKS_NODE_VERSION` is Coolify-specific and must not be copied to Vercel.
+- Keep `DMARK_PUBLIC_ORIGIN` and both Authentik redirect URIs on `https://dmark.is`.
+- `DMARK_USE_MOCK` must be explicitly set to `false` before the public scanner will call `DMARK_SCAN_API_URL`; when it is absent, the scanner intentionally serves demo fixtures.
+- `dmark.is` uses Bunny DNS/CDN. Validate the Vercel production hostname before changing the Bunny origin or authoritative DNS records.
