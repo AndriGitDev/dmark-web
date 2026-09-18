@@ -140,7 +140,7 @@
         "saas": {
           "name": "Kastro yfirferð",
           "description": "Raunveruleg yfirferð á léninu, sendendum og leiðinni að fullri vörn.",
-          "price": "Afmarkað",
+          "price": "Samkvæmt umfangi",
           "points": [
             "Yfirferð á virkum DNS gögnum",
             "Skýr úrbótaáætlun",
@@ -149,7 +149,7 @@
           "cta": "Ræða yfirferð"
         },
         "managed": {
-          "name": "Kastro Managed",
+          "name": "Kastro innleiðing",
           "description": "Heildarlausn fyrir stjórnendur sem vilja að DNS breytingar séu meðhöndlaðar á öruggan hátt.",
           "price": "Samkvæmt tilboði",
           "points": [
@@ -162,14 +162,14 @@
       }
     },
     "footer_cta": {
-      "eyebrow": "Tilbúin þegar þú ert tilbúin",
+      "eyebrow": "Taktu fyrsta skrefið",
       "title": "Láttu orðspor þitt fylgja hverjum pósti.",
       "cta_scan": "Athuga lénið þitt",
       "cta_saas": "Ræða við Kastro"
     },
     "footer": {
       "text": "Fræðsla um DMARC/SPF og Kastro-stýrðar úrbætur fyrir íslensk fyrirtæki.",
-      "credit": "Kastro <kastro>vara</kastro>.",
+      "credit": "Vara frá <kastro>Kastro</kastro>.",
       "cta_scan": "Athuga lénið þitt",
       "cta_saas": "Ræða við Kastro"
     },
@@ -185,7 +185,7 @@
       "try": "Prófa",
       "steps": {
         "dns": {
-          "title": "DNS vald",
+          "title": "DNS-færslur",
           "detail": "NS + TXT færslur"
         },
         "spf": {
@@ -205,7 +205,8 @@
       "errors": {
         "rate_limit": "Mikið álag er á þjónustunni. Reyndu aftur eftir mínútu.",
         "timeout": "Skoðunin tók of langan tíma. Reyndu aftur.",
-        "failed": "Ekki tókst að ljúka skoðuninni. Reyndu aftur."
+        "failed": "Ekki tókst að ljúka skoðuninni. Reyndu aftur.",
+        "invalid_domain": "Sláðu inn gilt lén, til dæmis fyrirtaeki.is, án netfangs eða bilstafa."
       }
     },
     "results": {
@@ -231,7 +232,8 @@
       "cta_unlock": "Ræða raunverulega yfirferð",
       "cta_another": "Athuga annað lén",
       "incomplete": "Mati er ólokið",
-      "dkim_limit": "Aðeins er leitað að algengum lyklum. Ófundinn lykill sannar ekki að DKIM vanti og birtur lykill staðfestir hvorki undirritun né samræmi sendanda."
+      "dkim_limit": "Aðeins er leitað að algengum lyklum. Ófundinn lykill sannar ekki að DKIM vanti og birtur lykill staðfestir hvorki undirritun né samræmi sendanda.",
+      "no_record": "Engin færsla fannst."
     },
     "demo": {
       "toggle_off": "Án DMARK",
@@ -239,7 +241,7 @@
       "inbox_label": "Innhólf — bjorn@northwind.is",
       "inbox_count_on": "1 skilaboð · 1 hafnað",
       "inbox_count_off": "2 skilaboð",
-      "caption_on": "p=reject — falsaða póstinn nær aldrei í innhólfið.",
+      "caption_on": "p=reject — ósamræmdum pósti er hafnað í þessu sýnidæmi.",
       "caption_off": "p=none — bæði skilaboðin skila sér. Það falsaða lítur eins út.",
       "steps": [
         {
@@ -262,7 +264,7 @@
       "mail": {
         "sender": "Northwind Bókhald",
         "pass": "✓ DKIM STANDST",
-        "fail": "✕ SPF FEILL · ÓSAMRÆMI",
+        "fail": "✕ SPF STENST EKKI · ÓSAMRÆMI",
         "via": " · sent í gegnum {ip}",
         "rejected": "Hafnað hjá móttakanda",
         "safe": {

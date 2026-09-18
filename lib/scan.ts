@@ -19,6 +19,8 @@ export type ScanPayload = {
   audit?: AuditPayload;
   assessment?: {
     incomplete: boolean;
+    spfState?: "red" | "yellow" | "green";
+    dmarcState?: "red" | "yellow" | "green";
     pct: number;
     spfReason: string;
     dmarcReason: string;

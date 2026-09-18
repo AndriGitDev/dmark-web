@@ -78,3 +78,26 @@ test('upstream throttling, network failure, and malformed data never produce a g
   const data=await response.json();assert.ok(data.code);assert.equal(data.audit,undefined);
  }
 });
+
+test('confirmed missing SPF and permanent errors receive a grade, not an incomplete result',()=>{
+ const data=fixture();
+ Object.assign(data.emailSecurity.spf,{record:null,state:'red',chain:[{error:'no SPF record'}]});
+ let r=live.mapLookupResponse(data,'example.com',20);assert.equal(r.assessment.incomplete,false);assert.equal(r.audit.grade,'F');
+ data.emailSecurity.spf.permErrors=['SPF include/redirect loop: example.com'];
+ r=live.mapLookupResponse(data,'example.com',20);assert.equal(r.assessment.incomplete,false);assert.equal(r.status,'FAIL');
+});
+test('Icelandic result presentation never renders backend English explanations',()=>{
+ const present=loadTSModule('lib/scan-presentation.ts').presentScan;
+ const data=fixture();for(const key of ['spf','dmarc','dkim'])data.emailSecurity[key].reason='ENGLISH_BACKEND_SENTINEL';
+ for(const state of ['green','yellow','red']) {
+  data.emailSecurity.spf.state=state;
+  const payload=live.mapLookupResponse(data,'example.com',20);
+  const view=present(payload,'is');const serialized=JSON.stringify(view);
+  assert.doesNotMatch(serialized,/ENGLISH_BACKEND_SENTINEL|Not reported|Needs attention|Unknown|Hardfail/);
+  assert.match(view.message,/Einkunnin/);assert.match(view.steps[0].title,/Staðfestu/);
+  assert.match(present(payload,'en').message,/This grade/);
+ }
+ data.emailSecurity.spf.warnings=['upstream English failure'];
+ const view=present(live.mapLookupResponse(data,'example.com',20),'is');
+ assert.equal(view.status,'Ólokið');assert.equal(view.risk,'Ómetin');assert.match(view.spf.headline,/ólokið/);assert.doesNotMatch(JSON.stringify(view),/upstream English/);
+});
