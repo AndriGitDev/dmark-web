@@ -17,6 +17,17 @@ export type ScanPayload = {
   durationMs?: number;
   source?: "live" | "demo";
   audit?: AuditPayload;
+  assessment?: {
+    incomplete: boolean;
+    spfState?: "red" | "yellow" | "green";
+    dmarcState?: "red" | "yellow" | "green";
+    pct: number;
+    spfReason: string;
+    dmarcReason: string;
+    dkimState: "red" | "yellow" | "green";
+    dkimReason: string;
+    warnings: string[];
+  };
   spf: {
     valid: boolean;
     lookups: number;
@@ -65,6 +76,12 @@ export type SpfFinding = {
 
 export function buildSpfFinding(result: ScanPayload): SpfFinding {
   const lookups = result.spf.lookups;
+  if (result.assessment) {
+    const tone = result.assessment.incomplete ? "warning" : !result.spf.valid ? "fail" : /~all/i.test(result.spf.record) || lookups >= 8 ? "warning" : "pass";
+    return {tone, statusLabel: tone === "pass" ? "PASS" : tone === "fail" ? "FAIL" : "PRESSURE",
+      headline: result.assessment.incomplete ? "SPF assessment incomplete" : result.assessment.spfReason,
+      detail: result.assessment.incomplete ? result.assessment.warnings.join(" ") || "The lookup service could not resolve the full SPF chain." : `Observed lookup count: ${lookups}/10. This does not verify sender alignment.`};
+  }
 
   if (!result.spf.valid) {
     return {
@@ -105,6 +122,10 @@ export function buildSpfFinding(result: ScanPayload): SpfFinding {
 }
 
 export function buildDmarcFinding(result: ScanPayload): DmarcFinding {
+  if (result.assessment) {
+    const tone = !result.dmarc.valid || result.dmarc.policy === "none" ? "fail" : result.dmarc.policy === "reject" && result.assessment.pct === 100 ? "pass" : "warning";
+    return {tone, statusLabel: tone === "pass" ? "PASS" : tone === "fail" ? "FAIL" : "PARTIAL", headline: result.assessment.dmarcReason};
+  }
   if (!result.dmarc.valid || result.dmarc.policy === "none") {
     return {
       tone: "fail",
@@ -132,7 +153,7 @@ export function buildScanEvidenceSummary(result: ScanPayload): ScanEvidenceSumma
   const demo = result.source === "demo";
 
   return {
-    sourceLabel: demo ? "Illustrative browser demo" : "DNS evidence",
+    sourceLabel: demo ? "Illustrative browser demo" : "Kastro Lookup · live DNS",
     checkedLabel: formatCheckedAt(result.checkedAt),
     durationLabel: typeof result.durationMs === "number" ? `${result.durationMs}ms` : "Not reported",
     detail: demo
@@ -213,6 +234,16 @@ export function validateScannableDomain(input: string): { domain: string; error?
 }
 
 export function buildScanRemediationPlan(result: ScanPayload): ScanRemediationPlan {
+  if (result.assessment) {
+    return {
+      summary: result.assessment.incomplete ? "Complete the missing evidence before making DNS changes." : "Review the evidence before changing enforcement.",
+      steps: [
+        {title: "Verify the records", detail: "Check the displayed SPF and DMARC records with your DNS provider. A lookup rating is not a complete mail authentication audit.", tone: "warning"},
+        {title: "Review real mail", detail: "Confirm legitimate senders and SPF/DKIM alignment using message headers and DMARC reports. A published DKIM key does not prove that messages are signed correctly.", tone: "warning"},
+        {title: "Plan changes safely", detail: "Preserve existing protection while investigating. Do not weaken DMARC or flatten SPF solely on the basis of this automated result.", tone: "stable"},
+      ],
+    };
+  }
   const spfOverLimit = result.spf.lookups > 10;
   const spfNeedsWork = !result.spf.valid || spfOverLimit;
   const dmarcNotEnforcing = !result.dmarc.valid || result.dmarc.policy === "none";
@@ -378,3 +409,4 @@ export function mockScan(domain: string): ScanPayload {
     },
   };
 }
+
