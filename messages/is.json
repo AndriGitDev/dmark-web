@@ -2,10 +2,10 @@
   "Marketing": {
     "skip": "Hoppa í gagnvirka sýnidæmið",
     "hero": {
-      "badge": "dmark.is · Íslensk tölvupóstöryggi",
-      "title": "Kynntu þér DNS færslurnar sem árásaraðilar nota til að <brand>herma eftir vörumerkinu þínu.</brand>",
-      "text": "Prófaðu gagnvirkt DMARC og SPF sýnidæmi til að sjá hvernig hætta á fölsun er metin. Ræddu síðan við Kastro um raunverulega DNS yfirferð og örugga leið að p=reject.",
-      "cta_scan": "Prófa sýnidæmið",
+      "badge": "Íslensk lausn fyrir öruggari tölvupóst",
+      "title": "Þitt lén. <brand>Þitt orðspor.</brand>",
+      "text": "Gerðu öðrum erfiðara að senda póst í þínu nafni. Fáðu innsýn í SPF og DMARC og taktu næstu skref að öruggari tölvupósti.",
+      "cta_scan": "Prófa sýnidæmi",
       "cta_saas": "Ræða við Kastro",
       "signals": {
         "live": {
@@ -42,13 +42,13 @@
       "cta_scan_short": "Sýnidæmi"
     },
     "threat": {
-      "eyebrow": "02 — Ógnin",
-      "title": "Hver sem er getur sent tölvupóst í nafni lénsins þíns. Þar til þú segir móttakendum að leyfa það ekki.",
-      "text": "Tölvupóstur var byggður á trausti, ekki auðkenni. Án virkrar DMARC stefnu getur ókunnugur sett netfangið þitt í From-reitinn og náð til viðskiptavina þinna. Breyttu stillingunni til að sjá muninn."
+      "eyebrow": "01 / Munurinn",
+      "title": "Þitt nafn á aðeins að tala fyrir þig.",
+      "text": "Kunnuglegt nafn sendanda segir ekki alla söguna. Sjáðu hvernig virk DMARC-stefna hjálpar póstþjónum að hafna fölsuðum sendingum."
     },
     "workflow": {
-      "eyebrow": "03 — Leiðin",
-      "title": "Frá sýnidæmi til virkrar stefnu — án þess að trufla póstflæði.",
+      "eyebrow": "02 / Skýr leið áfram",
+      "title": "Byggjum upp traust. Eina færslu í einu.",
       "text": "Sýnidæmið útskýrir flókinn raunveruleika: eldri þjónustur, SPF takmörk, XML skýrslur og DNS breytingar sem þarf að yfirfara vandlega.",
       "steps": {
         "discover": {
@@ -76,8 +76,8 @@
       }
     },
     "features": {
-      "eyebrow": "04 — Þjónustugeta",
-      "title": "Farðu úr óvörðum DNS færslum yfir í virkt traust.",
+      "eyebrow": "03 / Undir yfirborðinu",
+      "title": "Flóknar færslur. Skýrar ákvarðanir.",
       "text": "Kastro getur afmarkað og unnið þessa þætti fyrir raunverulegt lén. Þeir eru ekki virkjaðir í sýnidæminu.",
       "list": {
         "flattening": {
@@ -95,8 +95,8 @@
       }
     },
     "proof": {
-      "eyebrow": "05 — Rekstraröryggi",
-      "title": "Sérhver ráðlegging ætti að skýra sig sjálf.",
+      "eyebrow": "04 / Gögn á undan aðgerðum",
+      "title": "Sjáðu ástæðuna. Áður en þú breytir.",
       "text": "Þessi hugmyndasýn sýnir hvernig DMARC skýrslur, SPF keðjur og DNS færslur geta orðið að öruggum aðgerðum.",
       "console": {
         "badge": "dmark eftirlitsborð",
@@ -121,8 +121,8 @@
       }
     },
     "pricing": {
-      "eyebrow": "06 — Verðskrá",
-      "title": "Lærðu með sýnidæminu. Hafðu samband við Kastro fyrir raunverulega vinnu.",
+      "eyebrow": "05 / Fyrstu skrefin",
+      "title": "Byrjaðu á yfirsýn. Haltu áfram af öryggi.",
       "text": "Sýnidæmið í vafranum er ókeypis og til skýringar. Kastro afmarkar raunverulega DNS yfirferð, úrbætur og stýrða innleiðingu.",
       "tiers": {
         "core": "Kjarni",
@@ -163,7 +163,7 @@
     },
     "footer_cta": {
       "eyebrow": "Tilbúin þegar þú ert tilbúin",
-      "title": "Sýndu öryggisgatið áður en árásarmaður gerir það.",
+      "title": "Láttu orðspor þitt fylgja hverjum pósti.",
       "cta_scan": "Prófa sýnidæmið",
       "cta_saas": "Ræða við Kastro"
     },

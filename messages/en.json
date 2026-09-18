@@ -2,10 +2,10 @@
   "Marketing": {
     "skip": "Skip to the interactive demo",
     "hero": {
-      "badge": "dmark.is · Icelandic email security",
-      "title": "Explore the DNS records attackers use to <brand>borrow your brand.</brand>",
-      "text": "Use an interactive DMARC and SPF demo to see how spoofing risk is assessed, then talk to Kastro about a real DNS review and a safe path to p=reject.",
-      "cta_scan": "Try the demo",
+      "badge": "Email security. Made in Iceland.",
+      "title": "Your domain. <brand>Your reputation.</brand>",
+      "text": "Make it harder to send email in your name. Understand SPF and DMARC, identify the gaps, and plan a safer path to protected email.",
+      "cta_scan": "Explore the demo",
       "cta_saas": "Discuss with Kastro",
       "signals": {
         "live": {
@@ -42,13 +42,13 @@
       "cta_scan_short": "Demo"
     },
     "threat": {
-      "eyebrow": "02 — The threat",
-      "title": "Anyone can send email as your domain. Until you tell receivers not to let them.",
-      "text": "Email was built on trust, not identity. Without an enforced DMARC policy, a stranger can put your address in the From field and reach your customers. Flip the switch to see the difference."
+      "eyebrow": "01 / The difference",
+      "title": "Your name should only speak for you.",
+      "text": "A familiar sender is not always a trusted sender. Explore how an enforced DMARC policy helps receiving mail servers reject impersonation."
     },
     "workflow": {
-      "eyebrow": "03 — The path",
-      "title": "From an illustrative result to an enforced policy — without breaking mail.",
+      "eyebrow": "02 / A clear path forward",
+      "title": "Build trust. One record at a time.",
       "text": "The demo explains the messy middle: legacy vendors, SPF lookup limits, report XML, and DNS changes that need careful operational review.",
       "steps": {
         "discover": {
@@ -76,8 +76,8 @@
       }
     },
     "features": {
-      "eyebrow": "04 — Service capabilities",
-      "title": "Move from exposed DNS records to enforced domain trust.",
+      "eyebrow": "03 / Beneath the surface",
+      "title": "Complex records. Clear decisions.",
       "text": "These are capabilities Kastro can scope and deliver for a real domain. They are not activated by the browser demo.",
       "list": {
         "flattening": {
@@ -95,8 +95,8 @@
       }
     },
     "proof": {
-      "eyebrow": "05 — Operational proof",
-      "title": "Every recommendation should explain itself.",
+      "eyebrow": "04 / Evidence, before action",
+      "title": "See the why. Before the change.",
       "text": "This concept view illustrates how DMARC reports, SPF chains, and DNS records can become actions a business can safely approve.",
       "console": {
         "badge": "dmark audit console",
@@ -121,8 +121,8 @@
       }
     },
     "pricing": {
-      "eyebrow": "06 — Pricing",
-      "title": "Learn with the demo. Contact Kastro for real work.",
+      "eyebrow": "05 / Get started",
+      "title": "Start with clarity. Move with confidence.",
       "text": "The browser demo is free and illustrative. Real DNS review, remediation, and managed implementation are scoped by Kastro.",
       "tiers": {
         "core": "Core",
@@ -163,7 +163,7 @@
     },
     "footer_cta": {
       "eyebrow": "Ready when you are",
-      "title": "Show the spoofing gap before an attacker does.",
+      "title": "Put your name behind every email.",
       "cta_scan": "Try the demo",
       "cta_saas": "Discuss with Kastro"
     },
