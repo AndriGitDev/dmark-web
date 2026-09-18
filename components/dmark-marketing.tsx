@@ -33,13 +33,8 @@ import {
 } from "lucide-react";
 import type { ScanPayload } from "@/lib/scan";
 import { trackPrivacyEvent } from "@/lib/privacy-events";
-import {
-  buildDmarcFinding,
-  buildScanEvidenceSummary,
-  buildScanRemediationPlan,
-  buildSpfFinding,
-  validateScannableDomain,
-} from "@/lib/scan";
+import { validateScannableDomain } from "@/lib/scan";
+import { presentScan } from "@/lib/scan-presentation";
 
 type CTAOrigin = "nav" | "pricing" | "footer" | "result_upsell";
 
@@ -144,7 +139,7 @@ export function DmarkMarketing() {
 
     if (validation.error) {
       trackPrivacyEvent("scan_validation_error", { status: "ERROR", source: "live_scanner" });
-      setError(validation.error);
+      setError(t("scanner.errors.invalid_domain"));
       setScanState("error");
       setActiveStep(-1);
       return;
@@ -176,7 +171,7 @@ export function DmarkMarketing() {
       setActiveStep(scanSteps.length - 1);
     } catch (scanError) {
       trackPrivacyEvent("scan_error", { status: "ERROR", source: "live_scanner" });
-      setError(controller.signal.aborted ? t("scanner.errors.timeout") : scanError instanceof Error ? scanError.message : t("scanner.errors.failed"));
+      setError(controller.signal.aborted ? t("scanner.errors.timeout") : scanError instanceof Error && [t("scanner.errors.rate_limit"), t("scanner.errors.timeout"), t("scanner.errors.failed")].includes(scanError.message) ? scanError.message : t("scanner.errors.failed"));
       setScanState("error");
       setActiveStep(-1);
     } finally {
@@ -352,10 +347,10 @@ function ResultsDashboard({ result, onRescan, onUpgrade }: { result: ScanPayload
   const t = useTranslations("Marketing.results");
   const grade = result.audit?.grade || (result.status === "PASS" ? "A" : result.status === "WARNING" ? "C" : "F");
   const tone = result.status === "PASS" ? "pass" : result.status === "WARNING" ? "warn" : "fail";
-  const spfFinding = buildSpfFinding(result);
-  const dmarcFinding = buildDmarcFinding(result);
-  const remediationPlan = buildScanRemediationPlan(result);
-  const evidence = buildScanEvidenceSummary(result);
+  const locale = useLocale();
+  const view = presentScan(result, locale);
+  const spfFinding = view.spf;
+  const dmarcFinding = view.dmarc;
 
   return (
     <div>
@@ -368,23 +363,23 @@ function ResultsDashboard({ result, onRescan, onUpgrade }: { result: ScanPayload
           {tone === "pass" ? <ShieldCheck className="h-9 w-9" /> : tone === "warn" ? <AlertTriangle className="h-9 w-9" /> : <ShieldAlert className="h-9 w-9" />}
         </div>
         <p className="mt-4 font-mono text-sm">{result.domain}</p>
-        <p className="mt-3 text-sm leading-6">{result.audit?.message || (result.spoofable ? t("spoofable_default") : t("secure_default"))}</p>
+        <p className="mt-3 text-sm leading-6">{view.message}</p>
         <div className="mt-4 grid grid-cols-3 gap-2">
-          <ResultStat label={t("stats.status")} value={result.status} />
-          <ResultStat label={t("stats.risk")} value={result.audit?.risk || (result.spoofable ? t("stats.risk_high") : t("stats.risk_low"))} />
-          <ResultStat label={t("stats.time")} value={evidence.durationLabel} />
+          <ResultStat label={t("stats.status")} value={view.status} />
+          <ResultStat label={t("stats.risk")} value={view.risk} />
+          <ResultStat label={t("stats.time")} value={view.durationLabel} />
         </div>
-        <p className="mt-4 text-xs leading-5 opacity-80">{evidence.sourceLabel} · {t("stats.checked_at", { date: evidence.checkedLabel })}. {evidence.detail}</p>
+        <p className="mt-4 text-xs leading-5 opacity-80">{view.sourceLabel} · {t("stats.checked_at", { date: view.checkedLabel })}. {view.evidenceDetail}</p>
       </div>
       <div className="mt-5 grid gap-4">
         <TechnicalFinding title={t("findings.spf")} tone={spfFinding.tone} headline={spfFinding.headline} detail={spfFinding.detail} record={result.spf.record} />
-        <TechnicalFinding title={t("findings.dmarc")} tone={dmarcFinding.tone} headline={dmarcFinding.headline} record={result.dmarc.record} />
-        {result.assessment ? <article className="rounded border border-line bg-card p-4"><h3 className="font-semibold">{t("findings.dkim")}</h3><p className="mt-2 text-sm text-ink-500">{result.assessment.dkimReason}</p><p className="mt-2 text-sm text-ink-500">{t("dkim_limit")}</p></article> : null}
+        <TechnicalFinding title={t("findings.dmarc")} tone={dmarcFinding.tone} headline={dmarcFinding.headline} detail={dmarcFinding.detail} record={result.dmarc.record} />
+        {result.assessment ? <article className="rounded border border-line bg-card p-4"><h3 className="font-semibold">{t("findings.dkim")}</h3><p className="mt-2 text-sm text-ink-500">{view.dkim}</p><p className="mt-2 text-sm text-ink-500">{t("dkim_limit")}</p></article> : null}
         <article className="rounded border border-line bg-paper p-4">
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-brand-ink">{t("sequence.label")}</p>
-          <h3 className="mt-3 text-xl font-bold tracking-tight">{remediationPlan.summary}</h3>
+          <h3 className="mt-3 text-xl font-bold tracking-tight">{view.summary}</h3>
           <ol className="mt-4 grid gap-2">
-            {remediationPlan.steps.map((step, index) => <li key={step.title} className="rounded border border-line bg-card p-3 text-sm"><span className="font-mono text-brand-ink">{index + 1}.</span> <strong>{step.title}</strong> — <span className="text-ink-500">{step.detail}</span></li>)}
+            {view.steps.map((step, index) => <li key={step.title} className="rounded border border-line bg-card p-3 text-sm"><span className="font-mono text-brand-ink">{index + 1}.</span> <strong>{step.title}</strong> — <span className="text-ink-500">{step.detail}</span></li>)}
           </ol>
         </article>
         <button type="button" onClick={onUpgrade} className="inline-flex min-h-12 items-center justify-center gap-2 rounded bg-brand-ink px-5 font-semibold text-white shadow-glow transition hover:bg-brand-ink"><Lock className="h-4 w-4" /> {t("cta_unlock")}</button>
@@ -399,6 +394,7 @@ function ResultStat({ label, value }: { label: string; value: string }) {
 }
 
 function TechnicalFinding({ title, tone, headline, detail, record }: { title: string; tone: "fail" | "warning" | "pass"; headline: string; detail?: string; record: string }) {
+  const t = useTranslations("Marketing.results");
   const mappedTone = tone === "warning" ? "warn" : tone;
   return (
     <article className="rounded border border-line bg-card p-4">
@@ -406,7 +402,7 @@ function TechnicalFinding({ title, tone, headline, detail, record }: { title: st
         <div><p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-ink-500">{title}</p><h3 className={`mt-2 font-bold ${mappedTone === "fail" ? "text-fail-ink" : mappedTone === "warn" ? "text-warn-ink" : "text-pass-ink"}`}>{headline}</h3>{detail ? <p className="mt-2 text-sm leading-6 text-ink-500">{detail}</p> : null}</div>
         {mappedTone === "fail" ? <ShieldAlert className="h-5 w-5 shrink-0 text-fail-ink" /> : mappedTone === "warn" ? <AlertTriangle className="h-5 w-5 shrink-0 text-warn-ink" /> : <CheckCircle2 className="h-5 w-5 shrink-0 text-pass-ink" />}
       </div>
-      <pre className="mt-4 overflow-x-auto whitespace-pre-wrap break-words rounded bg-midnight p-3 font-mono text-xs leading-6 text-white">{record}</pre>
+      <pre className="mt-4 overflow-x-auto whitespace-pre-wrap break-words rounded bg-midnight p-3 font-mono text-xs leading-6 text-white">{record || t("no_record")}</pre>
     </article>
   );
 }

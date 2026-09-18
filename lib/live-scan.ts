@@ -39,9 +39,13 @@ export function mapLookupResponse(value: unknown, domain: string, durationMs: nu
   const permErrors = strings(spf.permErrors);
   const warnings = strings(spf.warnings);
   if (!Array.isArray(spf.chain) || spf.chain.length > 100) throw new Error("Invalid SPF chain");
-  const chainIncomplete = spf.chain.some(entry => !!object(entry).error);
+  const definitiveErrors = new Set(["no SPF record", "multiple SPF records"]);
+  const chainIncomplete = spf.chain.some(entry => {
+    const error = object(entry).error;
+    return !!error && !definitiveErrors.has(String(error));
+  });
   // Resolver failures, blocked include targets and loops are not proof that a domain fails SPF.
-  const incomplete = chainIncomplete || warnings.length > 0 || permErrors.some(e => !e.startsWith("PermError: SPF record requires"));
+  const incomplete = chainIncomplete || warnings.length > 0 || permErrors.some(e => !/^(PermError: SPF record requires|SPF include\/redirect loop:|Missing SPF include\/redirect record:|Multiple SPF records at)/.test(e));
   const tags = dmarc.tags === null ? {} : object(dmarc.tags);
   const policy = tags.p === "reject" || tags.p === "quarantine" || tags.p === "none" ? tags.p : "unknown";
   const pct = tags.pct === undefined ? 100 : tags.pct;
@@ -49,7 +53,7 @@ export function mapLookupResponse(value: unknown, domain: string, durationMs: nu
   const validDmarc = !!dmarcRecord && policy !== "unknown";
   const validSpf = !!spfRecord && lookups <= 10 && permErrors.length === 0 && !incomplete && spfState !== "red";
   const enforcing = validDmarc && policy === "reject" && pct === 100;
-  const fail = !validDmarc || policy === "none" || spfState === "red" || lookups > 10;
+  const fail = !validDmarc || policy === "none" || spfState === "red" || lookups > 10 || permErrors.length > 0;
   const pass = validSpf && enforcing && spfState === "green" && dmarcState === "green";
   const status = incomplete ? "WARNING" : fail ? "FAIL" : pass ? "PASS" : "WARNING";
   const grade = incomplete ? "—" : fail ? "F" : pass ? "A" : enforcing ? "B" : "C";
@@ -59,7 +63,7 @@ export function mapLookupResponse(value: unknown, domain: string, durationMs: nu
     dmarc: {valid: validDmarc, policy, record: dmarcRecord},
     spoofable: !enforcing,
     assessment: {
-      incomplete, pct: pct as number,
+      incomplete, spfState, dmarcState, pct: pct as number,
       spfReason: record(spf.reason), dmarcReason: record(dmarc.reason),
       dkimState, dkimReason: record(dkim.reason),
       warnings: [...permErrors, ...warnings],

@@ -205,7 +205,8 @@
       "errors": {
         "rate_limit": "The lookup service is busy. Please try again in a minute.",
         "timeout": "The lookup timed out. Please try again.",
-        "failed": "The lookup could not be completed. Please try again."
+        "failed": "The lookup could not be completed. Please try again.",
+        "invalid_domain": "Enter a valid domain such as example.com, without an email address or spaces."
       }
     },
     "results": {
@@ -231,7 +232,8 @@
       "cta_unlock": "Discuss a real review",
       "cta_another": "Check another domain",
       "incomplete": "Assessment incomplete",
-      "dkim_limit": "Only common selectors are checked. A missing key is not proof that DKIM is absent; a published key does not verify signatures or alignment."
+      "dkim_limit": "Only common selectors are checked. A missing key is not proof that DKIM is absent; a published key does not verify signatures or alignment.",
+      "no_record": "No record found."
     },
     "demo": {
       "toggle_off": "Without DMARK",
