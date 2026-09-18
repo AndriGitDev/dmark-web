@@ -38,7 +38,6 @@ import {
   buildScanEvidenceSummary,
   buildScanRemediationPlan,
   buildSpfFinding,
-  mockScan,
   validateScannableDomain,
 } from "@/lib/scan";
 
@@ -51,7 +50,7 @@ const scanSteps = [
   { key: "spoof", icon: Send },
 ];
 
-const quickDomains = ["example.is", "example.com", "example.org"];
+const quickDomains = ["kastro.is", "island.is", "example.com"];
 
 const workflow = [
   {
@@ -123,6 +122,8 @@ export function DmarkMarketing() {
   const [result, setResult] = useState<ScanPayload | null>(null);
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const scanController = useRef<AbortController | null>(null);
+  useEffect(() => () => scanController.current?.abort(), []);
 
   useEffect(() => {
     function focusScanner(event: KeyboardEvent) {
@@ -136,50 +137,57 @@ export function DmarkMarketing() {
     return () => window.removeEventListener("keydown", focusScanner);
   }, []);
 
-  useEffect(() => {
-    if (scanState !== "scanning") return;
-    const timers = scanSteps.map((_, index) => window.setTimeout(() => setActiveStep(index), index * 360));
-    return () => timers.forEach(window.clearTimeout);
-  }, [scanState]);
-
   async function handleScan(event?: FormEvent<HTMLFormElement>, sample?: string) {
     event?.preventDefault();
+    if (scanController.current) return;
     const validation = validateScannableDomain(sample || domain);
 
     if (validation.error) {
-      trackPrivacyEvent("scan_validation_error", { status: "ERROR", source: "demo_scanner" });
+      trackPrivacyEvent("scan_validation_error", { status: "ERROR", source: "live_scanner" });
       setError(validation.error);
       setScanState("error");
       setActiveStep(-1);
       return;
     }
 
-    trackPrivacyEvent("scan_start", { source: "demo_scanner" });
+    trackPrivacyEvent("scan_start", { source: "live_scanner" });
     setError("");
     setDomain(validation.domain);
     setResult(null);
     setActiveStep(-1);
     setScanState("scanning");
 
+    const controller = new AbortController();
+    scanController.current = controller;
+    const timeout = window.setTimeout(() => controller.abort(), 50_000);
     try {
-      await new Promise((resolve) => window.setTimeout(resolve, 1_250));
-      const payload = mockScan(validation.domain);
-      trackPrivacyEvent("scan_complete", { status: payload.status, source: "demo_scanner" });
+      const response = await fetch("/api/scan/", {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({domain: validation.domain}), signal: controller.signal,
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.code === "RATE_LIMITED" ? t("scanner.errors.rate_limit") : data.code === "TIMEOUT" ? t("scanner.errors.timeout") : t("scanner.errors.failed"));
+      const payload = data as ScanPayload;
+      if (payload.source !== "live" || payload.domain !== validation.domain || !payload.spf || !payload.dmarc) throw new Error(t("scanner.errors.failed"));
+      trackPrivacyEvent("scan_complete", { status: payload.status, source: "live_scanner" });
       setResult(payload);
       setDomain(payload.domain);
       setScanState("results");
       setActiveStep(scanSteps.length - 1);
     } catch (scanError) {
-      trackPrivacyEvent("scan_error", { status: "ERROR", source: "demo_scanner" });
-      setError(scanError instanceof Error ? scanError.message : "Scan failed.");
+      trackPrivacyEvent("scan_error", { status: "ERROR", source: "live_scanner" });
+      setError(controller.signal.aborted ? t("scanner.errors.timeout") : scanError instanceof Error ? scanError.message : t("scanner.errors.failed"));
       setScanState("error");
       setActiveStep(-1);
+    } finally {
+      window.clearTimeout(timeout);
+      scanController.current = null;
     }
   }
 
   useEffect(() => {
     if (scanState !== "results" || !result) return;
-    trackPrivacyEvent("recommendation_view", { status: result.status, source: "demo_scanner" });
+    trackPrivacyEvent("recommendation_view", { status: result.status, source: "live_scanner" });
   }, [scanState, result]);
 
   function openKastroService(source: CTAOrigin) {
@@ -303,7 +311,7 @@ function ScannerCard({ domain, setDomain, scanState, activeStep, error, result, 
               </div>
               <form onSubmit={onScan} className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto]">
                 <label className="sr-only" htmlFor="domain">{t("input_label")}</label>
-                <input id="domain" ref={inputRef} value={domain} onChange={(event) => setDomain(event.target.value)} className="min-h-14 rounded border border-line-strong bg-paper px-4 font-mono text-base text-ink outline-none transition placeholder:text-ink-300 focus:border-brand focus:ring-4 focus:ring-brand-soft" placeholder={t("placeholder")} autoComplete="off" inputMode="url" spellCheck={false} aria-invalid={scanState === "error" ? "true" : undefined} aria-describedby={scanState === "error" ? "domain-error" : undefined} />
+                <input id="domain" disabled={scanState === "scanning"} ref={inputRef} value={domain} onChange={(event) => setDomain(event.target.value)} className="min-h-14 rounded border border-line-strong bg-paper px-4 font-mono text-base text-ink outline-none transition placeholder:text-ink-300 focus:border-brand focus:ring-4 focus:ring-brand-soft" placeholder={t("placeholder")} autoComplete="off" inputMode="url" spellCheck={false} aria-invalid={scanState === "error" ? "true" : undefined} aria-describedby={scanState === "error" ? "domain-error" : undefined} />
                 <button type="submit" disabled={scanState === "scanning"} className="inline-flex min-h-14 items-center justify-center gap-2 rounded bg-brand-ink px-5 font-semibold text-white shadow-glow transition hover:bg-brand-ink disabled:cursor-not-allowed disabled:bg-ink-300">
                   {scanState === "scanning" ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />} {scanState === "scanning" ? t("scanning") : t("scan")}
                 </button>
@@ -315,7 +323,7 @@ function ScannerCard({ domain, setDomain, scanState, activeStep, error, result, 
                 </div>
               ) : null}
               {scanState === "error" ? <p id="domain-error" role="alert" className="mt-4 rounded border border-fail/30 bg-fail-soft px-4 py-3 text-sm font-semibold text-fail-ink">{error}</p> : null}
-              {scanState === "scanning" ? <div className="mt-5 h-2 overflow-hidden rounded-full bg-paper-soft"><div className="h-full rounded-full bg-brand transition-all duration-300" style={{ width: `${Math.min(100, ((activeStep + 1) / scanSteps.length) * 100)}%` }} /></div> : null}
+              {scanState === "scanning" ? <p role="status" className="mt-5 text-sm text-ink-500">{t("waiting")}</p> : null}
               <div className="mt-5 grid gap-3">
                 {scanSteps.map((step, index) => {
                   const Icon = step.icon;
@@ -354,7 +362,7 @@ function ResultsDashboard({ result, onRescan, onUpgrade }: { result: ScanPayload
       <div className={`rounded border p-5 ${toneClasses(tone)}`}>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em]">{t("badge")}</p>
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em]">{result.assessment?.incomplete ? t("incomplete") : t("badge")}</p>
             <h2 className="mt-3 text-6xl font-extrabold tracking-tight">{grade}</h2>
           </div>
           {tone === "pass" ? <ShieldCheck className="h-9 w-9" /> : tone === "warn" ? <AlertTriangle className="h-9 w-9" /> : <ShieldAlert className="h-9 w-9" />}
@@ -371,6 +379,7 @@ function ResultsDashboard({ result, onRescan, onUpgrade }: { result: ScanPayload
       <div className="mt-5 grid gap-4">
         <TechnicalFinding title={t("findings.spf")} tone={spfFinding.tone} headline={spfFinding.headline} detail={spfFinding.detail} record={result.spf.record} />
         <TechnicalFinding title={t("findings.dmarc")} tone={dmarcFinding.tone} headline={dmarcFinding.headline} record={result.dmarc.record} />
+        {result.assessment ? <article className="rounded border border-line bg-card p-4"><h3 className="font-semibold">{t("findings.dkim")}</h3><p className="mt-2 text-sm text-ink-500">{result.assessment.dkimReason}</p><p className="mt-2 text-sm text-ink-500">{t("dkim_limit")}</p></article> : null}
         <article className="rounded border border-line bg-paper p-4">
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-brand-ink">{t("sequence.label")}</p>
           <h3 className="mt-3 text-xl font-bold tracking-tight">{remediationPlan.summary}</h3>

@@ -7,7 +7,7 @@ type PrivacyEventName =
   | "cta_click";
 type PrivacyEventStatus = "PASS" | "WARNING" | "FAIL" | "ERROR";
 type PrivacyEventSource =
-  | "demo_scanner"
+  | "live_scanner"
   | "nav"
   | "pricing"
   | "footer"
@@ -34,7 +34,7 @@ const allowedEvents = new Set<PrivacyEventName>([
 ]);
 const allowedStatuses = new Set<PrivacyEventStatus>(["PASS", "WARNING", "FAIL", "ERROR"]);
 const allowedSources = new Set<PrivacyEventSource>([
-  "demo_scanner",
+  "live_scanner",
   "nav",
   "pricing",
   "footer",
@@ -91,3 +91,4 @@ export function trackPrivacyEvent(
     // Analytics must never affect product flow.
   }
 }
+
