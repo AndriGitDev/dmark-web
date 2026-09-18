@@ -1,11 +1,14 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import Image from "next/image";
+
 import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/routing";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import {
+  Menu,
+  X,
+  Globe2,
   AlertTriangle,
   ArrowRight,
   Check,
@@ -27,7 +30,6 @@ import {
   ServerCog,
   ShieldAlert,
   ShieldCheck,
-  Sparkles,
 } from "lucide-react";
 import type { ScanPayload } from "@/lib/scan";
 import { trackPrivacyEvent } from "@/lib/privacy-events";
@@ -49,14 +51,7 @@ const scanSteps = [
   { key: "spoof", icon: Send },
 ];
 
-const trustSignals = [
-  { key: "live" },
-  { key: "beta" },
-  { key: "operator" },
-  { key: "target" },
-];
-
-const quickDomains = ["landsbankinn.is", "kastro.is", "island.is"];
+const quickDomains = ["example.is", "example.com", "example.org"];
 
 const workflow = [
   {
@@ -199,190 +194,52 @@ export function DmarkMarketing() {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-paper text-ink">
-      <a href="#scanner-panel" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-brand-ink focus:px-4 focus:py-3 focus:font-semibold focus:text-white">
-        {t("skip")}
-      </a>
+    <MotionConfig reducedMotion="user"><main className="dmark-site">
+      <a href="#scanner-panel" className="skip-link">{t("skip")}</a>
       <Header onScan={() => scrollToScanner("nav")} onUpgrade={() => openKastroService("nav")} />
-
-      <section id="top" className="relative border-b border-line bg-paper">
-        <div className="absolute inset-0 dmark-grid" aria-hidden="true" />
-        <div className="relative mx-auto max-w-[1200px] px-5 py-10 sm:px-8 lg:px-12 lg:py-16">
-          <div className="grid min-h-[calc(100vh-96px)] items-center gap-10 lg:grid-cols-[minmax(0,1fr)_460px]">
-            <div>
-              <Image className="mb-8 h-auto w-48 drop-shadow-sm sm:w-56" src="/brand/dmark-logo.png" alt="dmark.is" width={769} height={240} sizes="(min-width: 640px) 224px, 192px" priority />
-              <p className="inline-flex items-center gap-3 rounded-full border border-line-strong bg-card px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.22em] text-brand-ink shadow-sm">
-                <span className="h-2 w-2 rounded-full bg-brand" aria-hidden="true" /> {t("hero.badge")}
-              </p>
-              <h1 className="mt-6 max-w-4xl text-balance text-[clamp(38px,6.2vw,76px)] font-[760] leading-[0.98] tracking-[-0.035em]">
-                {t.rich("hero.title", {
-                  brand: (chunks) => <span className="text-brand-ink underline decoration-brand/35 decoration-4 underline-offset-[10px]">{chunks}</span>,
-                })}
-              </h1>
-              <p className="mt-7 max-w-2xl text-pretty text-[clamp(17px,1.5vw,21px)] leading-[1.55] text-ink-500">
-                {t("hero.text")}
-              </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <button type="button" onClick={() => scrollToScanner("nav")} className="inline-flex min-h-[58px] items-center justify-center gap-3 rounded bg-brand-ink px-8 font-semibold text-white shadow-glow transition hover:-translate-y-0.5 hover:bg-brand-ink">
-                  <Search className="h-5 w-5" aria-hidden="true" /> {t("hero.cta_scan")}
-                </button>
-                <button type="button" onClick={() => openKastroService("nav")} className="inline-flex min-h-[58px] items-center justify-center gap-3 rounded border border-line-strong px-8 font-semibold text-ink transition hover:-translate-y-0.5 hover:border-ink">
-                  <Sparkles className="h-5 w-5" aria-hidden="true" /> {t("hero.cta_saas")}
-                </button>
-              </div>
+      <section id="top" className="hero-section">
+        <div className="shell hero-layout">
+          <div className="hero-copy">
+            <p className="eyebrow"><Globe2 size={16} /> {t("hero.badge")}</p>
+            <h1>{t.rich("hero.title", {brand: chunks => <span>{chunks}</span>})}</h1>
+            <p className="hero-description">{t("hero.text")}</p>
+            <div className="hero-actions">
+              <button className="button primary" onClick={() => scrollToScanner("nav")}>{t("hero.cta_scan")} <ArrowRight size={18} /></button>
+              <button className="text-button" onClick={() => openKastroService("nav")}>{t("hero.cta_saas")} <ChevronRight size={17} /></button>
             </div>
-
-            <div id="scanner-panel" tabIndex={-1}>
-              <ScannerCard
-                domain={domain}
-                setDomain={setDomain}
-                scanState={scanState}
-                activeStep={activeStep}
-                error={error}
-                result={result}
-                inputRef={inputRef}
-                onScan={handleScan}
-                onRescan={() => {
-                  setScanState("idle");
-                  setResult(null);
-                  setActiveStep(-1);
-                }}
-                onUpgrade={() => openKastroService("result_upsell")}
-              />
-            </div>
+            <p className="hero-note"><Lock size={14} /> {t("hero.signals.live.detail")}</p>
           </div>
-
-          <div className="grid gap-px overflow-hidden rounded border border-line bg-line shadow-sm md:grid-cols-4">
-            {trustSignals.map((signal) => (
-              <article key={signal.key} className="bg-card p-5">
-                <p className="font-mono text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-ink-500">{t(`hero.signals.${signal.key}.label`)}</p>
-                <p className="mt-2 text-2xl font-bold tracking-tight text-ink">{t(`hero.signals.${signal.key}.value`)}</p>
-                <p className="mt-2 text-sm leading-6 text-ink-500">{t(`hero.signals.${signal.key}.detail`)}</p>
-              </article>
-            ))}
+          <div className="hero-product">
+            <div className="product-caption"><span>01 / DMARK</span><span>SPF · DKIM · DMARC</span></div>
+            <div id="scanner-panel" tabIndex={-1}>
+              <ScannerCard domain={domain} setDomain={setDomain} scanState={scanState} activeStep={activeStep} error={error} result={result} inputRef={inputRef} onScan={handleScan} onRescan={() => {setScanState("idle"); setResult(null); setActiveStep(-1); inputRef.current?.focus();}} onUpgrade={() => openKastroService("result_upsell")} />
+            </div>
+            <div className="product-bottom"><span>{t("hero.signals.target.label")}</span><code>p=none <ArrowRight size={14} /> <strong>p=reject</strong></code></div>
           </div>
         </div>
+        <div className="shell protocol-strip"><span>{t("hero.signals.operator.label")}</span><strong>Microsoft 365</strong><strong>Google Workspace</strong><span className="protocol-end">DNS / SPF / DKIM / DMARC</span></div>
       </section>
-
-      <section id="threat" className="bg-paper-soft py-20 lg:py-28">
-        <div className="mx-auto max-w-[1200px] px-5 sm:px-8 lg:px-12">
+      <section id="threat" className="section light-section">
+        <div className="shell">
           <SectionHead eyebrow={t("threat.eyebrow")} title={t("threat.title")} text={t("threat.text")} />
           <SpoofDemo />
         </div>
       </section>
-
-      <section id="workflow" className="bg-paper py-20 lg:py-28">
-        <div className="mx-auto max-w-[1200px] px-5 sm:px-8 lg:px-12">
+      <section id="workflow" className="section workflow-section">
+        <div className="shell">
           <SectionHead eyebrow={t("workflow.eyebrow")} title={t("workflow.title")} text={t("workflow.text")} />
-          <div className="mt-12 grid gap-5 lg:grid-cols-3">
-            {workflow.map((step) => {
-              const Icon = step.icon;
-              return (
-                <article key={step.key} className="relative overflow-hidden rounded border border-line bg-card p-7 shadow-sm">
-                  <p className="font-mono text-sm font-semibold tracking-[0.18em] text-ink-500">{step.number}</p>
-                  <div className={`mt-7 grid h-12 w-12 place-items-center rounded ${toneClasses(step.tone)}`}>
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </div>
-                  <h3 className="mt-7 text-2xl font-bold tracking-tight">{t(`workflow.steps.${step.key}.title`)}</h3>
-                  <p className="mt-3 text-sm leading-7 text-ink-500">{t(`workflow.steps.${step.key}.detail`)}</p>
-                  <span className={`mt-6 inline-flex rounded-full px-3 py-1 font-mono text-xs font-semibold uppercase tracking-[0.14em] ${toneClasses(step.tone)}`}>{t(`workflow.steps.${step.key}.tag`)}</span>
-                </article>
-              );
-            })}
-          </div>
-          <div className="mt-8 rounded border border-line bg-card p-6">
-            <div className="flex flex-wrap items-baseline justify-between gap-3">
-              <h3 className="text-2xl font-bold tracking-tight">{t("workflow.ladder.title")}</h3>
-              <span className="font-mono text-xs text-ink-500">{t("workflow.ladder.detail")}</span>
-            </div>
-            <div className="mt-6 grid gap-3 md:grid-cols-3">
-              {["none", "quarantine", "reject"].map((item, index) => (
-                <div key={item} className="rounded border border-line bg-paper p-4">
-                  <span className="font-mono text-xs font-semibold text-brand-ink">0{index + 1}</span>
-                  <p className="mt-2 font-semibold text-ink">{t(`workflow.ladder.${item}`)}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+          <div className="workflow-grid">{workflow.map(step => {const Icon = step.icon; return <article key={step.key} className="workflow-step"><div className="step-top"><span>{step.number}</span><Icon size={24} /></div><h3>{t(`workflow.steps.${step.key}.title`)}</h3><p>{t(`workflow.steps.${step.key}.detail`)}</p><span className="step-tag">{t(`workflow.steps.${step.key}.tag`)}</span></article>;})}</div>
+          <div className="policy-track">{["none", "quarantine", "reject"].map((item,i) => <div key={item}><span>0{i+1}</span><p>{t(`workflow.ladder.${item}`)}</p>{i < 2 && <ArrowRight size={20}/>}</div>)}</div>
         </div>
       </section>
-
-      <section id="features" className="bg-paper-soft py-20 lg:py-28">
-        <div className="mx-auto max-w-[1200px] px-5 sm:px-8 lg:px-12">
-          <SectionHead eyebrow={t("features.eyebrow")} title={t("features.title")} text={t("features.text")} />
-          <div className="mt-12 grid gap-5 md:grid-cols-3">
-            {features.map((feature) => {
-              const Icon = feature.icon;
-              return (
-                <article key={feature.key} className="rounded border border-line bg-card p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-editorial">
-                  <div className="grid h-12 w-12 place-items-center rounded bg-brand-soft text-brand-ink">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </div>
-                  <h3 className="mt-7 text-2xl font-bold tracking-tight">{t(`features.list.${feature.key}.title`)}</h3>
-                  <p className="mt-3 text-sm leading-7 text-ink-500">{t(`features.list.${feature.key}.detail`)}</p>
-                </article>
-              );
-            })}
-          </div>
-        </div>
+      <section id="features" className="section light-section">
+        <div className="shell feature-layout"><SectionHead eyebrow={t("features.eyebrow")} title={t("features.title")} text={t("features.text")} /><div className="feature-list">{features.map(feature => {const Icon=feature.icon;return <article key={feature.key}><Icon size={25}/><div><h3>{t(`features.list.${feature.key}.title`)}</h3><p>{t(`features.list.${feature.key}.detail`)}</p></div></article>;})}</div></div>
       </section>
-
-      <section id="proof" className="bg-midnight py-20 text-white lg:py-28">
-        <div className="mx-auto grid max-w-[1200px] gap-10 px-5 sm:px-8 lg:grid-cols-[0.85fr_1.15fr] lg:px-12">
-          <div>
-            <p className="font-mono text-xs font-semibold uppercase tracking-[0.22em] text-brand-d">{t("proof.eyebrow")}</p>
-            <h2 className="mt-5 text-balance text-[clamp(30px,4.4vw,54px)] font-bold leading-none tracking-[-0.03em]">{t("proof.title")}</h2>
-            <p className="mt-6 max-w-xl text-pretty leading-8 text-white/68">{t("proof.text")}</p>
-          </div>
-          <ProofConsole />
-        </div>
-      </section>
-
-      <section id="pricing" className="bg-paper py-20 lg:py-28">
-        <div className="mx-auto max-w-[1200px] px-5 sm:px-8 lg:px-12">
-          <SectionHead eyebrow={t("pricing.eyebrow")} title={t("pricing.title")} text={t("pricing.text")} />
-          <div className="mt-12 grid gap-5 lg:grid-cols-3">
-            {pricing.map((tier) => (
-              <article key={tier.key} className={`rounded border bg-card p-7 shadow-sm ${tier.featured ? "border-brand ring-4 ring-brand-soft" : "border-line"}`}>
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h3 className="text-2xl font-bold tracking-tight">{t(`pricing.tiers.${tier.key}.name`)}</h3>
-                    <p className="mt-3 text-sm leading-7 text-ink-500">{t(`pricing.tiers.${tier.key}.description`)}</p>
-                  </div>
-                  {tier.featured ? <span className="rounded-full bg-brand-soft px-3 py-1 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-brand-ink">{t("pricing.tiers.core")}</span> : null}
-                </div>
-                <p className="mt-8 text-3xl font-bold tracking-tight">{t(`pricing.tiers.${tier.key}.price`)}</p>
-                <ul className="mt-8 space-y-3">
-                  {[0, 1, 2].map((i) => (
-                    <li key={i} className="flex gap-3 text-sm text-ink-700">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-pass-ink" aria-hidden="true" /> {t(`pricing.tiers.${tier.key}.points.${i}`)}
-                    </li>
-                  ))}
-                </ul>
-                <button type="button" onClick={() => (tier.mode === "scan" ? scrollToScanner("pricing") : openKastroService("pricing"))} className={`mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded px-5 font-semibold transition hover:-translate-y-0.5 ${tier.featured ? "bg-brand-ink text-white shadow-glow hover:bg-midnight" : "border border-line-strong text-ink hover:border-ink"}`}>
-                  {t(`pricing.tiers.${tier.key}.cta`)} <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </button>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-ink px-5 py-16 text-white sm:px-8 lg:px-12">
-        <div className="mx-auto flex max-w-[1200px] flex-col gap-6 rounded border border-white/10 bg-white/[0.03] p-8 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="font-mono text-xs font-semibold uppercase tracking-[0.22em] text-brand-d">{t("footer_cta.eyebrow")}</p>
-            <h2 className="mt-4 text-balance text-3xl font-bold tracking-tight md:text-5xl">{t("footer_cta.title")}</h2>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <button type="button" onClick={() => scrollToScanner("footer")} className="inline-flex min-h-12 items-center justify-center gap-2 rounded bg-white px-5 font-semibold text-ink transition hover:-translate-y-0.5"><Search className="h-4 w-4" /> {t("footer_cta.cta_scan")}</button>
-            <button type="button" onClick={() => openKastroService("footer")} className="inline-flex min-h-12 items-center justify-center gap-2 rounded border border-white/25 px-5 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10"><Sparkles className="h-4 w-4" /> {t("footer_cta.cta_saas")}</button>
-          </div>
-        </div>
-      </section>
-
+      <section id="proof" className="section proof-section"><div className="shell proof-layout"><SectionHead eyebrow={t("proof.eyebrow")} title={t("proof.title")} text={t("proof.text")} /><ProofConsole /></div></section>
+      <section id="pricing" className="section light-section"><div className="shell"><SectionHead eyebrow={t("pricing.eyebrow")} title={t("pricing.title")} text={t("pricing.text")} /><div className="pricing-grid">{pricing.map(tier => <article key={tier.key} className={`price-card ${tier.featured ? "featured" : ""}`}><div className="tier-label"><h3>{t(`pricing.tiers.${tier.key}.name`)}</h3>{tier.featured && <span>{t("pricing.tiers.core")}</span>}</div><p className="price-description">{t(`pricing.tiers.${tier.key}.description`)}</p><p className="price">{t(`pricing.tiers.${tier.key}.price`)}</p><ul>{[0,1,2].map(i=><li key={i}><Check size={17}/>{t(`pricing.tiers.${tier.key}.points.${i}`)}</li>)}</ul><button className={`button ${tier.featured ? "primary" : "secondary"}`} onClick={() => tier.mode === "scan" ? scrollToScanner("pricing") : openKastroService("pricing")}>{t(`pricing.tiers.${tier.key}.cta`)}<ArrowRight size={17}/></button></article>)}</div></div></section>
+      <section className="closing-section"><div className="shell"><p className="eyebrow">{t("footer_cta.eyebrow")}</p><h2>{t("footer_cta.title")}</h2><button className="button dark-button" onClick={() => scrollToScanner("footer")}>{t("footer_cta.cta_scan")}<ArrowRight size={20}/></button><span className="closing-word" aria-hidden="true">dmark.</span></div></section>
       <Footer onScan={() => scrollToScanner("footer")} onUpgrade={() => openKastroService("footer")} />
-    </main>
+    </main></MotionConfig>
   );
 }
 
@@ -399,41 +256,17 @@ function LanguageSwitcher() {
   );
 }
 
+function Wordmark() { return <span className="wordmark">dmark<span>.</span></span>; }
+
 function Header({ onScan, onUpgrade }: { onScan: () => void; onUpgrade: () => void }) {
   const t = useTranslations("Marketing.header");
-  return (
-    <header className="sticky top-0 z-40 border-b border-line/80 bg-paper/90 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-[1200px] items-center justify-between px-5 py-4 sm:px-8 lg:px-12">
-        <a href="#top" className="flex items-center gap-3" aria-label={t("logo_aria")}>
-          <Image className="h-11 w-auto" src="/brand/dmark-logo.png" alt="dmark.is" width={769} height={240} sizes="152px" priority />
-          <span className="sr-only">{t("logo_sr")}</span>
-        </a>
-        <nav className="hidden items-center gap-6 text-sm font-semibold text-ink-500 md:flex" aria-label="Primary">
-          <a className="transition hover:text-brand" href="#threat">{t("threat")}</a>
-          <a className="transition hover:text-brand" href="#workflow">{t("workflow")}</a>
-          <a className="transition hover:text-brand" href="#features">{t("features")}</a>
-          <a className="transition hover:text-brand" href="#pricing">{t("pricing")}</a>
-          <button className="transition hover:text-brand" onClick={onUpgrade} type="button">{t("saas")}</button>
-          <LanguageSwitcher />
-          <button className="inline-flex min-h-10 items-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white transition hover:bg-brand-ink" onClick={onScan} type="button"><Search className="h-4 w-4" aria-hidden="true" /> {t("cta_scan")}</button>
-        </nav>
-        <div className="flex items-center gap-3 md:hidden">
-          <LanguageSwitcher />
-          <button className="inline-flex min-h-10 items-center gap-2 rounded bg-brand-ink px-4 text-sm font-semibold text-white" onClick={onScan} type="button"><Search className="h-4 w-4" /> {t("cta_scan_short")}</button>
-        </div>
-      </div>
-    </header>
-  );
+  const locale = useLocale();
+  const [open, setOpen] = useState(false);
+  return <header className="site-header"><div className="shell header-inner"><a href="#top" aria-label={t("logo_aria")}><Wordmark /></a><nav id="primary-navigation" className={open ? "main-nav is-open" : "main-nav"} aria-label={locale === "is" ? "Aðalvalmynd" : "Main navigation"}>{["threat","workflow","features","pricing"].map(key=><a key={key} href={`#${key}`} onClick={()=>setOpen(false)}>{t(key)}</a>)}<button type="button" onClick={onUpgrade}>{t("saas")}</button></nav><div className="header-actions"><LanguageSwitcher/><button className="button primary nav-cta" onClick={onScan}>{t("cta_scan_short")}<ArrowRight size={16}/></button><button className="menu-button" aria-expanded={open} aria-controls="primary-navigation" aria-label={locale === "is" ? "Valmynd" : "Menu"} onClick={()=>setOpen(!open)}>{open ? <X/> : <Menu/>}</button></div></div></header>;
 }
 
 function SectionHead({ eyebrow, title, text }: { eyebrow: string; title: string; text: string }) {
-  return (
-    <div className="max-w-4xl">
-      <p className="flex items-center gap-3 font-mono text-xs font-semibold uppercase tracking-[0.22em] text-brand-ink before:h-px before:w-6 before:bg-brand">{eyebrow}</p>
-      <h2 className="mt-5 text-balance text-[clamp(30px,4.4vw,54px)] font-bold leading-none tracking-[-0.03em]">{title}</h2>
-      <p className="mt-6 max-w-3xl text-pretty text-lg leading-8 text-ink-500">{text}</p>
-    </div>
-  );
+  return <div className="section-head"><p className="eyebrow">{eyebrow}</p><h2>{title}</h2><p className="section-description">{text}</p></div>;
 }
 
 function ScannerCard({ domain, setDomain, scanState, activeStep, error, result, inputRef, onScan, onRescan, onUpgrade }: {
@@ -450,9 +283,9 @@ function ScannerCard({ domain, setDomain, scanState, activeStep, error, result, 
 }) {
   const t = useTranslations("Marketing.scanner");
   return (
-    <aside className="overflow-hidden rounded border border-line-strong bg-card shadow-editorial">
+    <aside aria-live="polite" className="scanner-card overflow-hidden rounded border border-line-strong bg-card shadow-editorial">
       <div className="flex items-center justify-between gap-3 border-b border-line bg-paper-soft px-4 py-3">
-        <span className="flex items-center gap-1.5" aria-hidden="true"><i className="h-3 w-3 rounded-full bg-fail" /><i className="h-3 w-3 rounded-full bg-warn" /><i className="h-3 w-3 rounded-full bg-pass" /></span>
+        <ShieldCheck className="h-5 w-5 text-brand-ink" aria-hidden="true" />
         <span className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-ink-500">{t("badge")}</span>
         <span className="inline-flex items-center gap-1.5 font-mono text-xs text-pass-ink"><i className="h-2 w-2 rounded-full bg-pass" />{t("online")}</span>
       </div>
@@ -576,8 +409,8 @@ function SpoofDemo() {
     <div className="mt-12 grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
       <div className="rounded border border-line bg-card p-5 shadow-editorial">
         <div className="mb-5 grid grid-cols-2 overflow-hidden rounded border border-line bg-paper p-1">
-          <button type="button" onClick={() => setProtectedMode(false)} className={`rounded px-3 py-3 text-sm font-semibold transition ${!protectedMode ? "bg-fail-ink text-white" : "text-ink-500"}`}>{t("toggle_off")}</button>
-          <button type="button" onClick={() => setProtectedMode(true)} className={`rounded px-3 py-3 text-sm font-semibold transition ${protectedMode ? "bg-pass-ink text-white" : "text-ink-500"}`}>{t("toggle_on")}</button>
+          <button type="button" aria-pressed={!protectedMode} onClick={() => setProtectedMode(false)} className={`rounded px-3 py-3 text-sm font-semibold transition ${!protectedMode ? "bg-fail-ink text-white" : "text-ink-500"}`}>{t("toggle_off")}</button>
+          <button type="button" aria-pressed={protectedMode} onClick={() => setProtectedMode(true)} className={`rounded px-3 py-3 text-sm font-semibold transition ${protectedMode ? "bg-pass-ink text-white" : "text-ink-500"}`}>{t("toggle_on")}</button>
         </div>
         <div className="overflow-hidden rounded border border-line bg-paper">
           <div className="flex flex-wrap items-center gap-3 border-b border-line bg-card px-4 py-3"><Inbox className="h-4 w-4 text-brand-ink" /><span className="font-semibold">{t("inbox_label")}</span><span className="ml-auto font-mono text-xs text-ink-500">{protectedMode ? t("inbox_count_on") : t("inbox_count_off")}</span></div>
@@ -650,7 +483,7 @@ function Footer({ onScan, onUpgrade }: { onScan: () => void; onUpgrade: () => vo
     <footer className="bg-midnight py-10 text-white">
       <div className="mx-auto flex max-w-[1200px] flex-col gap-5 px-5 sm:px-8 md:flex-row md:items-center md:justify-between lg:px-12">
         <div>
-          <span className="inline-flex rounded bg-white px-3 py-2"><Image className="h-10 w-auto" src="/brand/dmark-logo.png" alt="dmark.is" width={769} height={240} sizes="138px" /></span>
+          <Wordmark />
           <p className="mt-4 max-w-xl text-sm leading-6 text-white/70">{t("text")}</p>
           <p className="mt-3 text-sm text-white/70">{t.rich("credit", { kastro: (chunks) => <a href="https://kastro.is" className="font-semibold text-white underline decoration-white/30 underline-offset-4 transition hover:decoration-white" target="_blank" rel="noreferrer">{chunks}</a> })}</p>
         </div>
@@ -662,3 +495,4 @@ function Footer({ onScan, onUpgrade }: { onScan: () => void; onUpgrade: () => vo
     </footer>
   );
 }
+
