@@ -6,7 +6,7 @@ import ts from "typescript";
 
 export const root = dirname(dirname(fileURLToPath(import.meta.url)));
 
-export function loadTSModule(relativePath) {
+export function loadTSModule(relativePath, imports = {}) {
   const filename = join(root, relativePath);
   const source = readFileSync(filename, "utf8");
   const { outputText } = ts.transpileModule(source, {
@@ -19,9 +19,12 @@ export function loadTSModule(relativePath) {
   const cjsModule = { exports: {} };
   const sandbox = {
     console,
+    Response, Request, URL, TextDecoder, AbortController,
+    fetch: (...args) => imports.fetch(...args),
     exports: cjsModule.exports,
     module: cjsModule,
     require: (specifier) => {
+      if (specifier in imports) return imports[specifier];
       throw new Error(`Unexpected require: ${specifier}`);
     },
     setTimeout,
@@ -31,3 +34,4 @@ export function loadTSModule(relativePath) {
   vm.runInNewContext(outputText, sandbox, { filename });
   return cjsModule.exports;
 }
+

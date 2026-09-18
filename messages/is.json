@@ -1,17 +1,17 @@
 {
   "Marketing": {
-    "skip": "Hoppa í gagnvirka sýnidæmið",
+    "skip": "Fara í lénaskoðun",
     "hero": {
-      "badge": "dmark.is · Íslensk tölvupóstöryggi",
-      "title": "Kynntu þér DNS færslurnar sem árásaraðilar nota til að <brand>herma eftir vörumerkinu þínu.</brand>",
-      "text": "Prófaðu gagnvirkt DMARC og SPF sýnidæmi til að sjá hvernig hætta á fölsun er metin. Ræddu síðan við Kastro um raunverulega DNS yfirferð og örugga leið að p=reject.",
-      "cta_scan": "Prófa sýnidæmið",
+      "badge": "Íslensk lausn fyrir öruggari tölvupóst",
+      "title": "Þitt lén. <brand>Þitt orðspor.</brand>",
+      "text": "Gerðu öðrum erfiðara að senda póst í þínu nafni. Fáðu innsýn í SPF og DMARC og taktu næstu skref að öruggari tölvupósti.",
+      "cta_scan": "Athuga lénið þitt",
       "cta_saas": "Ræða við Kastro",
       "signals": {
         "live": {
-          "label": "Gagnvirkt sýnidæmi",
-          "value": "Enginn bakendi",
-          "detail": "Niðurstöðurnar eru til skýringar, verða til í vafranum og fletta ekki upp virku DNS."
+          "label": "Rauntímaskoðun DNS",
+          "value": "Opinberar færslur",
+          "detail": "Lénið er sent til Kastro Lookup til að meta opinberar DNS-færslur."
         },
         "beta": {
           "label": "Raunveruleg yfirferð",
@@ -38,22 +38,22 @@
       "features": "Eiginleikar",
       "pricing": "Verðskrá",
       "saas": "Kastro þjónusta",
-      "cta_scan": "Prófa sýnidæmið",
-      "cta_scan_short": "Sýnidæmi"
+      "cta_scan": "Athuga lénið þitt",
+      "cta_scan_short": "Athuga lén"
     },
     "threat": {
-      "eyebrow": "02 — Ógnin",
-      "title": "Hver sem er getur sent tölvupóst í nafni lénsins þíns. Þar til þú segir móttakendum að leyfa það ekki.",
-      "text": "Tölvupóstur var byggður á trausti, ekki auðkenni. Án virkrar DMARC stefnu getur ókunnugur sett netfangið þitt í From-reitinn og náð til viðskiptavina þinna. Breyttu stillingunni til að sjá muninn."
+      "eyebrow": "01 / Munurinn",
+      "title": "Þitt nafn á aðeins að tala fyrir þig.",
+      "text": "Kunnuglegt nafn sendanda segir ekki alla söguna. Sjáðu hvernig virk DMARC-stefna hjálpar póstþjónum að hafna fölsuðum sendingum."
     },
     "workflow": {
-      "eyebrow": "03 — Leiðin",
-      "title": "Frá sýnidæmi til virkrar stefnu — án þess að trufla póstflæði.",
-      "text": "Sýnidæmið útskýrir flókinn raunveruleika: eldri þjónustur, SPF takmörk, XML skýrslur og DNS breytingar sem þarf að yfirfara vandlega.",
+      "eyebrow": "02 / Skýr leið áfram",
+      "title": "Frá opinberum færslum að upplýstum ákvörðunum.",
+      "text": "Skoðaðu SPF- og DMARC-stillingar og staðfestu lögmæta sendendur og skýrslur áður en þú breytir stefnunni.",
       "steps": {
         "discover": {
           "title": "Uppgötva",
-          "detail": "Kynntu þér SPF, DMARC, DKIM, áframsendingar og óþekkta sendendur án þess að tengja aðgang.",
+          "detail": "Sæktu opinberar DNS-færslur og fáðu yfirsýn yfir stillingar án þess að stofna aðgang.",
           "tag": "Engin innskráning"
         },
         "stabilize": {
@@ -76,9 +76,9 @@
       }
     },
     "features": {
-      "eyebrow": "04 — Þjónustugeta",
-      "title": "Farðu úr óvörðum DNS færslum yfir í virkt traust.",
-      "text": "Kastro getur afmarkað og unnið þessa þætti fyrir raunverulegt lén. Þeir eru ekki virkjaðir í sýnidæminu.",
+      "eyebrow": "03 / Undir yfirborðinu",
+      "title": "Flóknar færslur. Skýrar ákvarðanir.",
+      "text": "Kastro getur hjálpað þér að breyta niðurstöðum skoðunar í yfirfarna framkvæmdaáætlun.",
       "list": {
         "flattening": {
           "title": "Leiðsögn um SPF samþjöppun",
@@ -95,8 +95,8 @@
       }
     },
     "proof": {
-      "eyebrow": "05 — Rekstraröryggi",
-      "title": "Sérhver ráðlegging ætti að skýra sig sjálf.",
+      "eyebrow": "04 / Gögn á undan aðgerðum",
+      "title": "Sjáðu ástæðuna. Áður en þú breytir.",
       "text": "Þessi hugmyndasýn sýnir hvernig DMARC skýrslur, SPF keðjur og DNS færslur geta orðið að öruggum aðgerðum.",
       "console": {
         "badge": "dmark eftirlitsborð",
@@ -121,26 +121,26 @@
       }
     },
     "pricing": {
-      "eyebrow": "06 — Verðskrá",
-      "title": "Lærðu með sýnidæminu. Hafðu samband við Kastro fyrir raunverulega vinnu.",
-      "text": "Sýnidæmið í vafranum er ókeypis og til skýringar. Kastro afmarkar raunverulega DNS yfirferð, úrbætur og stýrða innleiðingu.",
+      "eyebrow": "05 / Fyrstu skrefin",
+      "title": "Byrjaðu á yfirsýn. Haltu áfram af öryggi.",
+      "text": "Lénaskoðunin er ókeypis. Yfirferð, lagfæringar og innleiðing eru metnar í samráði við Kastro.",
       "tiers": {
         "core": "Kjarni",
         "scan": {
           "name": "Skoðun",
-          "description": "Fræðandi sýnidæmi í vafra um DMARC og SPF áhættu.",
+          "description": "Yfirsýn yfir opinberar auðkenningarfærslur tölvupósts á tilteknum tíma.",
           "price": "0 ISK",
           "points": [
-            "Engin innskráning eða aðgangur",
-            "Dæmi um SPF og DMARC stöðu",
-            "Engin uppfletting á virku DNS"
+            "Enginn aðgangur nauðsynlegur",
+            "SPF- og DMARC-mat úr lifandi gögnum",
+            "Skoðun algengra DKIM-lykla"
           ],
-          "cta": "Prófa sýnidæmið"
+          "cta": "Athuga lénið þitt"
         },
         "saas": {
           "name": "Kastro yfirferð",
           "description": "Raunveruleg yfirferð á léninu, sendendum og leiðinni að fullri vörn.",
-          "price": "Afmarkað",
+          "price": "Samkvæmt umfangi",
           "points": [
             "Yfirferð á virkum DNS gögnum",
             "Skýr úrbótaáætlun",
@@ -149,7 +149,7 @@
           "cta": "Ræða yfirferð"
         },
         "managed": {
-          "name": "Kastro Managed",
+          "name": "Kastro innleiðing",
           "description": "Heildarlausn fyrir stjórnendur sem vilja að DNS breytingar séu meðhöndlaðar á öruggan hátt.",
           "price": "Samkvæmt tilboði",
           "points": [
@@ -162,30 +162,30 @@
       }
     },
     "footer_cta": {
-      "eyebrow": "Tilbúin þegar þú ert tilbúin",
-      "title": "Sýndu öryggisgatið áður en árásarmaður gerir það.",
-      "cta_scan": "Prófa sýnidæmið",
+      "eyebrow": "Taktu fyrsta skrefið",
+      "title": "Láttu orðspor þitt fylgja hverjum pósti.",
+      "cta_scan": "Athuga lénið þitt",
       "cta_saas": "Ræða við Kastro"
     },
     "footer": {
       "text": "Fræðsla um DMARC/SPF og Kastro-stýrðar úrbætur fyrir íslensk fyrirtæki.",
-      "credit": "Kastro <kastro>vara</kastro>.",
-      "cta_scan": "Prófa sýnidæmið",
+      "credit": "Vara frá <kastro>Kastro</kastro>.",
+      "cta_scan": "Athuga lénið þitt",
       "cta_saas": "Ræða við Kastro"
     },
     "scanner": {
-      "badge": "dmark · gagnvirkt sýnidæmi",
-      "online": "aðeins í vafra",
-      "label": "Dæmi til skýringar — engin virk DNS uppfletting",
+      "badge": "dmark · lénaskoðun",
+      "online": "lifandi gögn",
+      "label": "Skoðaðu auðkenningarfærslur tölvupósts",
       "shortcut": "ýttu á /",
       "input_label": "Lén",
       "placeholder": "fyrirtaeki.is",
-      "scan": "Keyra sýnidæmi",
-      "scanning": "Býr til dæmi",
+      "scan": "Athuga lén",
+      "scanning": "Skoða",
       "try": "Prófa",
       "steps": {
         "dns": {
-          "title": "DNS vald",
+          "title": "DNS-færslur",
           "detail": "NS + TXT færslur"
         },
         "spf": {
@@ -200,10 +200,17 @@
           "title": "Hætta á fölsun",
           "detail": "samræmi + einkunn"
         }
+      },
+      "waiting": "Bíð eftir Kastro Lookup. Skoðunin getur tekið allt að 45 sekúndur.",
+      "errors": {
+        "rate_limit": "Mikið álag er á þjónustunni. Reyndu aftur eftir mínútu.",
+        "timeout": "Skoðunin tók of langan tíma. Reyndu aftur.",
+        "failed": "Ekki tókst að ljúka skoðuninni. Reyndu aftur.",
+        "invalid_domain": "Sláðu inn gilt lén, til dæmis fyrirtaeki.is, án netfangs eða bilstafa."
       }
     },
     "results": {
-      "badge": "Niðurstaða sýnidæmis",
+      "badge": "SPF / DMARC-einkunn úr lifandi gögnum",
       "spoofable_default": "Þetta lén er enn hægt að misnota þar til SPF og DMARC vörn er komin í lag.",
       "secure_default": "Þetta lén er með virka DMARC vörn. Haltu áfram að fylgjast með breytingum.",
       "stats": {
@@ -212,17 +219,21 @@
         "risk_high": "alvarleg",
         "risk_low": "lág",
         "time": "Tími",
-        "checked_at": "Búið til {date}"
+        "checked_at": "Skoðað {date}"
       },
       "findings": {
         "spf": "SPF staða",
-        "dmarc": "DMARC staða"
+        "dmarc": "DMARC staða",
+        "dkim": "DKIM-leit"
       },
       "sequence": {
         "label": "Ráðlögð röð"
       },
       "cta_unlock": "Ræða raunverulega yfirferð",
-      "cta_another": "Prófa annað dæmi"
+      "cta_another": "Athuga annað lén",
+      "incomplete": "Mati er ólokið",
+      "dkim_limit": "Aðeins er leitað að algengum lyklum. Ófundinn lykill sannar ekki að DKIM vanti og birtur lykill staðfestir hvorki undirritun né samræmi sendanda.",
+      "no_record": "Engin færsla fannst."
     },
     "demo": {
       "toggle_off": "Án DMARK",
@@ -230,7 +241,7 @@
       "inbox_label": "Innhólf — bjorn@northwind.is",
       "inbox_count_on": "1 skilaboð · 1 hafnað",
       "inbox_count_off": "2 skilaboð",
-      "caption_on": "p=reject — falsaða póstinn nær aldrei í innhólfið.",
+      "caption_on": "p=reject — ósamræmdum pósti er hafnað í þessu sýnidæmi.",
       "caption_off": "p=none — bæði skilaboðin skila sér. Það falsaða lítur eins út.",
       "steps": [
         {
@@ -253,7 +264,7 @@
       "mail": {
         "sender": "Northwind Bókhald",
         "pass": "✓ DKIM STANDST",
-        "fail": "✕ SPF FEILL · ÓSAMRÆMI",
+        "fail": "✕ SPF STENST EKKI · ÓSAMRÆMI",
         "via": " · sent í gegnum {ip}",
         "rejected": "Hafnað hjá móttakanda",
         "safe": {
@@ -269,20 +280,20 @@
   },
   "Metadata": {
     "title": "dmark.is | Íslensk DMARC og SPF vörn",
-    "description": "Kynntu þér gagnvirkt DMARC og SPF sýnidæmi, lærðu hvernig hætta á fölsun er metin og ræddu raunverulega lénayfirferð við Kastro.",
+    "description": "Skoðaðu lifandi SPF- og DMARC-færslur, fáðu innsýn í DKIM og skipuleggðu öruggari tölvupóst með Kastro.",
     "ogTitle": "dmark.is | Íslensk DMARC og SPF vörn",
-    "ogDescription": "Skildu DMARC og SPF áhættu með sýnidæmi í vafra og skipuleggðu síðan raunverulega yfirferð og örugga leið að p=reject."
+    "ogDescription": "Skoðaðu lifandi SPF- og DMARC-færslur, fáðu innsýn í DKIM og skipuleggðu öruggari tölvupóst með Kastro."
   },
   "Errors": {
     "somethingBroke": "Eitthvað fór úrskeiðis",
     "unexpectedError": "Óvænt villa kom upp á þessari síðu.",
-    "errorDetail": "Reyndu aftur eða farðu aftur í gagnvirka sýnidæmið.",
+    "errorDetail": "Reyndu aftur eða farðu aftur í lénaskoðun.",
     "tryAgain": "Reyna aftur",
-    "backToScanner": "Aftur í sýnidæmið",
+    "backToScanner": "Til baka í lénaskoðun",
     "notFound": {
       "title": "Síða fannst ekki",
       "heading": "Þessi síða er ekki til.",
-      "detail": "Slóðin gæti hafa breyst eða hlekkurinn verið rangt sleginn inn. Gagnvirka sýnidæmið er á forsíðunni."
+      "detail": "Slóðin gæti hafa breyst. Lénaskoðunin er á forsíðunni."
     }
   }
 }

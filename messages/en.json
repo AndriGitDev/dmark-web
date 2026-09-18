@@ -1,17 +1,17 @@
 {
   "Marketing": {
-    "skip": "Skip to the interactive demo",
+    "skip": "Skip to domain check",
     "hero": {
-      "badge": "dmark.is · Icelandic email security",
-      "title": "Explore the DNS records attackers use to <brand>borrow your brand.</brand>",
-      "text": "Use an interactive DMARC and SPF demo to see how spoofing risk is assessed, then talk to Kastro about a real DNS review and a safe path to p=reject.",
-      "cta_scan": "Try the demo",
+      "badge": "Email security. Made in Iceland.",
+      "title": "Your domain. <brand>Your reputation.</brand>",
+      "text": "Make it harder to send email in your name. Understand SPF and DMARC, identify the gaps, and plan a safer path to protected email.",
+      "cta_scan": "Check your domain",
       "cta_saas": "Discuss with Kastro",
       "signals": {
         "live": {
-          "label": "Interactive browser demo",
-          "value": "No backend",
-          "detail": "Illustrative results stay in your browser and do not query live DNS."
+          "label": "Live DNS lookup",
+          "value": "Public records",
+          "detail": "Your domain is sent to Kastro Lookup to assess its public DNS records."
         },
         "beta": {
           "label": "Real-world review",
@@ -38,22 +38,22 @@
       "features": "Features",
       "pricing": "Pricing",
       "saas": "Kastro service",
-      "cta_scan": "Try the demo",
-      "cta_scan_short": "Demo"
+      "cta_scan": "Check your domain",
+      "cta_scan_short": "Check domain"
     },
     "threat": {
-      "eyebrow": "02 — The threat",
-      "title": "Anyone can send email as your domain. Until you tell receivers not to let them.",
-      "text": "Email was built on trust, not identity. Without an enforced DMARC policy, a stranger can put your address in the From field and reach your customers. Flip the switch to see the difference."
+      "eyebrow": "01 / The difference",
+      "title": "Your name should only speak for you.",
+      "text": "A familiar sender is not always a trusted sender. Explore how an enforced DMARC policy helps receiving mail servers reject impersonation."
     },
     "workflow": {
-      "eyebrow": "03 — The path",
-      "title": "From an illustrative result to an enforced policy — without breaking mail.",
-      "text": "The demo explains the messy middle: legacy vendors, SPF lookup limits, report XML, and DNS changes that need careful operational review.",
+      "eyebrow": "02 / A clear path forward",
+      "title": "From public records to informed decisions.",
+      "text": "Check published SPF and DMARC configuration, then verify legitimate senders and reporting before changing enforcement.",
       "steps": {
         "discover": {
           "title": "Discover",
-          "detail": "Learn what SPF, DMARC, DKIM, forwarding, and unknown senders mean without connecting an account.",
+          "detail": "Retrieve public DNS records and identify configuration issues without creating an account.",
           "tag": "No login"
         },
         "stabilize": {
@@ -76,9 +76,9 @@
       }
     },
     "features": {
-      "eyebrow": "04 — Service capabilities",
-      "title": "Move from exposed DNS records to enforced domain trust.",
-      "text": "These are capabilities Kastro can scope and deliver for a real domain. They are not activated by the browser demo.",
+      "eyebrow": "03 / Beneath the surface",
+      "title": "Complex records. Clear decisions.",
+      "text": "Kastro can help turn the lookup findings into a reviewed implementation plan.",
       "list": {
         "flattening": {
           "title": "SPF flattening guidance",
@@ -95,8 +95,8 @@
       }
     },
     "proof": {
-      "eyebrow": "05 — Operational proof",
-      "title": "Every recommendation should explain itself.",
+      "eyebrow": "04 / Evidence, before action",
+      "title": "See the why. Before the change.",
       "text": "This concept view illustrates how DMARC reports, SPF chains, and DNS records can become actions a business can safely approve.",
       "console": {
         "badge": "dmark audit console",
@@ -121,21 +121,21 @@
       }
     },
     "pricing": {
-      "eyebrow": "06 — Pricing",
-      "title": "Learn with the demo. Contact Kastro for real work.",
-      "text": "The browser demo is free and illustrative. Real DNS review, remediation, and managed implementation are scoped by Kastro.",
+      "eyebrow": "05 / Get started",
+      "title": "Start with clarity. Move with confidence.",
+      "text": "The live domain check is free. DNS review, remediation and implementation are scoped with Kastro.",
       "tiers": {
         "core": "Core",
         "scan": {
           "name": "Skoðun",
-          "description": "Browser-only educational example of DMARC and SPF exposure.",
+          "description": "A point-in-time view of public email authentication records.",
           "price": "0 ISK",
           "points": [
-            "No login or account",
-            "Illustrative SPF and DMARC status",
-            "No live DNS lookup"
+            "No account required",
+            "Live SPF and DMARC assessment",
+            "Common DKIM selector checks"
           ],
-          "cta": "Try the demo"
+          "cta": "Check your domain"
         },
         "saas": {
           "name": "Kastro review",
@@ -163,25 +163,25 @@
     },
     "footer_cta": {
       "eyebrow": "Ready when you are",
-      "title": "Show the spoofing gap before an attacker does.",
-      "cta_scan": "Try the demo",
+      "title": "Put your name behind every email.",
+      "cta_scan": "Check your domain",
       "cta_saas": "Discuss with Kastro"
     },
     "footer": {
       "text": "Educational DMARC/SPF guidance and Kastro-managed remediation for Icelandic businesses.",
       "credit": "A <kastro>Kastro</kastro> made product.",
-      "cta_scan": "Try the demo",
+      "cta_scan": "Check your domain",
       "cta_saas": "Discuss with Kastro"
     },
     "scanner": {
-      "badge": "dmark · interactive demo",
-      "online": "browser only",
-      "label": "Illustrative result — no live DNS lookup",
+      "badge": "dmark · domain check",
+      "online": "live lookup",
+      "label": "Check public email authentication records",
       "shortcut": "press /",
       "input_label": "Domain",
       "placeholder": "yourcompany.is",
-      "scan": "Run demo",
-      "scanning": "Building example",
+      "scan": "Check domain",
+      "scanning": "Checking",
       "try": "Try",
       "steps": {
         "dns": {
@@ -200,10 +200,17 @@
           "title": "Spoof exposure",
           "detail": "alignment + audit grade"
         }
+      },
+      "waiting": "Waiting for Kastro Lookup. This may take up to 45 seconds.",
+      "errors": {
+        "rate_limit": "The lookup service is busy. Please try again in a minute.",
+        "timeout": "The lookup timed out. Please try again.",
+        "failed": "The lookup could not be completed. Please try again.",
+        "invalid_domain": "Enter a valid domain such as example.com, without an email address or spaces."
       }
     },
     "results": {
-      "badge": "Illustrative demo",
+      "badge": "Live SPF / DMARC rating",
       "spoofable_default": "This domain can still be abused by unauthorised senders until SPF and DMARC enforcement are corrected.",
       "secure_default": "This domain has enforcing DMARC posture. Keep monitoring for sender and DNS drift.",
       "stats": {
@@ -212,17 +219,21 @@
         "risk_high": "critical",
         "risk_low": "low",
         "time": "Time",
-        "checked_at": "Generated {date}"
+        "checked_at": "Checked {date}"
       },
       "findings": {
         "spf": "SPF status",
-        "dmarc": "DMARC status"
+        "dmarc": "DMARC status",
+        "dkim": "DKIM discovery"
       },
       "sequence": {
         "label": "Recommended sequence"
       },
       "cta_unlock": "Discuss a real review",
-      "cta_another": "Try another example"
+      "cta_another": "Check another domain",
+      "incomplete": "Assessment incomplete",
+      "dkim_limit": "Only common selectors are checked. A missing key is not proof that DKIM is absent; a published key does not verify signatures or alignment.",
+      "no_record": "No record found."
     },
     "demo": {
       "toggle_off": "Without DMARK",
@@ -269,20 +280,20 @@
   },
   "Metadata": {
     "title": "dmark.is | Icelandic DMARC and SPF protection",
-    "description": "Explore an interactive DMARC and SPF demo, learn how spoofing risk is assessed, and discuss a real domain review with Kastro.",
+    "description": "Check live SPF and DMARC records, explore DKIM discovery, and plan safer email authentication with Kastro.",
     "ogTitle": "dmark.is | Icelandic DMARC and SPF protection",
-    "ogDescription": "Understand DMARC and SPF risk through an illustrative browser demo, then plan a real review and a safe path toward p=reject."
+    "ogDescription": "Check live SPF and DMARC records, explore DKIM discovery, and plan safer email authentication with Kastro."
   },
   "Errors": {
     "somethingBroke": "Something broke",
     "unexpectedError": "This page hit an unexpected error.",
-    "errorDetail": "Try again, or return to the interactive demo.",
+    "errorDetail": "Try again or return to the domain check.",
     "tryAgain": "Try again",
-    "backToScanner": "Back to the demo",
+    "backToScanner": "Back to domain check",
     "notFound": {
       "title": "Page not found",
       "heading": "This page does not exist.",
-      "detail": "The address may have changed or the link was mistyped. The interactive demo is available from the front page."
+      "detail": "The address may have changed. The domain checker is available on the front page."
     }
   }
 }
