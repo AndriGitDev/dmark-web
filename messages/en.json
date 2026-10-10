@@ -2,11 +2,11 @@
   "Marketing": {
     "skip": "Skip to domain check",
     "hero": {
-      "badge": "Email security. Made in Iceland.",
-      "title": "Your domain. <brand>Your reputation.</brand>",
-      "text": "Make it harder to send email in your name. Understand SPF and DMARC, identify the gaps, and plan a safer path to protected email.",
+      "badge": "Free email security by Kastro",
+      "title": "Safer email. <brand>Start with your domain.</brand>",
+      "text": "Check your domain for free, keep a setup checklist, and work through SPF, DKIM, DMARC and BIMI. Get help from Kastro when you need someone to handle the setup.",
       "cta_scan": "Check your domain",
-      "cta_saas": "Discuss with Kastro",
+      "cta_saas": "Get help from Kastro",
       "signals": {
         "live": {
           "label": "Live DNS lookup",
@@ -19,7 +19,7 @@
           "detail": "Kastro can review actual DNS evidence and scope the right remediation work."
         },
         "operator": {
-          "label": "Operator-managed rollout",
+          "label": "For your email provider",
           "value": "Kastro",
           "detail": "Kastro verifies DNS changes before they go live."
         },
@@ -36,10 +36,11 @@
       "threat": "Threat",
       "workflow": "How it works",
       "features": "Features",
-      "pricing": "Pricing",
       "saas": "Kastro service",
       "cta_scan": "Check your domain",
-      "cta_scan_short": "Check domain"
+      "cta_scan_short": "Check domain",
+      "domains": "My domains",
+      "help": "Get help"
     },
     "threat": {
       "eyebrow": "01 / The difference",
@@ -53,12 +54,12 @@
       "steps": {
         "discover": {
           "title": "Discover",
-          "detail": "Retrieve public DNS records and identify configuration issues without creating an account.",
+          "detail": "Check public DNS records, then add your domain to a checklist saved in this browser.",
           "tag": "No login"
         },
         "stabilize": {
           "title": "Stabilize",
-          "detail": "Flatten SPF, remove stale includes, and document every DNS change before it ships.",
+          "detail": "Review every sending service, remove obsolete SPF entries only after verification, and enable DKIM at each provider.",
           "tag": "Reversible"
         },
         "enforce": {
@@ -72,92 +73,29 @@
         "detail": "Most domains never leave the first rung.",
         "none": "p=none — watch only",
         "quarantine": "p=quarantine — suspicious mail diverted",
-        "reject": "p=reject — spoofed mail blocked"
+        "reject": "p=reject — request rejection of unauthenticated mail"
       }
     },
     "features": {
       "eyebrow": "03 / Beneath the surface",
-      "title": "Complex records. Clear decisions.",
-      "text": "Kastro can help turn the lookup findings into a reviewed implementation plan.",
+      "title": "Four standards. Practical next steps.",
+      "text": "Use the free check and setup checklist at your own pace. Dmark does not publish or change DNS records for you.",
       "list": {
-        "flattening": {
-          "title": "SPF flattening guidance",
-          "detail": "Plan how Microsoft 365, Google Workspace, marketing tools, and local senders can stay below the 10-lookup limit."
+        "spf": {
+          "title": "SPF",
+          "detail": "Review authorized senders, duplicate records and the 10-lookup limit. Clean up unnecessary includes with evidence; Dmark does not offer hosted SPF flattening."
         },
-        "reporting": {
-          "title": "Readable reporting",
-          "detail": "Turn aggregate-report data into sender inventory, pass/fail trends, and a safer enforcement decision."
+        "dkim": {
+          "title": "DKIM",
+          "detail": "Enable signing at each sending service. Check a selector from your provider or a message header, then verify real signed messages."
         },
-        "rollout": {
-          "title": "Provider-aware rollout",
-          "detail": "Copy-paste changes tailored for Icelandic DNS providers and reviewed for operational risk."
-        }
-      }
-    },
-    "proof": {
-      "eyebrow": "04 / Evidence, before action",
-      "title": "See the why. Before the change.",
-      "text": "This concept view illustrates how DMARC reports, SPF chains, and DNS records can become actions a business can safely approve.",
-      "console": {
-        "badge": "dmark audit console",
-        "stats": "p=none, 13 SPF lookups, 4 unknown senders",
-        "items": [
-          {
-            "title": "Flatten SPF includes",
-            "detail": "Remove stale HubSpot include",
-            "state": "Ready"
-          },
-          {
-            "title": "Quarantine rollout",
-            "detail": "Start at pct=25 for seven days",
-            "state": "Review"
-          },
-          {
-            "title": "Unknown sender",
-            "detail": "ASN 1299 fails alignment",
-            "state": "Block"
-          }
-        ]
-      }
-    },
-    "pricing": {
-      "eyebrow": "05 / Get started",
-      "title": "Start with clarity. Move with confidence.",
-      "text": "The live domain check is free. DNS review, remediation and implementation are scoped with Kastro.",
-      "tiers": {
-        "core": "Core",
-        "scan": {
-          "name": "Skoðun",
-          "description": "A point-in-time view of public email authentication records.",
-          "price": "0 ISK",
-          "points": [
-            "No account required",
-            "Live SPF and DMARC assessment",
-            "Common DKIM selector checks"
-          ],
-          "cta": "Check your domain"
+        "dmarc": {
+          "title": "DMARC",
+          "detail": "Inventory senders and review aggregate reports before tightening enforcement. Use an existing reporting service, including Cloudflare where available."
         },
-        "saas": {
-          "name": "Kastro review",
-          "description": "A real review of your domain, senders, and enforcement path.",
-          "price": "Scoped",
-          "points": [
-            "Live DNS evidence review",
-            "Readable remediation plan",
-            "Guided p=reject progression"
-          ],
-          "cta": "Discuss the review"
-        },
-        "managed": {
-          "name": "Kastro Managed",
-          "description": "Done-for-you implementation for directors who want DNS changes handled safely.",
-          "price": "Quoted",
-          "points": [
-            "Implementation plan",
-            "DNS provider coordination",
-            "Post-change verification"
-          ],
-          "cta": "Discuss managed setup"
+        "bimi": {
+          "title": "BIMI",
+          "detail": "An optional branding step after authentication. Check the default BIMI record and review logo, enforcement and certificate requirements. Certificates may cost money; logo display is not guaranteed."
         }
       }
     },
@@ -168,7 +106,7 @@
       "cta_saas": "Discuss with Kastro"
     },
     "footer": {
-      "text": "Educational DMARC/SPF guidance and Kastro-managed remediation for Icelandic businesses.",
+      "text": "A free email security tool from Kastro. SPF, DKIM, DMARC and BIMI guidance, with optional setup assistance.",
       "credit": "A <kastro>Kastro</kastro> made product.",
       "cta_scan": "Check your domain",
       "cta_saas": "Discuss with Kastro"
@@ -201,17 +139,20 @@
           "detail": "alignment + audit grade"
         }
       },
-      "waiting": "Waiting for Kastro Lookup. This may take up to 45 seconds.",
+      "waiting": "Checking public records. This may take up to 50 seconds.",
       "errors": {
         "rate_limit": "The lookup service is busy. Please try again in a minute.",
         "timeout": "The lookup timed out. Please try again.",
         "failed": "The lookup could not be completed. Please try again.",
-        "invalid_domain": "Enter a valid domain such as example.com, without an email address or spaces."
-      }
+        "invalid_domain": "Enter a valid domain such as example.com, without an email address or spaces.",
+        "invalid_selector": "Enter a selector such as selector1 or google, without a domain name or spaces."
+      },
+      "selector": "DKIM selector (optional)",
+      "selector_help": "From your email provider or the s= value in a DKIM-Signature header. Leave blank for common-selector discovery."
     },
     "results": {
       "badge": "Live SPF / DMARC rating",
-      "spoofable_default": "This domain can still be abused by unauthorised senders until SPF and DMARC enforcement are corrected.",
+      "spoofable_default": "Review authentication and sender alignment before changing DNS.",
       "secure_default": "This domain has enforcing DMARC posture. Keep monitoring for sender and DNS drift.",
       "stats": {
         "status": "Status",
@@ -229,20 +170,20 @@
       "sequence": {
         "label": "Recommended sequence"
       },
-      "cta_unlock": "Discuss a real review",
+      "cta_unlock": "Get help with setup",
       "cta_another": "Check another domain",
       "incomplete": "Assessment incomplete",
       "dkim_limit": "Only common selectors are checked. A missing key is not proof that DKIM is absent; a published key does not verify signatures or alignment.",
       "no_record": "No record found."
     },
     "demo": {
-      "toggle_off": "Without DMARK",
-      "toggle_on": "With DMARK · p=reject",
+      "toggle_off": "p=none · example",
+      "toggle_on": "p=reject · example",
       "inbox_label": "Inbox — bjorn@northwind.is",
       "inbox_count_on": "1 message · 1 rejected",
       "inbox_count_off": "2 messages",
-      "caption_on": "p=reject — the unaligned message never reaches the inbox.",
-      "caption_off": "p=none — both messages are delivered. The fake one looks identical.",
+      "caption_on": "Illustration: a receiver honoring p=reject rejects this unaligned message. Receiver decisions can vary.",
+      "caption_off": "Illustration: p=none does not request rejection. Other spam and security filters can still block mail.",
       "steps": [
         {
           "title": "An attacker sends mail “from” your domain",
@@ -250,16 +191,16 @@
         },
         {
           "title": "Your domain has p=none or none at all",
-          "detail": "Receivers have no instruction to reject unaligned mail, so it sails through."
+          "detail": "A monitoring policy does not request rejection for DMARC failures. Other receiver protections still apply."
         },
         {
-          "title": "It lands in the inbox, looking legitimate",
+          "title": "A familiar name can look convincing",
           "detail": "Your logo, your name, your customer — a convincing invoice or password reset."
         }
       ],
       "footer": {
-        "title": "DMARK closes the gap.",
-        "text": "We get you to an enforced p=reject safely — without breaking the legitimate mail your business depends on."
+        "title": "DMARC helps protect your domain.",
+        "text": "Dmark helps you understand the settings. Confirm legitimate senders and alignment before moving to enforcement; DMARC does not stop every form of phishing."
       },
       "mail": {
         "sender": "Northwind Billing",
@@ -276,13 +217,20 @@
           "body": "Your account is on hold. Confirm your card to avoid suspension…"
         }
       }
+    },
+    "help": {
+      "eyebrow": "05 / Need a hand?",
+      "title": "The tool is free. Expert help is optional.",
+      "text": "There is no paid Dmark plan and no subscription required. Kastro can quote separately for sender review, DNS setup and verification. You keep control of your domain and email provider.",
+      "cta": "Talk to Kastro",
+      "guides": "Official setup guides"
     }
   },
   "Metadata": {
-    "title": "dmark.is | Icelandic DMARC and SPF protection",
-    "description": "Check live SPF and DMARC records, explore DKIM discovery, and plan safer email authentication with Kastro.",
-    "ogTitle": "dmark.is | Icelandic DMARC and SPF protection",
-    "ogDescription": "Check live SPF and DMARC records, explore DKIM discovery, and plan safer email authentication with Kastro."
+    "title": "dmark.is | Free email security by Kastro",
+    "description": "Check SPF, DMARC, DKIM selectors and BIMI records for free. Save domain checklists in your browser and get practical setup guidance from Kastro.",
+    "ogTitle": "dmark.is | Free email security by Kastro",
+    "ogDescription": "Check SPF, DMARC, DKIM selectors and BIMI records for free. Save domain checklists in your browser and get practical setup guidance from Kastro."
   },
   "Errors": {
     "somethingBroke": "Something broke",
@@ -294,6 +242,66 @@
       "title": "Page not found",
       "heading": "This page does not exist.",
       "detail": "The address may have changed. The domain checker is available on the front page."
+    }
+  },
+  "Workspace": {
+    "eyebrow": "04 / Your domain workspace",
+    "title": "Add your domains. Work through the setup.",
+    "text": "Keep a free checklist for each domain and return to the live check whenever you change a record.",
+    "privacy": "Saved domains and checkmarks stay in this browser on this device. They are not synced to an account. A live check sends the selected domain to Kastro Lookup and queries public DNS.",
+    "manual": "The checkboxes record your progress. They do not certify that your domain is secure. BIMI is optional; complete it only if you want to publish a brand logo.",
+    "domain": "Domain",
+    "add": "Add domain",
+    "check": "Check DNS",
+    "remove": "Remove",
+    "remove_domain": "Remove {domain}",
+    "clear": "Clear saved domains",
+    "empty": "Add your first domain to start a setup checklist.",
+    "invalid": "Enter a valid domain, such as example.com.",
+    "limit": "This browser supports up to {count} saved domains to keep the tool lightweight. Remove a domain to add another.",
+    "progress": "{count}/{total} checklist items marked by you",
+    "storage_failed": "Browser storage is unavailable. Changes work for this visit but may not be saved.",
+    "steps": {
+      "senders": {
+        "title": "List every legitimate sender",
+        "detail": "Include staff email, invoices, newsletters, CRM, website forms, ticketing and devices. Confirm who owns each service and which domain it signs with."
+      },
+      "spf": {
+        "title": "Review SPF",
+        "detail": "Use one SPF record for the domain, include only verified senders, and stay within the 10-lookup limit. Get record values from your providers. Never replace a live record with a generic example."
+      },
+      "dkim": {
+        "title": "Enable and verify DKIM",
+        "detail": "Publish the TXT or CNAME entries supplied by each sending service, then enable signing there. Find the selector in the provider settings or s= in a message header. Check an actual message for dkim=pass and an aligned d= domain."
+      },
+      "reports": {
+        "title": "Review DMARC reports",
+        "detail": "Choose a report service or mailbox you control. Confirm external reporting authorization where required. Review legitimate and unknown senders across a representative business cycle. Dmark does not receive or host aggregate reports in this release."
+      },
+      "dmarc": {
+        "title": "Plan DMARC enforcement",
+        "detail": "For a new setup, monitor before enforcing. Preserve any existing protection while checking senders. DMARC passes when aligned SPF or aligned DKIM succeeds. Progress toward quarantine or reject only after real mail and reports support the change; include subdomain policy in the review."
+      },
+      "bimi": {
+        "title": "Optional: prepare BIMI",
+        "detail": "BIMI adds branding, not a replacement for authentication. Review DMARC enforcement, a compliant SVG logo served over HTTPS, and the receiving provider’s VMC/CMC requirements. Certificates may cost money and inbox display depends on the provider. The scanner checks default._bimi only and does not validate the logo or certificate."
+      }
+    }
+  },
+  "Authentication": {
+    "states": {
+      "published": "A record is published. This is a basic publication check, not full validation.",
+      "missing": "No matching record was found at this name.",
+      "invalid": "The record is incomplete, duplicated or has conflicting tags. Review it with your provider.",
+      "error": "The DNS lookup could not be completed. This does not prove the record is missing."
+    },
+    "bimi": {
+      "title": "BIMI · default selector",
+      "limit": "Optional branding. DMARC enforcement, logo validity, certificate validity and inbox display are not verified here. External certificate costs may apply."
+    },
+    "dkim": {
+      "title": "DKIM · selected selector",
+      "limit": "A published key does not prove signing, key strength or alignment. Verify an actual message from this sender."
     }
   }
 }

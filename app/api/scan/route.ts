@@ -1,5 +1,7 @@
 import { validateScannableDomain } from "@/lib/scan";
 import { mapLookupResponse } from "@/lib/live-scan";
+import { validSelector } from "@/lib/authentication-records";
+import { checkAuthenticationRecords } from "@/lib/dns-records";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,12 +39,18 @@ export async function POST(request: Request) {
     } catch { return reply({code: "INVALID_REQUEST"}, 403); }
   }
   let domain: string;
+  let selector = "";
   try {
     const body = JSON.parse(await boundedText(request.body, 1024));
     if (typeof body?.domain !== "string") return reply({code: "INVALID_DOMAIN"}, 400);
     const validated = validateScannableDomain(body.domain);
     if (validated.error) return reply({code: "INVALID_DOMAIN"}, 400);
     domain = validated.domain;
+    if (body.selector !== undefined) {
+      if (typeof body.selector !== "string") return reply({code: "INVALID_SELECTOR"}, 400);
+      selector = body.selector.trim();
+      if (selector && !validSelector(selector)) return reply({code: "INVALID_SELECTOR"}, 400);
+    }
   } catch { return reply({code: "INVALID_REQUEST"}, 400); }
   const started = Date.now();
   const controller = new AbortController();
@@ -60,8 +68,11 @@ export async function POST(request: Request) {
     }
     if (!response.ok) { await response.body?.cancel(); return reply({code: "LOOKUP_FAILED"}, 502); }
     const data: unknown = JSON.parse(await boundedText(response.body, 512_000));
-    return reply(mapLookupResponse(data, domain, Date.now() - started));
+    const payload = mapLookupResponse(data, domain, Date.now() - started);
+    const authentication = await checkAuthenticationRecords(domain, selector);
+    return reply({...payload, authentication, durationMs: Date.now() - started});
   } catch {
     return reply({code: controller.signal.aborted ? "TIMEOUT" : "LOOKUP_FAILED"}, controller.signal.aborted ? 504 : 502);
   } finally { clearTimeout(timer); }
 }
+

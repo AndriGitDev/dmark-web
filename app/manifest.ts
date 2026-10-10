@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "dmark.is",
     short_name: "dmark",
-    description: "Interactive DMARC and SPF education for Icelandic domains, with real-world review available from Kastro.",
+    description: "Free SPF, DKIM, DMARC and BIMI checks and domain setup guidance from Kastro.",
     start_url: "/is/",
     scope: "/",
     display: "standalone",
@@ -22,3 +22,4 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
   };
 }
+
