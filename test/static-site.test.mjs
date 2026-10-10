@@ -49,7 +49,7 @@ test('validates domains and keeps domain names out of analytics',()=>{
  const events=loadTSModule('lib/privacy-events.ts');
  assert.deepEqual({...events.sanitizePrivacyEventProperties({source:'live_scanner',domain:'private.example'})},{source:'live_scanner'});
 });
-function route(fetch) {return loadTSModule('app/api/scan/route.ts', {'@/lib/scan':scan,'@/lib/live-scan':live,fetch});}
+function route(fetch, checkAuthenticationRecords = async()=>({bimi:{name:'default._bimi.example.com',state:'missing',record:''}})) {return loadTSModule('app/api/scan/route.ts', {'@/lib/scan':scan,'@/lib/live-scan':live,'@/lib/authentication-records':loadTSModule('lib/authentication-records.ts'),'@/lib/dns-records':{checkAuthenticationRecords},fetch});}
 const request=(domain='example.com',origin='https://dmark.is')=>new Request('https://dmark.is/api/scan/',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify({domain})});
 test('route forwards only a validated domain to the fixed upstream and filters unrelated data',async()=>{
  let called=false;
@@ -100,4 +100,17 @@ test('Icelandic result presentation never renders backend English explanations',
  data.emailSecurity.spf.warnings=['upstream English failure'];
  const view=present(live.mapLookupResponse(data,'example.com',20),'is');
  assert.equal(view.status,'Ólokið');assert.equal(view.risk,'Ómetin');assert.match(view.spf.headline,/ólokið/);assert.doesNotMatch(JSON.stringify(view),/upstream English/);
+});
+
+
+test('route validates selectors before work and missing BIMI does not downgrade authentication',async()=>{
+ const r=route(async()=>Response.json(fixture()),async(domain,selector)=>{
+  assert.equal(domain,'example.com');assert.equal(selector,'selector1');
+  return {bimi:{name:'default._bimi.example.com',state:'missing',record:''},dkim:{name:'selector1._domainkey.example.com',state:'published',record:'v=DKIM1; p=example'}};
+ });
+ const req=selector=>new Request('https://dmark.is/api/scan/',{method:'POST',headers:{origin:'https://dmark.is'},body:JSON.stringify({domain:'example.com',selector})});
+ const rejected=route(()=>{throw Error('Must not fetch');});
+ assert.equal((await rejected.POST(req('../../secret'))).status,400);
+ const response=await r.POST(req('selector1'));const result=await response.json();
+ assert.equal(response.status,200);assert.equal(result.audit.grade,'A');assert.equal(result.authentication.bimi.state,'missing');
 });

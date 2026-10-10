@@ -90,7 +90,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} className={`${schibsted.variable} ${jetbrains.variable}`}>
       <body>
-        <NextIntlClientProvider messages={{Marketing: messages.Marketing, Errors: messages.Errors}}>
+        <NextIntlClientProvider messages={{Marketing: messages.Marketing, Errors: messages.Errors, Workspace: messages.Workspace, Authentication: messages.Authentication}}>
           {children}
         </NextIntlClientProvider>
         <PrivacyAnalytics />
@@ -99,3 +99,4 @@ export default async function RootLayout({
     </html>
   );
 }
+

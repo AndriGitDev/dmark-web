@@ -11,7 +11,6 @@ import {
   Globe2,
   AlertTriangle,
   ArrowRight,
-  Check,
   CheckCircle2,
   ChevronRight,
   Eye,
@@ -27,16 +26,18 @@ import {
   Route,
   Search,
   Send,
-  ServerCog,
   ShieldAlert,
   ShieldCheck,
 } from "lucide-react";
+import { DomainWorkspace } from "@/components/domain-workspace";
+import { AuthenticationFindings } from "@/components/authentication-findings";
+import { validSelector } from "@/lib/authentication-records";
 import type { ScanPayload } from "@/lib/scan";
 import { trackPrivacyEvent } from "@/lib/privacy-events";
 import { validateScannableDomain } from "@/lib/scan";
 import { presentScan } from "@/lib/scan-presentation";
 
-type CTAOrigin = "nav" | "pricing" | "footer" | "result_upsell";
+type CTAOrigin = "nav" | "help" | "footer" | "result_help";
 
 const scanSteps = [
   { key: "dns", icon: Route },
@@ -69,37 +70,11 @@ const workflow = [
 ];
 
 const features = [
-  {
-    key: "flattening",
-    icon: Layers3,
-  },
-  {
-    key: "reporting",
-    icon: Gauge,
-  },
-  {
-    key: "rollout",
-    icon: ServerCog,
-  },
+  { key: "spf", icon: Layers3 },
+  { key: "dkim", icon: ShieldCheck },
+  { key: "dmarc", icon: Gauge },
+  { key: "bimi", icon: Globe2 },
 ];
-
-const pricing = [
-  {
-    key: "scan",
-    mode: "scan",
-    featured: false,
-  },
-  {
-    key: "saas",
-    mode: "saas",
-    featured: true,
-  },
-  {
-    key: "managed",
-    mode: "managed",
-    featured: false,
-  },
-] as const;
 
 function toneClasses(tone: string) {
   if (tone === "pass") return "bg-pass-soft text-pass-ink";
@@ -112,6 +87,7 @@ export function DmarkMarketing() {
   const t = useTranslations("Marketing");
   const locale = useLocale();
   const [domain, setDomain] = useState("");
+  const [selector, setSelector] = useState("");
   const [scanState, setScanState] = useState<"idle" | "scanning" | "results" | "error">("idle");
   const [activeStep, setActiveStep] = useState(-1);
   const [result, setResult] = useState<ScanPayload | null>(null);
@@ -145,6 +121,9 @@ export function DmarkMarketing() {
       return;
     }
 
+    if (!sample && selector.trim() && !validSelector(selector.trim())) {
+      setError(t("scanner.errors.invalid_selector")); setScanState("error"); return;
+    }
     trackPrivacyEvent("scan_start", { source: "live_scanner" });
     setError("");
     setDomain(validation.domain);
@@ -154,11 +133,11 @@ export function DmarkMarketing() {
 
     const controller = new AbortController();
     scanController.current = controller;
-    const timeout = window.setTimeout(() => controller.abort(), 50_000);
+    const timeout = window.setTimeout(() => controller.abort(), 55_000);
     try {
       const response = await fetch("/api/scan/", {
         method: "POST", headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({domain: validation.domain}), signal: controller.signal,
+        body: JSON.stringify({domain: validation.domain, selector: sample ? "" : selector.trim()}), signal: controller.signal,
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.code === "RATE_LIMITED" ? t("scanner.errors.rate_limit") : data.code === "TIMEOUT" ? t("scanner.errors.timeout") : t("scanner.errors.failed"));
@@ -190,7 +169,7 @@ export function DmarkMarketing() {
     window.location.assign(`https://kastro.is/${locale}/services/dmark`);
   }
 
-  function scrollToScanner(source?: "nav" | "pricing" | "footer") {
+  function scrollToScanner(source?: "nav" | "help" | "footer") {
     if (source) trackPrivacyEvent("cta_click", { source });
     document.getElementById("scanner-panel")?.scrollIntoView({ behavior: "smooth", block: "center" });
     window.setTimeout(() => inputRef.current?.focus(), 450);
@@ -199,7 +178,7 @@ export function DmarkMarketing() {
   return (
     <MotionConfig reducedMotion="user"><main className="dmark-site">
       <a href="#scanner-panel" className="skip-link">{t("skip")}</a>
-      <Header onScan={() => scrollToScanner("nav")} onUpgrade={() => openKastroService("nav")} />
+      <Header onScan={() => scrollToScanner("nav")} onHelp={() => openKastroService("nav")} />
       <section id="top" className="hero-section">
         <div className="shell hero-layout">
           <div className="hero-copy">
@@ -213,14 +192,14 @@ export function DmarkMarketing() {
             <p className="hero-note"><Lock size={14} /> {t("hero.signals.live.detail")}</p>
           </div>
           <div className="hero-product">
-            <div className="product-caption"><span>01 / DMARK</span><span>SPF · DKIM · DMARC</span></div>
+            <div className="product-caption"><span>01 / DMARK</span><span>SPF · DKIM · DMARC · BIMI</span></div>
             <div id="scanner-panel" tabIndex={-1}>
-              <ScannerCard domain={domain} setDomain={setDomain} scanState={scanState} activeStep={activeStep} error={error} result={result} inputRef={inputRef} onScan={handleScan} onRescan={() => {setScanState("idle"); setResult(null); setActiveStep(-1); inputRef.current?.focus();}} onUpgrade={() => openKastroService("result_upsell")} />
+              <ScannerCard selector={selector} setSelector={setSelector} domain={domain} setDomain={setDomain} scanState={scanState} activeStep={activeStep} error={error} result={result} inputRef={inputRef} onScan={handleScan} onRescan={() => {setScanState("idle"); setResult(null); setActiveStep(-1); inputRef.current?.focus();}} onHelp={() => openKastroService("result_help")} />
             </div>
             <div className="product-bottom"><span>{t("hero.signals.target.label")}</span><code>p=none <ArrowRight size={14} /> <strong>p=reject</strong></code></div>
           </div>
         </div>
-        <div className="shell protocol-strip"><span>{t("hero.signals.operator.label")}</span><strong>Microsoft 365</strong><strong>Google Workspace</strong><span className="protocol-end">DNS / SPF / DKIM / DMARC</span></div>
+        <div className="shell protocol-strip"><span>{t("hero.signals.operator.label")}</span><strong>Microsoft 365</strong><strong>Google Workspace</strong><span className="protocol-end">SPF / DKIM / DMARC / BIMI</span></div>
       </section>
       <section id="threat" className="section light-section">
         <div className="shell">
@@ -238,10 +217,10 @@ export function DmarkMarketing() {
       <section id="features" className="section light-section">
         <div className="shell feature-layout"><SectionHead eyebrow={t("features.eyebrow")} title={t("features.title")} text={t("features.text")} /><div className="feature-list">{features.map(feature => {const Icon=feature.icon;return <article key={feature.key}><Icon size={25}/><div><h3>{t(`features.list.${feature.key}.title`)}</h3><p>{t(`features.list.${feature.key}.detail`)}</p></div></article>;})}</div></div>
       </section>
-      <section id="proof" className="section proof-section"><div className="shell proof-layout"><SectionHead eyebrow={t("proof.eyebrow")} title={t("proof.title")} text={t("proof.text")} /><ProofConsole /></div></section>
-      <section id="pricing" className="section light-section"><div className="shell"><SectionHead eyebrow={t("pricing.eyebrow")} title={t("pricing.title")} text={t("pricing.text")} /><div className="pricing-grid">{pricing.map(tier => <article key={tier.key} className={`price-card ${tier.featured ? "featured" : ""}`}><div className="tier-label"><h3>{t(`pricing.tiers.${tier.key}.name`)}</h3>{tier.featured && <span>{t("pricing.tiers.core")}</span>}</div><p className="price-description">{t(`pricing.tiers.${tier.key}.description`)}</p><p className="price">{t(`pricing.tiers.${tier.key}.price`)}</p><ul>{[0,1,2].map(i=><li key={i}><Check size={17}/>{t(`pricing.tiers.${tier.key}.points.${i}`)}</li>)}</ul><button className={`button ${tier.featured ? "primary" : "secondary"}`} onClick={() => tier.mode === "scan" ? scrollToScanner("pricing") : openKastroService("pricing")}>{t(`pricing.tiers.${tier.key}.cta`)}<ArrowRight size={17}/></button></article>)}</div></div></section>
+      <DomainWorkspace busy={scanState === "scanning"} onScan={value => { scrollToScanner(); void handleScan(undefined, value); }} />
+      <section id="help" className="section light-section"><div className="shell"><SectionHead eyebrow={t("help.eyebrow")} title={t("help.title")} text={t("help.text")} /><button type="button" className="button primary mt-6" onClick={() => openKastroService("help")}>{t("help.cta")}<ArrowRight size={17}/></button><h3 className="mt-8 font-semibold">{t("help.guides")}</h3><ul className="mt-4 flex flex-wrap gap-6"><li><a className="underline underline-offset-4" href="https://learn.microsoft.com/en-us/defender-office-365/email-authentication-about" target="_blank" rel="noreferrer">Microsoft 365</a></li><li><a className="underline underline-offset-4" href="https://support.google.com/a/answer/174124" target="_blank" rel="noreferrer">Google Workspace</a></li><li><a className="underline underline-offset-4" href="https://developers.cloudflare.com/dmarc-management/" target="_blank" rel="noreferrer">Cloudflare DMARC</a></li><li><a className="underline underline-offset-4" href="https://bimigroup.org/implementation-guide/" target="_blank" rel="noreferrer">BIMI Group</a></li></ul></div></section>
       <section className="closing-section"><div className="shell"><p className="eyebrow">{t("footer_cta.eyebrow")}</p><h2>{t("footer_cta.title")}</h2><button className="button dark-button" onClick={() => scrollToScanner("footer")}>{t("footer_cta.cta_scan")}<ArrowRight size={20}/></button><span className="closing-word" aria-hidden="true">dmark.</span></div></section>
-      <Footer onScan={() => scrollToScanner("footer")} onUpgrade={() => openKastroService("footer")} />
+      <Footer onScan={() => scrollToScanner("footer")} onHelp={() => openKastroService("footer")} />
     </main></MotionConfig>
   );
 }
@@ -261,18 +240,20 @@ function LanguageSwitcher() {
 
 function Wordmark() { return <span className="wordmark">dmark<span>.</span></span>; }
 
-function Header({ onScan, onUpgrade }: { onScan: () => void; onUpgrade: () => void }) {
+function Header({ onScan, onHelp }: { onScan: () => void; onHelp: () => void }) {
   const t = useTranslations("Marketing.header");
   const locale = useLocale();
   const [open, setOpen] = useState(false);
-  return <header className="site-header"><div className="shell header-inner"><a href="#top" aria-label={t("logo_aria")}><Wordmark /></a><nav id="primary-navigation" className={open ? "main-nav is-open" : "main-nav"} aria-label={locale === "is" ? "Aðalvalmynd" : "Main navigation"}>{["threat","workflow","features","pricing"].map(key=><a key={key} href={`#${key}`} onClick={()=>setOpen(false)}>{t(key)}</a>)}<button type="button" onClick={onUpgrade}>{t("saas")}</button></nav><div className="header-actions"><LanguageSwitcher/><button className="button primary nav-cta" onClick={onScan}>{t("cta_scan_short")}<ArrowRight size={16}/></button><button className="menu-button" aria-expanded={open} aria-controls="primary-navigation" aria-label={locale === "is" ? "Valmynd" : "Menu"} onClick={()=>setOpen(!open)}>{open ? <X/> : <Menu/>}</button></div></div></header>;
+  return <header className="site-header"><div className="shell header-inner"><a href="#top" aria-label={t("logo_aria")}><Wordmark /></a><nav id="primary-navigation" className={open ? "main-nav is-open" : "main-nav"} aria-label={locale === "is" ? "Aðalvalmynd" : "Main navigation"}>{["threat","workflow","features","domains","help"].map(key=><a key={key} href={`#${key}`} onClick={()=>setOpen(false)}>{t(key)}</a>)}<button type="button" onClick={onHelp}>{t("saas")}</button></nav><div className="header-actions"><LanguageSwitcher/><button className="button primary nav-cta" onClick={onScan}>{t("cta_scan_short")}<ArrowRight size={16}/></button><button className="menu-button" aria-expanded={open} aria-controls="primary-navigation" aria-label={locale === "is" ? "Valmynd" : "Menu"} onClick={()=>setOpen(!open)}>{open ? <X/> : <Menu/>}</button></div></div></header>;
 }
 
 function SectionHead({ eyebrow, title, text }: { eyebrow: string; title: string; text: string }) {
   return <div className="section-head"><p className="eyebrow">{eyebrow}</p><h2>{title}</h2><p className="section-description">{text}</p></div>;
 }
 
-function ScannerCard({ domain, setDomain, scanState, activeStep, error, result, inputRef, onScan, onRescan, onUpgrade }: {
+function ScannerCard({ selector, setSelector, domain, setDomain, scanState, activeStep, error, result, inputRef, onScan, onRescan, onHelp }: {
+  selector: string;
+  setSelector: (value: string) => void;
   domain: string;
   setDomain: (value: string) => void;
   scanState: "idle" | "scanning" | "results" | "error";
@@ -282,7 +263,7 @@ function ScannerCard({ domain, setDomain, scanState, activeStep, error, result, 
   inputRef: React.RefObject<HTMLInputElement>;
   onScan: (event?: FormEvent<HTMLFormElement>, sample?: string) => void;
   onRescan: () => void;
-  onUpgrade: () => void;
+  onHelp: () => void;
 }) {
   const t = useTranslations("Marketing.scanner");
   return (
@@ -296,7 +277,7 @@ function ScannerCard({ domain, setDomain, scanState, activeStep, error, result, 
         <AnimatePresence mode="wait">
           {scanState === "results" && result ? (
             <motion.div key="results" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-              <ResultsDashboard result={result} onRescan={onRescan} onUpgrade={onUpgrade} />
+              <ResultsDashboard result={result} onRescan={onRescan} onHelp={onHelp} />
             </motion.div>
           ) : (
             <motion.div key="form" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
@@ -311,6 +292,7 @@ function ScannerCard({ domain, setDomain, scanState, activeStep, error, result, 
                   {scanState === "scanning" ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />} {scanState === "scanning" ? t("scanning") : t("scan")}
                 </button>
               </form>
+              <div className="mt-4"><label htmlFor="dkim-selector" className="text-sm font-semibold">{t("selector")}</label><input id="dkim-selector" value={selector} onChange={event => setSelector(event.target.value)} disabled={scanState === "scanning"} autoComplete="off" spellCheck={false} maxLength={128} aria-describedby="dkim-selector-help" className="mt-2 min-h-11 w-full rounded border border-line-strong bg-paper px-3 font-mono" placeholder="selector1" /><p id="dkim-selector-help" className="mt-2 text-xs leading-5 text-ink-500">{t("selector_help")}</p></div>
               {scanState !== "scanning" ? (
                 <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
                   <span className="font-mono text-xs text-ink-500">{t("try")}</span>
@@ -343,7 +325,7 @@ function ScannerCard({ domain, setDomain, scanState, activeStep, error, result, 
   );
 }
 
-function ResultsDashboard({ result, onRescan, onUpgrade }: { result: ScanPayload; onRescan: () => void; onUpgrade: () => void }) {
+function ResultsDashboard({ result, onRescan, onHelp }: { result: ScanPayload; onRescan: () => void; onHelp: () => void }) {
   const t = useTranslations("Marketing.results");
   const grade = result.audit?.grade || (result.status === "PASS" ? "A" : result.status === "WARNING" ? "C" : "F");
   const tone = result.status === "PASS" ? "pass" : result.status === "WARNING" ? "warn" : "fail";
@@ -375,6 +357,7 @@ function ResultsDashboard({ result, onRescan, onUpgrade }: { result: ScanPayload
         <TechnicalFinding title={t("findings.spf")} tone={spfFinding.tone} headline={spfFinding.headline} detail={spfFinding.detail} record={result.spf.record} />
         <TechnicalFinding title={t("findings.dmarc")} tone={dmarcFinding.tone} headline={dmarcFinding.headline} detail={dmarcFinding.detail} record={result.dmarc.record} />
         {result.assessment ? <article className="rounded border border-line bg-card p-4"><h3 className="font-semibold">{t("findings.dkim")}</h3><p className="mt-2 text-sm text-ink-500">{view.dkim}</p><p className="mt-2 text-sm text-ink-500">{t("dkim_limit")}</p></article> : null}
+        {result.authentication ? <AuthenticationFindings records={result.authentication} /> : null}
         <article className="rounded border border-line bg-paper p-4">
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-brand-ink">{t("sequence.label")}</p>
           <h3 className="mt-3 text-xl font-bold tracking-tight">{view.summary}</h3>
@@ -382,7 +365,7 @@ function ResultsDashboard({ result, onRescan, onUpgrade }: { result: ScanPayload
             {view.steps.map((step, index) => <li key={step.title} className="rounded border border-line bg-card p-3 text-sm"><span className="font-mono text-brand-ink">{index + 1}.</span> <strong>{step.title}</strong> — <span className="text-ink-500">{step.detail}</span></li>)}
           </ol>
         </article>
-        <button type="button" onClick={onUpgrade} className="inline-flex min-h-12 items-center justify-center gap-2 rounded bg-brand-ink px-5 font-semibold text-white shadow-glow transition hover:bg-brand-ink"><Lock className="h-4 w-4" /> {t("cta_unlock")}</button>
+        <button type="button" onClick={onHelp} className="inline-flex min-h-12 items-center justify-center gap-2 rounded bg-brand-ink px-5 font-semibold text-white shadow-glow transition hover:bg-brand-ink"><ArrowRight className="h-4 w-4" /> {t("cta_unlock")}</button>
         <button type="button" onClick={onRescan} className="inline-flex min-h-11 items-center justify-center gap-2 rounded border border-line-strong px-5 font-semibold text-ink transition hover:border-ink"><Search className="h-4 w-4" /> {t("cta_another")}</button>
       </div>
     </div>
@@ -459,30 +442,7 @@ function MailRow({ safe = false, blocked = false }: { safe?: boolean; blocked?: 
   );
 }
 
-function ProofConsole() {
-  const t = useTranslations("Marketing.proof.console");
-  return (
-    <div className="rounded border border-white/10 bg-midnight-2 p-4 shadow-2xl">
-      <div className="flex items-center gap-2 border-b border-white/10 pb-4"><span className="h-3 w-3 rounded-full bg-fail-d" /><span className="h-3 w-3 rounded-full bg-warn-d" /><span className="h-3 w-3 rounded-full bg-pass-d" /><span className="ml-3 font-mono text-xs text-white/65">{t("badge")}</span></div>
-      <div className="mt-5 grid gap-4 md:grid-cols-[0.8fr_1.2fr]">
-        <div className="rounded bg-white/[0.06] p-5"><p className="font-mono text-xs uppercase tracking-[0.16em] text-white/70">northwind.is</p><p className="mt-4 text-6xl font-extrabold text-fail-d">F</p><p className="mt-4 text-sm leading-6 text-white/70">{t("stats")}</p></div>
-        <div className="grid gap-3">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="flex items-center justify-between gap-4 rounded bg-white/[0.06] p-4">
-              <div>
-                <p className="text-sm font-semibold text-white">{t(`items.${i}.title`)}</p>
-                <p className="mt-1 text-xs text-white/70">{t(`items.${i}.detail`)}</p>
-              </div>
-              <span className="rounded bg-brand/20 px-2.5 py-1 font-mono text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-brand-d">{t(`items.${i}.state`)}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Footer({ onScan, onUpgrade }: { onScan: () => void; onUpgrade: () => void }) {
+function Footer({ onScan, onHelp }: { onScan: () => void; onHelp: () => void }) {
   const t = useTranslations("Marketing.footer");
   return (
     <footer className="bg-midnight py-10 text-white">
@@ -494,10 +454,11 @@ function Footer({ onScan, onUpgrade }: { onScan: () => void; onUpgrade: () => vo
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <button type="button" onClick={onScan} className="inline-flex min-h-11 items-center justify-center gap-2 rounded bg-white px-4 font-semibold text-ink transition hover:bg-brand-soft"><Search className="h-4 w-4" /> {t("cta_scan")}</button>
-          <button type="button" onClick={onUpgrade} className="inline-flex min-h-11 items-center justify-center gap-2 rounded border border-white/25 px-4 font-semibold text-white transition hover:bg-white/10"><Gauge className="h-4 w-4" /> {t("cta_saas")}</button>
+          <button type="button" onClick={onHelp} className="inline-flex min-h-11 items-center justify-center gap-2 rounded border border-white/25 px-4 font-semibold text-white transition hover:bg-white/10"><Gauge className="h-4 w-4" /> {t("cta_saas")}</button>
         </div>
       </div>
     </footer>
   );
 }
+
 

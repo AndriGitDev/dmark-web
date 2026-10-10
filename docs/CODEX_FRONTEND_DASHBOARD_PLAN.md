@@ -1,5 +1,7 @@
 # Codex Frontend Dashboard Integration Plan
 
+> Historical scope, superseded 2026-10-10 by the [free Kastro product plan](FREE_PRODUCT_PLAN.md). Paid tiers, hosted SPF flattening and earlier GA promises below are not current product commitments. Runtime retirement must follow the dependency migration plan; historical implementation evidence remains useful.
+
 ## Completion Note - 2026-05-29
 
 This dashboard integration plan is archived. The backend proxying, live backend QA, and visual/browser verification are complete in the current product state, so the remaining sections below are historical reference only.
@@ -464,3 +466,4 @@ Security checks:
 ```text
 Continue Dmark frontend work in /Users/andri/Documents/GitHub/dmark-web using docs/CODEX_FRONTEND_DASHBOARD_PLAN.md. Replace the mock dashboard data with server-side proxy routes to the dmark-app authenticated dashboard API. Do not expose the backend API token to browser JavaScript. Preserve the existing dashboard interaction model: recheck, copy/export, Reporter filter, alert acknowledge/mute, and settings toggles. Update tests/docs as needed and run npm run lint and npm run build before stopping.
 ```
+

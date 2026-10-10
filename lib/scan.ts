@@ -1,3 +1,5 @@
+import type { AuthenticationRecords } from "./authentication-records";
+
 export type ScanStatus = "PASS" | "WARNING" | "FAIL";
 
 export type AuditPayload = {
@@ -39,6 +41,7 @@ export type ScanPayload = {
     record: string;
   };
   spoofable: boolean;
+  authentication?: AuthenticationRecords;
 };
 
 export type ScanRemediationStep = {
@@ -90,7 +93,7 @@ export function buildSpfFinding(result: ScanPayload): SpfFinding {
       headline: "FAIL - SPF record did not validate.",
       detail:
         lookups > 10
-          ? `It also uses ${lookups} DNS lookups, beyond the 10-lookup receiver limit. Fix syntax and flatten includes before tightening DMARC.`
+          ? `It also uses ${lookups} DNS lookups, beyond the 10-lookup receiver limit. Review syntax and verified sender entries before tightening DMARC.`
           : `It reports ${lookups} DNS lookups. Fix syntax or authorised sender entries before tightening DMARC.`,
     };
   }
@@ -100,7 +103,7 @@ export function buildSpfFinding(result: ScanPayload): SpfFinding {
       tone: "fail",
       statusLabel: "FAIL",
       headline: `FAIL - SPF uses ${lookups} DNS lookups, above the receiver limit.`,
-      detail: "Receivers can stop evaluation after 10 DNS lookups and return a permerror. Flatten SPF before enforcement changes.",
+      detail: "Receivers can stop evaluation after 10 DNS lookups and return a permerror. Review verified senders and remove obsolete includes before enforcement changes.",
     };
   }
 
@@ -109,7 +112,7 @@ export function buildSpfFinding(result: ScanPayload): SpfFinding {
       tone: "warning",
       statusLabel: "PRESSURE",
       headline: `PRESSURE - SPF uses ${lookups}/10 DNS lookups.`,
-      detail: "The record still passes, but one more sender include could push it over the limit. Plan flattening before adding vendors.",
+      detail: "The record still passes, but one more sender include could push it over the limit. Review the lookup budget before adding vendors.",
     };
   }
 
@@ -279,7 +282,7 @@ export function buildScanRemediationPlan(result: ScanPayload): ScanRemediationPl
         : "Repair SPF before tightening DMARC enforcement.",
       steps: [
         {
-          title: spfOverLimit ? "Flatten SPF includes" : "Repair SPF record",
+          title: spfOverLimit ? "Review SPF includes" : "Repair SPF record",
           detail: spfOverLimit
             ? `The SPF record uses ${result.spf.lookups} DNS lookups; receivers can stop evaluating after 10 and return a permerror.`
             : "The SPF record did not validate. Fix syntax and authorised senders before policy changes.",
@@ -287,7 +290,7 @@ export function buildScanRemediationPlan(result: ScanPayload): ScanRemediationPl
         },
         {
           title: "Keep monitoring DMARC reports",
-          detail: "Stay at p=none while SPF is unstable so legitimate mail failures are visible before enforcement.",
+          detail: "Preserve existing DMARC protection while reviewing legitimate mail failures and aligned DKIM. Do not weaken policy based only on an SPF finding.",
           tone: "warning",
         },
         {
@@ -409,4 +412,5 @@ export function mockScan(domain: string): ScanPayload {
     },
   };
 }
+
 

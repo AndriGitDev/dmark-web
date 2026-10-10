@@ -1,5 +1,7 @@
 # Dmark Dynamic SPF Flattener Plan
 
+> Historical scope, superseded 2026-10-10 by the [free Kastro product plan](FREE_PRODUCT_PLAN.md). Paid tiers, hosted SPF flattening and earlier GA promises below are not current product commitments. Runtime retirement must follow the dependency migration plan; historical implementation evidence remains useful.
+
 This frontend-facing plan is superseded for backend implementation details by `dmark-app/docs/SPF_FLATTENER_BUNNY_PLAN.md`. SPF flattening is now GA scope, not a future/nice-to-have. This document remains as the `dmark-web` UI handoff: the frontend should render SPF route status and onboarding instructions through server-side dashboard proxy routes, while all resolver, worker, Bunny.net DNS, secrets, and publication logic lives in `dmark-app`.
 
 ## Founder Prep
@@ -164,3 +166,4 @@ Backend tests should cover:
 - No Bunny API call when generated output is unchanged.
 - Provider detection from authoritative nameservers, including Icelandic providers such as ISNIC, 1984, Opin Kerfi, Origo, and Advania; global providers; ambiguous matches; and unknown fallback.
 - Provider-specific instruction and deep-link rendering for SPF route CNAME, SPF TXT, and DMARC TXT records.
+
