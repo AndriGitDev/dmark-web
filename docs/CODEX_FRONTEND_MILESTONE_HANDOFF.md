@@ -1,5 +1,7 @@
 # Codex Frontend Milestone Handoff
 
+> Historical scope, superseded 2026-10-10 by the [free Kastro product plan](FREE_PRODUCT_PLAN.md). Paid tiers, hosted SPF flattening and earlier GA promises below are not current product commitments. Runtime retirement must follow the dependency migration plan; historical implementation evidence remains useful.
+
 ## Completion Note - 2026-05-29
 
 This milestone handoff is archived. The dashboard integration, backend proxying, live backend QA, and local visual QA are complete for the current product state. The remaining longer-term ideas below are future milestones, not blockers for the completed handoff.
@@ -264,3 +266,4 @@ Never commit or store the real seed token.
 ```text
 Continue Dmark frontend milestone work in /Users/andri/Documents/GitHub/dmark-web using docs/CODEX_FRONTEND_MILESTONE_HANDOFF.md. Start with Phase 1 visual/accessibility QA if the in-app browser is available; otherwise implement Phase 2 protected-domain detail route. Preserve server-only dashboard token handling and run npm run lint, npm test, npm run build, and git diff --check before stopping.
 ```
+

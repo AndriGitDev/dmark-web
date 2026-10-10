@@ -1,5 +1,7 @@
 # Codex Backend Roadmap For Dmark
 
+> Historical scope, superseded 2026-10-10 by the [free Kastro product plan](FREE_PRODUCT_PLAN.md). Paid tiers, hosted SPF flattening and earlier GA promises below are not current product commitments. Runtime retirement must follow the dependency migration plan; historical implementation evidence remains useful.
+
 ## Completion Note - 2026-05-29
 
 This backend roadmap is archived. The dashboard contract endpoints documented below are implemented in `dmark-app` and consumed by `dmark-web`, so the remaining sections are historical reference only.
@@ -306,3 +308,4 @@ Once Phase 1 and Phase 2 land, update `dmark-web`:
 ```text
 Continue Dmark backend work in /Users/andri/Documents/GitHub/dmark-app using the roadmap in /Users/andri/Documents/GitHub/dmark-web/docs/CODEX_BACKEND_ROADMAP.md. Start with Phase 1 and Phase 2 only: stabilize frontend-ready dashboard API contracts, implement protected-domain fleet responses, and add authenticated recheck. Keep public scan/audit endpoints compatible with dmark-web. Update docs/API.md and run the listed Go tests before stopping.
 ```
+

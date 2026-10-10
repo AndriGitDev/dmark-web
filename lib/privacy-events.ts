@@ -9,9 +9,9 @@ type PrivacyEventStatus = "PASS" | "WARNING" | "FAIL" | "ERROR";
 type PrivacyEventSource =
   | "live_scanner"
   | "nav"
-  | "pricing"
+  | "help"
   | "footer"
-  | "result_upsell";
+  | "result_help";
 
 type PrivacyEventProperties = {
   status?: string;
@@ -36,9 +36,9 @@ const allowedStatuses = new Set<PrivacyEventStatus>(["PASS", "WARNING", "FAIL", 
 const allowedSources = new Set<PrivacyEventSource>([
   "live_scanner",
   "nav",
-  "pricing",
+  "help",
   "footer",
-  "result_upsell",
+  "result_help",
 ]);
 
 function sanitizePrivacyEventName(value: string): PrivacyEventName | null {
@@ -91,4 +91,5 @@ export function trackPrivacyEvent(
     // Analytics must never affect product flow.
   }
 }
+
 

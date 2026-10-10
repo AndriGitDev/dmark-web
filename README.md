@@ -1,5 +1,9 @@
 # dmark-web
 
+Dmark is a free email-authentication tool from Kastro, with optional separately quoted setup assistance. There is no paid Dmark plan or new hosted SPF flattening offering. The current scope and safe legacy retirement sequence are defined in [FREE_PRODUCT_PLAN.md](docs/FREE_PRODUCT_PLAN.md).
+
+The free site includes live SPF/DMARC evidence, common and explicit-selector DKIM checks, default BIMI publication checks, and a per-domain checklist saved only in the current browser. No login, subscription or automatic DNS changes. Device-only checklists are user-declared progress and do not certify security.
+
 Bilingual marketing site for dmark.is with a live public-domain email security check.
 
 ## Development and verification
@@ -24,6 +28,13 @@ The upstream deadline is 45 seconds; the function budget is 60 seconds. Response
 
 Ratings describe observed SPF/DMARC configuration, not whether an individual message is authenticated or whether spoofing is impossible. F indicates missing/non-enforcing DMARC or failed SPF posture; A requires assessed SPF and full reject enforcement with upstream green findings; B/C indicate remaining configuration concerns. An incomplete SPF chain, blocked target, or resolver warning suppresses the overall grade. Common-selector DKIM discovery is shown separately and does not lower the rating when no key is found. This is not a complete standards conformance validator, and upstream resolver limitations may yield incomplete results. Verify findings against authoritative DNS and message/report evidence before changes.
 
+## Saved domains and supplementary DNS checks
+
+`dmark:domains:v1` stores only domain names and manual checklist progress in localStorage. The UI supports up to 20 domains as a device storage bound. Users can remove a domain or clear the list; unavailable storage is reported and the checklist remains usable for the visit. There is no account sync or scheduled monitoring.
+
+The scanner accepts one optional DKIM selector and performs bounded Node DNS TXT resolution for that selector and `default._bimi`. DNS timeouts are shown as unknown, distinct from a missing record. The new observations do not alter the SPF/DMARC grade and do not fetch remote logos, certificates or arbitrary URLs. They check basic publication only, not cryptographic or full standards validity. Public scan traffic still needs a shared deployment-level rate limiter for substantial use; the new lookups are bounded per request and do not forward caller IP headers.
+
 ## Analytics
 
 The domain is sent to Kastro Lookup for the requested check, but is not included in scanner analytics events. Events permit only status and source. Optional build-time analytics settings: `DMARK_ANALYTICS_PROVIDER`, `DMARK_ANALYTICS_DOMAIN`, `DMARK_ANALYTICS_SCRIPT_URL`, and `DMARK_ANALYTICS_SITE_ID`. Service links lead to Kastro.
+
