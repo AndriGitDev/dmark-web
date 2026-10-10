@@ -1,5 +1,7 @@
 # Dmark GA Readiness Next Session Plan
 
+> Historical scope, superseded 2026-10-10 by the [free Kastro product plan](../FREE_PRODUCT_PLAN.md). Paid tiers, hosted SPF flattening and earlier GA promises below are not current product commitments. Runtime retirement must follow the dependency migration plan; historical implementation evidence remains useful.
+
 > **For Hermes:** Use subagent-driven-development skill to implement this plan task-by-task if the next session becomes a multi-area execution run. Use test-driven-development for every code change.
 
 **Goal:** Bring Dmark from customer-dashboard Authentik wiring to GA-ready product quality without weakening admin/customer isolation or the unauthenticated public scanner.
@@ -398,3 +400,4 @@ The next session is successful if it produces one of these outcomes:
 1. **GA-ready:** Smoke script, docs, UX recovery, security regression tests, and GA checklist are done, verified, pushed, and documented in Memento.
 2. **GA-blocked with evidence:** A specific live/provider/deployment issue is reproduced, root-caused, documented, and either fixed or turned into a precise blocker with next action.
 3. **Scoped GA slice complete:** At least one high-value GA slice is completed via TDD, fully verified, pushed, and captured in Memento.
+
