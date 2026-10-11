@@ -103,11 +103,11 @@ await page
   .locator(".domain-score > strong")
   .filter({ hasText: "100" })
   .waitFor();
-await page
-  .getByRole("button", { name: "example.com", exact: true })
-  .first()
-  .click();
-await page.getByRole("tab").last().click();
+await page.getByRole("button", { name: "Improve domain", exact: true }).click();
+if (
+  (await page.getByRole("tab").last().getAttribute("aria-selected")) !== "true"
+)
+  throw Error("Improve domain did not open guided plan");
 await page
   .getByRole("heading", { name: "All assessed DNS checks pass", exact: true })
   .waitFor();
@@ -118,11 +118,17 @@ await page.screenshot({
   fullPage: true,
 });
 await page.locator(".app-logo").click();
-await page.screenshot({path:"/tmp/dmark-score-dashboard.png",fullPage:true});
+await page.screenshot({
+  path: "/tmp/dmark-score-dashboard.png",
+  fullPage: true,
+});
 await page.setViewportSize({ width: 360, height: 900 });
-await page.getByRole("button",{name:"example.com",exact:true}).first().click();
+await page
+  .getByRole("button", { name: "example.com", exact: true })
+  .first()
+  .click();
 await page.getByRole("tab").last().click();
-await page.screenshot({path:"/tmp/dmark-guided-mobile.png",fullPage:true});
+await page.screenshot({ path: "/tmp/dmark-guided-mobile.png", fullPage: true });
 const overflow = await page.evaluate(() => ({
   width: innerWidth,
   scroll: document.documentElement.scrollWidth,
