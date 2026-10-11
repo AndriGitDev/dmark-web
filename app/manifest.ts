@@ -10,8 +10,8 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/is/",
     scope: "/",
     display: "standalone",
-    background_color: "#F4F8FA",
-    theme_color: "#44B6CD",
+    background_color: "#0F0F0D",
+    theme_color: "#F2B705",
     icons: [
       {
         src: "/brand/dmark-icon.png",
