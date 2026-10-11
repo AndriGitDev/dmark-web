@@ -8,8 +8,11 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
+        disallow: ["/api/"],
       },
     ],
+    host: "https://dmark.is",
     sitemap: "https://dmark.is/sitemap.xml",
   };
 }
+

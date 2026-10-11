@@ -13,13 +13,8 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: "#0F0F0D",
     theme_color: "#F2B705",
     icons: [
-      {
-        src: "/brand/kastro/star-yellow.png",
-        sizes: "1842x1688",
-        type: "image/png",
-        purpose: "any",
-      },
+      { src: "/icons/192/", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icons/512/", sizes: "512x512", type: "image/png", purpose: "any" },
     ],
   };
 }
-
