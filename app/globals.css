@@ -343,3 +343,46 @@ input::placeholder { color: var(--dim); }
   .spin { animation: none; }
   .domain-card { transition: none; }
 }
+
+/* Launch accessibility: sticky headers, zoom, touch and forced-color modes. */
+html { scroll-padding-top: 100px; }
+.app-main, .app-page-heading h1 { scroll-margin-top: 100px; }
+.app-text-button, .back-link, .domain-card-bottom button { min-height: 32px; min-width: 24px; }
+.app-language a { min-width: 32px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; }
+.app-add-form .app-error { color: var(--red); }
+.app-button { white-space: normal; text-align: center; }
+#domain-panel:focus-visible { outline-offset: 8px; }
+.public-reference { border-top: 1px solid var(--line); margin-top: 48px; padding-top: 40px; }
+.public-reference h2 { font-size: clamp(32px,3vw,44px); max-width: 25ch; }
+.reference-intro { color: var(--muted); max-width: 70ch; font-size: 16px; line-height: 1.75; margin-top: 20px; }
+.public-reference h3 { font-size: 26px; margin: 32px 0 20px; }
+.reference-faqs { border-top: 1px solid var(--line); }
+.reference-faqs details { border-bottom: 1px solid var(--line); }
+.reference-faqs summary { padding: 18px 0; font-size: 16px; font-weight: 600; cursor: pointer; }
+.reference-faqs p { max-width: 75ch; padding: 0 0 24px; color: var(--muted); font-size: 15px; line-height: 1.8; }
+.reference-help { color: var(--muted); font-size: 14px; line-height: 1.8; margin-top: 24px; max-width: 75ch; }
+.reference-help a { color: var(--lime); text-decoration: underline; text-underline-offset: 4px; }
+.noscript-notice { padding: 20px; border-top: 1px solid var(--line); color: var(--lime); }
+@media (pointer: coarse) {
+  .icon-button, .app-nav button, .app-text-button, .back-link, .domain-card-bottom button, .app-tabs button { min-height: 44px; }
+  .icon-button, .app-language a { min-width: 44px; }
+}
+@media (max-width: 360px) {
+  .app-sidebar { flex-wrap: wrap; }
+  .app-nav { margin-left: 0; width: 100%; }
+  .app-nav button { flex: 1; }
+  .app-top-actions .app-button { font-size: 11px; }
+}
+@media (forced-colors: active) {
+  .status-dot, .progress-track span { background: Highlight; }
+  .app-button, .app-tabs button, .icon-button { border: 1px solid ButtonText; }
+  .app-tabs button[aria-selected='true'] { border-bottom: 3px solid Highlight; }
+  .setup-task-list input { forced-color-adjust: auto; }
+}
+.app-add-form input, .selector-settings input, .guided-selector input, .account-dialog input { border-color: #777268; }
+.domain-filter { border-bottom-color: #777268; }
+.app-language [aria-current='page'] { text-decoration: underline; text-underline-offset: 5px; }
+.app-nav button.active { box-shadow: inset 2px 0 var(--lime); }
+.account-nudge :focus-visible, .next-step-panel :focus-visible { outline-color: var(--paper); }
+.app-footer nav { width: 100%; display: flex; gap: 12px 20px; flex-wrap: wrap; }
+.app-footer nav a { display: inline-flex; align-items: center; min-height: 32px; text-decoration: underline; text-underline-offset: 4px; }

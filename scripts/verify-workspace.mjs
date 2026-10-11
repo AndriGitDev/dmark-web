@@ -1,5 +1,8 @@
 import { readFileSync } from "node:fs";
 import { spawn } from "node:child_process";
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const axeScript = require.resolve("axe-core/axe.min.js");
 import { chromium } from "@playwright/test";
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
@@ -36,6 +39,18 @@ await page.route("**/api/account/**", (r) =>
     json: { authenticated: false, available: false, csrf: "x".repeat(43) },
   }),
 );
+async function checkAccessibility(label) {
+  await page.addScriptTag({ path: axeScript });
+  const findings = await page.evaluate(async () => {
+    const result = await window.axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"] } });
+    return result.violations.map(item => ({ id: item.id, impact: item.impact, targets: item.nodes.map(node => node.target) }));
+  });
+  if (findings.length) throw Error(`Accessibility ${label}: ${JSON.stringify(findings)}`);
+}
+async function noOverflow(label) {
+  const sizes = await page.evaluate(() => ({ width: innerWidth, scroll: document.documentElement.scrollWidth }));
+  if (sizes.scroll > sizes.width) throw Error(`Overflow ${label}: ${JSON.stringify(sizes)}`);
+}
 let improved = false;
 await page.route("**/api/scan/**", (route) =>
   route.fulfill({
@@ -100,15 +115,34 @@ await page.route("**/api/spf/flatten/**", (route) => {
   });
 });
 await page.goto("http://localhost:3000/en/");
+await page.getByRole("button", { name: "Add domain", exact: true }).waitFor();
+await checkAccessibility("English empty workspace");
+await page.locator("#add-domain").fill("not-a-domain");
+await page.getByRole("button", { name: "Add domain", exact: true }).click();
+await page.locator("#add-domain-error").waitFor();
+if (await page.locator("#add-domain").getAttribute("aria-invalid") !== "true") throw Error("Missing input invalid state");
+if (await page.evaluate(() => document.activeElement?.id) !== "add-domain") throw Error("Invalid input did not receive focus");
+await checkAccessibility("Domain validation error");
 await page.locator("#add-domain").fill("example.com");
 await page.getByRole("button", { name: "Add domain", exact: true }).click();
 
 await page.locator(".scan-grade > strong").filter({ hasText: "60" }).waitFor();
+await checkAccessibility("Domain summary");
+const summaryTab = page.getByRole("tab").first();
+await summaryTab.focus();
+await page.keyboard.press("End");
+if (await page.getByRole("tab").last().getAttribute("aria-selected") !== "true") throw Error("End key did not select last tab");
+await page.keyboard.press("Home");
+if (await summaryTab.getAttribute("aria-selected") !== "true") throw Error("Home key did not select first tab");
+for (const control of await page.getByRole("tab").evaluateAll(items => items.map(item => item.getAttribute("aria-controls")))) {
+  if (await page.locator(`#${control}`).count() !== 1) throw Error("Missing tab panel target");
+}
 await page.getByRole("tab").last().click();
 await page
   .locator(".next-step-panel h3")
   .filter({ hasText: "Confirm a published DKIM key" })
   .waitFor();
+await checkAccessibility("Guided setup");
 await page.getByRole("checkbox").nth(1).check();
 if (!(await page.locator(".readiness-total").textContent()).includes("60"))
   throw Error("Manual checkbox changed score");
@@ -166,6 +200,7 @@ const download = await downloadPromise;
 const exportPath = await download.path();
 if (!readFileSync(exportPath, "utf8").includes("vendor.com"))
   throw Error("Export lost provenance");
+await checkAccessibility("SPF generated result");
 await page.screenshot({ path: "/tmp/dmark-spf-generator.png", fullPage: true });
 flattenFailure = true;
 await page
@@ -187,6 +222,11 @@ await page.screenshot({
   path: "/tmp/dmark-score-dashboard.png",
   fullPage: true,
 });
+await checkAccessibility("Scored workspace");
+for (const width of [320, 360, 768, 1440]) {
+  await page.setViewportSize({ width, height: 900 });
+  await noOverflow(`workspace ${width}`);
+}
 await page.setViewportSize({ width: 360, height: 900 });
 await page
   .getByRole("button", { name: "example.com", exact: true })
@@ -206,8 +246,15 @@ await page
   .click();
 if (!(await page.locator("dialog").evaluate((e) => e.open)))
   throw Error("Dialog closed");
+await checkAccessibility("Account dialog");
+const firstInput = page.locator("#account-email");
+if (!(await firstInput.evaluate(input => input === document.activeElement))) throw Error("Dialog did not focus email field");
 await page.keyboard.press("Escape");
 await page.goto("http://localhost:3000/is/");
+await checkAccessibility("Icelandic workspace");
+await page.locator(".app-nav button").last().click();
+await checkAccessibility("Icelandic reference guide");
+await noOverflow("Icelandic guide 360");
 
 // Account API mocks exercise UI transitions; backend session contracts have separate Go tests.
 await page.unroute("**/api/account/**");
@@ -334,7 +381,7 @@ await blockedPage
   .waitFor();
 if (errors.length) throw Error(errors.join("\n"));
 console.log(
-  "Dashboard score, cached reload, guided next action, verified improvement, manual-progress separation, mobile guide, guest/account persistence and blocked-cookie flows passed.",
+  "WCAG axe checks, keyboard tabs, form errors, dialog focus, responsive overflow, dashboard score, cached reload, guided next action, verified improvement, manual-progress separation, mobile guide, guest/account persistence and blocked-cookie flows passed.",
 );
 await browser.close();
 server.kill();
