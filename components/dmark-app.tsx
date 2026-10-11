@@ -33,6 +33,13 @@ import {
 } from "@/lib/domain-workspace";
 import { validSelector } from "@/lib/authentication-records";
 import { validateScannableDomain, type ScanPayload } from "@/lib/scan";
+import { DomainGuidance } from "@/components/domain-guidance";
+import {
+  domainReadiness,
+  parseScoreCache,
+  scoreCacheKey,
+  type ScoreSnapshot,
+} from "@/lib/domain-readiness";
 import { presentScan } from "@/lib/scan-presentation";
 import { AuthenticationFindings } from "@/components/authentication-findings";
 import { trackPrivacyEvent } from "@/lib/privacy-events";
@@ -62,6 +69,8 @@ export function DmarkApp() {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [results, setResults] = useState<Record<string, ScanPayload>>({});
+  const [observedAt, setObservedAt] = useState(0);
+  const [scores, setScores] = useState<Record<string, ScoreSnapshot>>({});
   const [busy, setBusy] = useState("");
   const controller = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -81,7 +90,13 @@ export function DmarkApp() {
   // Cookie hydration keeps the server and first browser render identical.
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
+    setObservedAt(Date.now());
     let initial = readWorkspaceCookie(document.cookie);
+    try {
+      setScores(parseScoreCache(localStorage.getItem(scoreCacheKey)));
+    } catch {
+      /* Scores still work in memory. */
+    }
     try {
       if (
         !document.cookie
@@ -153,11 +168,20 @@ export function DmarkApp() {
   }, [dirty]);
 
   const current = domains.find((item) => item.domain === selected);
-  const result = current ? results[current.domain] : undefined;
+  const result =
+    current &&
+    scores[current.domain]?.selector === (current.selector?.trim() || "")
+      ? results[current.domain]
+      : undefined;
   const filtered = domains.filter((item) =>
     item.domain.includes(filter.toLowerCase().trim()),
   );
-  const checked = domains.filter((item) => results[item.domain]).length;
+  const checked = domains.filter(
+    (item) =>
+      scores[item.domain] &&
+      scores[item.domain].selector === (item.selector?.trim() || ""),
+  ).length;
+  const text = (en: string, is: string) => (locale === "en" ? en : is);
 
   function persist(next: SavedDomain[]) {
     if (saving) return false;
@@ -216,6 +240,7 @@ export function DmarkApp() {
     setTab("summary");
     setInput("");
     setError("");
+    void scan(existing || { domain: value.domain, completed: [] });
   }
   function select(domain: string) {
     setSelected(domain);
@@ -247,29 +272,30 @@ export function DmarkApp() {
     );
   }
   function updateSelector(value: string) {
+    if (value !== current?.selector)
+      setResults((previous) => {
+        const next = { ...previous };
+        delete next[selected];
+        return next;
+      });
     persist(
       domains.map((item) =>
         item.domain === selected ? { ...item, selector: value } : item,
       ),
     );
   }
-  async function scan() {
-    if (!current || controller.current) return;
-    const selector = current.selector?.trim() || "";
+  async function scan(target: SavedDomain | undefined = current) {
+    if (!target || controller.current) return;
+    const selector = target.selector?.trim() || "";
     if (selector && !validSelector(selector)) {
       setError(t("invalid_selector"));
       return;
     }
-    const domain = current.domain;
+    const domain = target.domain;
     const abort = new AbortController();
     controller.current = abort;
     setBusy(domain);
     setError("");
-    setResults((previous) => {
-      const next = { ...previous };
-      delete next[domain];
-      return next;
-    });
     const timeout = window.setTimeout(() => abort.abort(), 55000);
     trackPrivacyEvent("scan_start", { source: "live_scanner" });
     try {
@@ -291,7 +317,25 @@ export function DmarkApp() {
         !data.dmarc
       )
         throw Error("scan_failed");
+      setObservedAt(Date.parse(data.checkedAt) || observedAt);
       setResults((previous) => ({ ...previous, [domain]: data }));
+      const snapshot: ScoreSnapshot = {
+        score: domainReadiness(data).score,
+        grade: data.audit?.grade || "—",
+        checkedAt: data.checkedAt || new Date(observedAt).toISOString(),
+        selector,
+      };
+      setScores((previous) => ({ ...previous, [domain]: snapshot }));
+      try {
+        const cached = parseScoreCache(localStorage.getItem(scoreCacheKey));
+        cached[domain] = snapshot;
+        localStorage.setItem(
+          scoreCacheKey,
+          JSON.stringify({ v: 1, scores: Object.entries(cached).slice(-20) }),
+        );
+      } catch {
+        /* A blocked cache does not prevent checking a domain. */
+      }
       trackPrivacyEvent("scan_complete", {
         source: "live_scanner",
         status: data.status,
@@ -606,7 +650,7 @@ export function DmarkApp() {
                   <strong>{domains.length.toString().padStart(2, "0")}</strong>
                 </div>
                 <div>
-                  <span>{t("checked_session")}</span>
+                  <span>{text("Domains with scores", "Lén með stig")}</span>
                   <strong>{checked.toString().padStart(2, "0")}</strong>
                 </div>
                 <div>
@@ -631,58 +675,109 @@ export function DmarkApp() {
                     </label>
                   </div>
                   <div className="domain-grid">
-                    {filtered.map((item) => (
-                      <article key={item.domain} className="domain-card">
-                        <div className="domain-card-top">
-                          <span className="domain-icon">
-                            <Globe2 size={21} />
-                          </span>
+                    {filtered.map((item) => {
+                      const score =
+                        scores[item.domain]?.selector ===
+                        (item.selector?.trim() || "")
+                          ? scores[item.domain]
+                          : undefined;
+                      const stale =
+                        score &&
+                        observedAt - Date.parse(score.checkedAt) > 86400000;
+                      return (
+                        <article key={item.domain} className="domain-card">
+                          <div className="domain-card-top">
+                            <span className="domain-icon">
+                              <Globe2 size={21} />
+                            </span>
+                            <button
+                              className="icon-button"
+                              aria-label={t("remove_domain", {
+                                domain: item.domain,
+                              })}
+                              onClick={() => remove(item.domain)}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                           <button
-                            className="icon-button"
-                            aria-label={t("remove_domain", {
-                              domain: item.domain,
-                            })}
-                            onClick={() => remove(item.domain)}
+                            className="domain-open"
+                            onClick={() => select(item.domain)}
                           >
-                            <Trash2 size={16} />
+                            {item.domain}
+                            <ArrowRight size={17} />
                           </button>
-                        </div>
-                        <button
-                          className="domain-open"
-                          onClick={() => select(item.domain)}
-                        >
-                          {item.domain}
-                          <ArrowRight size={17} />
-                        </button>
-                        <div className="domain-card-status">
-                          <span
-                            className={`status-dot ${results[item.domain] ? "checked" : ""}`}
-                          />
-                          {results[item.domain]
-                            ? presentScan(results[item.domain], locale).status
-                            : t("not_checked")}
-                        </div>
-                        <div className="progress-track">
-                          <span
-                            style={{
-                              width: `${(item.completed.length / 6) * 100}%`,
-                            }}
-                          />
-                        </div>
-                        <div className="domain-card-bottom">
-                          <span>
-                            {t("tasks_done", {
-                              count: item.completed.length,
-                              total: 6,
-                            })}
-                          </span>
-                          <button onClick={() => select(item.domain)}>
-                            {t("open_workspace")}
-                            <ChevronRight size={14} />
+                          <div
+                            className={`domain-score ${score?.score === 100 ? "perfect" : ""}`}
+                          >
+                            <strong>
+                              {score?.score ?? "—"}
+                              <small>/100</small>
+                            </strong>
+                            <span>
+                              {text("DNS readiness", "DNS staða")}
+                              <small>
+                                {text(
+                                  "SPF / DMARC grade",
+                                  "SPF / DMARC einkunn",
+                                )}
+                                : {score?.grade || "—"}
+                              </small>
+                            </span>
+                          </div>
+                          <div className="domain-card-status">
+                            <span
+                              className={`status-dot ${results[item.domain] ? "checked" : ""}`}
+                            />
+                            {results[item.domain]
+                              ? presentScan(results[item.domain], locale).status
+                              : score
+                                ? text(
+                                    "Saved observation · recheck for live findings",
+                                    "Vistuð athugun · athugaðu aftur fyrir nýjar niðurstöður",
+                                  )
+                                : t("not_checked")}
+                          </div>
+                          <div className="progress-track" aria-hidden="true">
+                            <span style={{ width: `${score?.score ?? 0}%` }} />
+                          </div>
+                          <p className="score-checked">
+                            {score
+                              ? `${stale ? text("Older result · recheck", "Eldri niðurstaða · athugaðu aftur") : text("Last checked", "Síðast athugað")} · ${new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "is-IS", { dateStyle: "medium", timeStyle: "short" }).format(new Date(score.checkedAt))}`
+                              : text(
+                                  "Check DNS to get your score",
+                                  "Athugaðu DNS til að fá stig",
+                                )}
+                          </p>
+                          <button
+                            className="app-text-button"
+                            disabled={!!busy}
+                            onClick={() => void scan(item)}
+                          >
+                            {busy === item.domain
+                              ? t("checking")
+                              : text("Refresh score", "Uppfæra stig")}
                           </button>
-                        </div>
-                      </article>
-                    ))}
+                          <div className="domain-card-bottom">
+                            <span>
+                              {t("tasks_done", {
+                                count: item.completed.length,
+                                total: 6,
+                              })}
+                            </span>
+                            <button
+                              onClick={() => {
+                                select(item.domain);
+                                setTab("setup");
+                              }}
+                            >
+                              {text("Improve domain", "Bæta lénið")}
+                              <ChevronRight size={14} />
+                            </button>
+                          </div>
+                        </article>
+                      );
+                    })}
                   </div>
                   {!filtered.length ? (
                     <p className="app-empty-small">{t("no_matches")}</p>
@@ -814,47 +909,100 @@ export function DmarkApp() {
                 aria-labelledby={`tab-${tab}`}
               >
                 {tab === "setup" ? (
-                  <div className="setup-layout">
-                    <div className="setup-task-list">
-                      {setupSteps.map((step, i) => (
-                        <article
-                          className={
-                            current.completed.includes(step) ? "done" : ""
-                          }
-                          key={step}
+                  <>
+                    <label className="guided-selector">
+                      {t("selector")}
+                      <input
+                        aria-label={text(
+                          "Guided DKIM selector",
+                          "DKIM selector í leiðsögn",
+                        )}
+                        value={current.selector || ""}
+                        onChange={(event) =>
+                          updateSelector(event.target.value.trim())
+                        }
+                        placeholder="selector1"
+                      />
+                    </label>
+                    {result ? (
+                      <DomainGuidance
+                        result={result}
+                        busy={!!busy}
+                        onRecheck={() => void scan()}
+                      />
+                    ) : (
+                      <div className="next-step-panel">
+                        <div>
+                          <h2>
+                            {text(
+                              "Start with a DNS check",
+                              "Byrjaðu á DNS athugun",
+                            )}
+                          </h2>
+                          <p>
+                            {text(
+                              "Your personalised guide uses the current findings to show what to fix and how to verify it.",
+                              "Leiðsögnin notar núverandi niðurstöður til að sýna hvað þarf að laga og hvernig á að staðfesta það.",
+                            )}
+                          </p>
+                        </div>
+                        <button
+                          className="app-button dark"
+                          disabled={!!busy}
+                          onClick={() => void scan()}
                         >
-                          <label>
-                            <input
-                              type="checkbox"
-                              checked={current.completed.includes(step)}
-                              onChange={() => toggle(step)}
-                            />
-                            <span className="task-number">
-                              {(i + 1).toString().padStart(2, "0")}
-                            </span>
-                            <strong>{w(`steps.${step}.title`)}</strong>
-                          </label>
-                          <p>{w(`steps.${step}.detail`)}</p>
-                        </article>
-                      ))}
+                          {busy ? t("checking") : t("check_domain")}
+                        </button>
+                      </div>
+                    )}
+                    <h2 className="manual-notes-heading">
+                      {text(
+                        "Your preparation notes",
+                        "Undirbúningsathugasemdir þínar",
+                      )}
+                    </h2>
+                    <div className="setup-layout">
+                      <div className="setup-task-list">
+                        {setupSteps.map((step, i) => (
+                          <article
+                            className={
+                              current.completed.includes(step) ? "done" : ""
+                            }
+                            key={step}
+                          >
+                            <label>
+                              <input
+                                type="checkbox"
+                                checked={current.completed.includes(step)}
+                                onChange={() => toggle(step)}
+                              />
+                              <span className="task-number">
+                                {(i + 1).toString().padStart(2, "0")}
+                              </span>
+                              <strong>{w(`steps.${step}.title`)}</strong>
+                            </label>
+                            <p>{w(`steps.${step}.detail`)}</p>
+                          </article>
+                        ))}
+                      </div>
+                      <aside className="setup-note">
+                        <BookOpen size={22} />
+                        <h2>{t("your_progress")}</h2>
+                        <strong className="setup-count">
+                          {current.completed.length}
+                          <span>/6</span>
+                        </strong>
+                        <p>{w("manual")}</p>
+                        <button
+                          className="app-text-button"
+                          onClick={() => setView("guide")}
+                        >
+                          {t("official_guides")}
+                          <ArrowRight size={15} />
+                        </button>
+                      </aside>
                     </div>
-                    <aside className="setup-note">
-                      <BookOpen size={22} />
-                      <h2>{t("your_progress")}</h2>
-                      <strong className="setup-count">
-                        {current.completed.length}
-                        <span>/6</span>
-                      </strong>
-                      <p>{w("manual")}</p>
-                      <button
-                        className="app-text-button"
-                        onClick={() => setView("guide")}
-                      >
-                        {t("official_guides")}
-                        <ArrowRight size={15} />
-                      </button>
-                    </aside>
-                  </div>
+                  </>
                 ) : (
                   <>
                     <div className="selector-settings">
@@ -1033,6 +1181,8 @@ function ScanView({
   const auth = useTranslations("Authentication");
   const locale = useLocale();
   const view = presentScan(result, locale);
+  const readiness = domainReadiness(result, locale);
+  const text = (en: string, is: string) => (locale === "en" ? en : is);
   if (records)
     return (
       <div className="records-grid">
@@ -1062,8 +1212,14 @@ function ScanView({
     <>
       <div className="scan-summary">
         <div className="scan-grade">
-          <span>{t("spf_dmarc_rating")}</span>
-          <strong>{result.audit?.grade || "—"}</strong>
+          <span>{text("DNS readiness", "DNS staða")}</span>
+          <strong>
+            {readiness.score ?? "—"}
+            <small>/100</small>
+          </strong>
+          <small>
+            {t("spf_dmarc_rating")}: {result.audit?.grade || "—"}
+          </small>
         </div>
         <div>
           <span className="mode-pill">{view.status}</span>
@@ -1108,10 +1264,16 @@ function ScanView({
         <BookOpen size={24} />
         <div>
           <h2>{t("next_step")}</h2>
-          <p>{view.summary}</p>
+          <p>
+            {readiness.next?.title ||
+              text(
+                "All assessed DNS checks pass. Verify real-mail alignment and keep reviewing reports.",
+                "Allar metnar DNS athuganir standast. Staðfestu samsvörun í raunverulegum pósti og yfirfarðu skýrslur áfram.",
+              )}
+          </p>
         </div>
         <button className="app-button" onClick={onSetup}>
-          {t("open_checklist")}
+          {text("Follow the guided plan", "Fylgja leiðsögn")}
           <ArrowRight size={16} />
         </button>
       </div>
