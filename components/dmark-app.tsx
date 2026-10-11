@@ -472,10 +472,11 @@ export function DmarkApp() {
           onClick={() => setView("overview")}
           aria-label="Dmark"
         >
-          <span>
-            dmark<span>.</span>
+          <KastroStar className="logo-star" />
+          <span className="app-wordmark">
+            <span>dmark<span>.</span></span>
+            <span className="app-logo-tag">by Kastro</span>
           </span>
-          <span className="app-logo-tag">by Kastro</span>
         </button>
         <div className="sidebar-caption">{t("workspace")}</div>
         <nav aria-label={t("navigation")} className="app-nav">
@@ -500,14 +501,15 @@ export function DmarkApp() {
           {domains.map((item) => (
             <button
               key={item.domain}
+              aria-label={item.domain}
               className={
                 view === "domain" && item.domain === selected ? "selected" : ""
               }
               onClick={() => select(item.domain)}
             >
-              <Globe2 size={15} />
+              <span className="status-dot" />
               <span>{item.domain}</span>
-              <ChevronRight size={14} />
+              <small>{scores[item.domain]?.selector === (item.selector?.trim() || "") ? scores[item.domain]?.score ?? "—" : "—"}</small>
             </button>
           ))}
           {!domains.length ? <p>{t("sidebar_empty")}</p> : null}
@@ -611,17 +613,13 @@ export function DmarkApp() {
           ) : null}
           {view === "overview" ? (
             <>
-              <div className="app-page-heading">
+              <div className="app-page-heading overview-heading">
                 <div>
                   <p className="app-eyebrow">SPF / DKIM / DMARC / BIMI</p>
                   <h1>{t("my_domains")}</h1>
                   <p>{t("overview_text")}</p>
                 </div>
-                <span className="mode-pill">
-                  {account?.authenticated
-                    ? t("account_workspace")
-                    : t("guest_workspace")}
-                </span>
+                <KastroStar className="hero-star" />
               </div>
               <form onSubmit={add} className="app-add-form">
                 <label htmlFor="add-domain">{t("add_domain")}</label>
@@ -675,7 +673,7 @@ export function DmarkApp() {
                     </label>
                   </div>
                   <div className="domain-grid">
-                    {filtered.map((item) => {
+                    {filtered.map((item, index) => {
                       const score =
                         scores[item.domain]?.selector ===
                         (item.selector?.trim() || "")
@@ -685,11 +683,9 @@ export function DmarkApp() {
                         score &&
                         observedAt - Date.parse(score.checkedAt) > 86400000;
                       return (
-                        <article key={item.domain} className="domain-card">
+                        <article key={item.domain} className={`domain-card ${score?.score === 100 ? "perfect" : ""}`}>
                           <div className="domain-card-top">
-                            <span className="domain-icon">
-                              <Globe2 size={21} />
-                            </span>
+                            <span className="domain-index">{String(index + 1).padStart(2, "0")}</span>
                             <button
                               className="icon-button"
                               aria-label={t("remove_domain", {
@@ -715,14 +711,8 @@ export function DmarkApp() {
                               <small>/100</small>
                             </strong>
                             <span>
-                              {text("DNS readiness", "DNS staða")}
-                              <small>
-                                {text(
-                                  "SPF / DMARC grade",
-                                  "SPF / DMARC einkunn",
-                                )}
-                                : {score?.grade || "—"}
-                              </small>
+                              <small>SPF / DMARC</small>
+                              <b className="grade-badge">{score?.grade || "—"}</b>
                             </span>
                           </div>
                           <div className="domain-card-status">
@@ -810,15 +800,19 @@ export function DmarkApp() {
               )}
               {!account?.authenticated ? (
                 <div className="account-nudge">
-                  <ShieldCheck size={22} />
                   <div>
+                    <p className="app-eyebrow">{t("free_account")}</p>
                     <strong>{t("nudge_title")}</strong>
                     <p>{t("nudge_text")}</p>
                   </div>
-                  <button className="app-text-button" onClick={openAccount}>
-                    {t("create_account")}
-                    <ArrowRight size={15} />
-                  </button>
+                  <div className="nudge-action">
+                    <p>{t("account_text")}</p>
+                    <button className="app-button" onClick={openAccount}>
+                      {t("create_account")}
+                      <ArrowRight size={15} />
+                    </button>
+                  </div>
+                  <KastroStar className="nudge-star" />
                 </div>
               ) : dirty ? (
                 <p className="unsaved-note">{t("unsaved")}</p>
@@ -826,7 +820,7 @@ export function DmarkApp() {
             </>
           ) : view === "domain" && current ? (
             <>
-              <div className="app-page-heading">
+              <div className="app-page-heading domain-heading">
                 <div>
                   <button
                     className="back-link"
@@ -899,6 +893,7 @@ export function DmarkApp() {
                       }
                     }}
                   >
+                    <span className="tab-number">0{["summary", "records", "setup"].indexOf(value) + 1}</span>
                     {t(`tabs.${value}`)}
                   </button>
                 ))}
@@ -1278,5 +1273,14 @@ function ScanView({
         </button>
       </div>
     </>
+  );
+}
+
+function KastroStar({ className }: { className: string }) {
+  return (
+    <svg className={className} viewBox="0 0 200 200" aria-hidden="true" focusable="false">
+      <path fill="currentColor" d="M100 0 118 55 150 13 145 68 187 50 155 91 200 100 155 118 187 150 132 145 150 187 109 155 100 200 82 155 50 187 55 132 13 150 45 109 0 100 45 82 13 50 68 55 50 13 91 45Z" />
+      <circle cx="100" cy="100" r="23" fill="var(--paper)" />
+    </svg>
   );
 }

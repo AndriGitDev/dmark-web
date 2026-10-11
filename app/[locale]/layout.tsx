@@ -3,7 +3,7 @@ import {getMessages, getTranslations, setRequestLocale} from 'next-intl/server';
 import {notFound} from 'next/navigation';
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
-import { JetBrains_Mono, Schibsted_Grotesk } from "next/font/google";
+import localFont from "next/font/local";
 import { PrivacyAnalytics } from "@/components/privacy-analytics";
 import {routing} from "@/i18n/routing";
 import "../globals.css";
@@ -12,14 +12,19 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({locale}));
 }
 
-const schibsted = Schibsted_Grotesk({
-  subsets: ["latin"],
+const archivo = localFont({
+  src: [
+    { path: "../../public/fonts/archivo-latin.woff2", weight: "100 900", style: "normal" },
+    { path: "../../public/fonts/archivo-latin-ext.woff2", weight: "100 900", style: "normal" },
+  ],
   display: "swap",
-  variable: "--font-schibsted",
+  variable: "--font-archivo",
 });
-
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin"],
+const jetbrains = localFont({
+  src: [
+    { path: "../../public/fonts/jetbrains-latin.woff2", weight: "400", style: "normal" },
+    { path: "../../public/fonts/jetbrains-latin-ext.woff2", weight: "400", style: "normal" },
+  ],
   display: "swap",
   variable: "--font-jetbrains",
 });
@@ -88,7 +93,7 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className={`${schibsted.variable} ${jetbrains.variable}`}>
+    <html lang={locale} className={`${archivo.variable} ${jetbrains.variable}`}>
       <body>
         <NextIntlClientProvider messages={{App: messages.App, Errors: messages.Errors, Workspace: messages.Workspace, Authentication: messages.Authentication}}>
           {children}
