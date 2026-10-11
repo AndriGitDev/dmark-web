@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const headers = {
   "Cache-Control": "no-store",
+  "X-Robots-Tag": "noindex, nofollow, nosnippet",
   "Referrer-Policy": "no-referrer",
   "Content-Security-Policy":
     "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
     ? "Continue to your Dmark account"
     : "Halda áfram í Dmark aðganginn þinn";
   const response = new Response(
-    `<!doctype html><html lang="${en ? "en" : "is"}"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{font:16px system-ui;background:#f4f6f3;color:#18251e;display:grid;place-items:center;min-height:95vh;margin:0}main{max-width:420px;padding:32px;background:white;border:1px solid #dce3db;border-radius:16px}h1{font-size:25px}p{line-height:1.6}button{padding:14px 22px;border:0;border-radius:8px;background:#c3f25c;font:600 16px system-ui;cursor:pointer}a{color:#283e24}</style><main><strong>dmark.</strong><h1>${title}</h1><p>${en ? "Open this link in the same browser where you requested it. Continue only if you requested this sign-in." : "Opnaðu hlekkinn í sama vafra og þú notaðir til að biðja um hann. Haltu aðeins áfram ef þú baðst um innskráninguna."}</p><form method="post" action="/api/account/confirm/"><input type="hidden" name="token" value="${token}"><input type="hidden" name="csrf" value="${data.csrf}"><input type="hidden" name="locale" value="${en ? "en" : "is"}"><button type="submit">${en ? "Sign in" : "Skrá inn"}</button></form><p><a href="/${en ? "en" : "is"}/">${en ? "Back to workspace" : "Til baka í vinnusvæði"}</a></p></main></html>`,
+    `<!doctype html><html lang="${en ? "en" : "is"}"><head><meta charset="utf-8"><meta name="robots" content="noindex, nofollow"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{font:16px system-ui;background:#0f0f0d;color:#edeae2;display:grid;place-items:center;min-height:95vh;margin:0;padding:16px;box-sizing:border-box}main{width:100%;max-width:420px;box-sizing:border-box;padding:32px;background:#181815;border:1px solid #edeae23d;border-radius:6px}h1{font-size:25px}p{line-height:1.6}button{padding:14px 22px;border:0;border-radius:4px;background:#f2b705;color:#0f0f0d;font:600 16px system-ui;cursor:pointer}a{color:#f2b705}:focus-visible{outline:2px solid #f2b705;outline-offset:4px}</style></head><body><main><strong>dmark.</strong><h1>${title}</h1><p>${en ? "Open this link in the same browser where you requested it. Continue only if you requested this sign-in." : "Opnaðu hlekkinn í sama vafra og þú notaðir til að biðja um hann. Haltu aðeins áfram ef þú baðst um innskráninguna."}</p><form method="post" action="/api/account/confirm/"><input type="hidden" name="token" value="${token}"><input type="hidden" name="csrf" value="${data.csrf}"><input type="hidden" name="locale" value="${en ? "en" : "is"}"><button type="submit">${en ? "Sign in" : "Skrá inn"}</button></form><p><a href="/${en ? "en" : "is"}/">${en ? "Back to workspace" : "Til baka í vinnusvæði"}</a></p></main></body></html>`,
     { headers: { ...headers, "Content-Type": "text/html; charset=utf-8" } },
   );
   for (const value of session.headers.getSetCookie())

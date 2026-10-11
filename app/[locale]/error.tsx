@@ -18,7 +18,7 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
           <button
             type="button"
             onClick={() => reset()}
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded bg-brand-ink px-5 font-semibold text-white shadow-glow transition hover:bg-brand"
+            className="app-button"
           >
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
             {t("tryAgain")}
@@ -35,3 +35,4 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
     </main>
   );
 }
+
