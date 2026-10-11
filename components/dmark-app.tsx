@@ -765,7 +765,12 @@ export function DmarkApp() {
                                 total: 6,
                               })}
                             </span>
-                            <button onClick={() => select(item.domain)}>
+                            <button
+                              onClick={() => {
+                                select(item.domain);
+                                setTab("setup");
+                              }}
+                            >
                               {text("Improve domain", "Bæta lénið")}
                               <ChevronRight size={14} />
                             </button>
