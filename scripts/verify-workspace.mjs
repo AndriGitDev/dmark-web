@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { chromium } from "@playwright/test";
 import { fileURLToPath } from "node:url";
@@ -71,6 +72,33 @@ await page.route("**/api/scan/**", (route) =>
     },
   }),
 );
+let flattenFailure = false;
+await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+await page.route("**/api/spf/flatten/**", (route) => {
+  if (flattenFailure)
+    return route.fulfill({
+      status: 422,
+      json: { code: "UNSUPPORTED_TERM", target: "example.com", term: "mx" },
+    });
+  return route.fulfill({
+    json: {
+      domain: "example.com",
+      original: "v=spf1 include:vendor.com ~all",
+      flattened: "v=spf1 ip4:192.0.2.1 ~all",
+      generatedAt: new Date().toISOString(),
+      dependencies: 1,
+      lookupTerms: 1,
+      zoneValue: '"v=spf1 ip4:192.0.2.1 ~all"',
+      sources: [
+        {
+          network: "ip4:192.0.2.1",
+          domain: "vendor.com",
+          mechanism: "ip4:192.0.2.1",
+        },
+      ],
+    },
+  });
+});
 await page.goto("http://localhost:3000/en/");
 await page.locator("#add-domain").fill("example.com");
 await page.getByRole("button", { name: "Add domain", exact: true }).click();
@@ -113,6 +141,43 @@ await page
   .waitFor();
 if ((await page.locator(".guided-checks .verified").count()) !== 5)
   throw Error("Recheck did not verify five checks");
+await page.locator(".spf-flatten-tool > summary").click();
+await page
+  .getByRole("button", { name: "Generate flattened SPF", exact: true })
+  .click();
+await page
+  .locator(".flatten-comparison pre")
+  .last()
+  .filter({ hasText: "v=spf1 ip4:192.0.2.1 ~all" })
+  .waitFor();
+if (!(await page.locator(".readiness-total").textContent()).includes("100"))
+  throw Error("Generation changed the score");
+await page.getByRole("button", { name: "Copy record", exact: true }).click();
+if (
+  (await page.evaluate(() => navigator.clipboard.readText())) !==
+  "v=spf1 ip4:192.0.2.1 ~all"
+)
+  throw Error("Wrong copied record");
+const downloadPromise = page.waitForEvent("download");
+await page
+  .getByRole("button", { name: "Download snapshot", exact: true })
+  .click();
+const download = await downloadPromise;
+const exportPath = await download.path();
+if (!readFileSync(exportPath, "utf8").includes("vendor.com"))
+  throw Error("Export lost provenance");
+await page.screenshot({ path: "/tmp/dmark-spf-generator.png", fullPage: true });
+flattenFailure = true;
+await page
+  .getByRole("button", { name: "Regenerate record", exact: true })
+  .click();
+await page
+  .getByRole("alert")
+  .filter({ hasText: "cannot safely flatten" })
+  .waitFor();
+if (await page.locator(".flatten-result").count())
+  throw Error("Failed regeneration left a copyable stale candidate");
+flattenFailure = false;
 await page.screenshot({
   path: "/tmp/dmark-guided-desktop.png",
   fullPage: true,
