@@ -56,10 +56,10 @@ export async function generateMetadata({
       description: t("ogDescription"),
       images: [
         {
-          url: "/brand/dmark-icon.png",
-          width: 512,
-          height: 512,
-          alt: "dmark.is logo",
+          url: "/brand/kastro/star-yellow.png",
+          width: 1842,
+          height: 1688,
+          alt: "Dmark by Kastro",
         },
       ],
     },
@@ -67,12 +67,12 @@ export async function generateMetadata({
       card: "summary_large_image",
       title: t("ogTitle"),
       description: t("ogDescription"),
-      images: ["/brand/dmark-icon.png"],
+      images: ["/brand/kastro/star-yellow.png"],
     },
     robots: { index: true, follow: true },
     icons: {
-      icon: "/brand/dmark-icon.png",
-      apple: "/brand/dmark-icon.png",
+      icon: "/brand/kastro/star-yellow.png",
+      apple: "/brand/kastro/star-yellow.png",
     },
     manifest: "/manifest.webmanifest",
   };
