@@ -1,6 +1,7 @@
 "use client";
 import { useLocale, useTranslations } from "next-intl";
 import type { ScanPayload } from "@/lib/scan";
+import { SpfFlattenTool } from "@/components/spf-flatten-tool";
 import { domainReadiness } from "@/lib/domain-readiness";
 
 export function DomainGuidance({
@@ -108,6 +109,11 @@ export function DomainGuidance({
           </details>
         ))}
       </div>
+      <SpfFlattenTool
+        key={result.domain}
+        domain={result.domain}
+        lookups={result.spf.lookups}
+      />
       <aside className="guided-bimi">
         <h3>
           {text("Optional next goal: BIMI", "Valfrjálst næsta markmið: BIMI")}

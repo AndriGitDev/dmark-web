@@ -39,8 +39,8 @@ export function domainReadiness(result: ScanPayload, locale = "en") {
       title: text("Resolve SPF warnings", "Leysa SPF viðvaranir"),
       name: result.domain,
       action: text(
-        `Current lookup count: ${result.spf.lookups}/10. Review the observed SPF warning and remove only confirmed obsolete includes. Aim for fewer than 8 lookups and a green SPF assessment. Dmark does not host or flatten SPF.`,
-        `Núverandi uppflettingar: ${result.spf.lookups}/10. Farðu yfir SPF viðvörunina og fjarlægðu aðeins staðfestar úreltar tilvísanir. Stefndu á færri en 8 uppflettingar og græna SPF niðurstöðu. Dmark hýsir ekki eða fletur út SPF.`,
+        `Current lookup count: ${result.spf.lookups}/10. Review the observed SPF warning and remove only confirmed obsolete includes. Aim for fewer than 8 lookups and a green SPF assessment. Dmark does not host SPF. An advanced on-demand flattening generator is available below.`,
+        `Núverandi uppflettingar: ${result.spf.lookups}/10. Farðu yfir SPF viðvörunina og fjarlægðu aðeins staðfestar úreltar tilvísanir. Stefndu á færri en 8 uppflettingar og græna SPF niðurstöðu. Dmark hýsir ekki SPF. Ítarlegur valkostur til að búa til útflatta færslu er hér fyrir neðan.`,
       ),
       verify: text(
         "Recheck: valid SPF, fewer than 8 lookups, no assessed SPF warnings.",

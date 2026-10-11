@@ -1534,6 +1534,106 @@ h1 {
   }
 }
 @media (max-width: 600px) {
-  .guided-plan .next-step-panel { flex-direction: column; align-items: stretch; }
-  .guided-plan .next-step-panel .app-button { margin-left: 0; align-self: flex-start; }
+  .guided-plan .next-step-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .guided-plan .next-step-panel .app-button {
+    margin-left: 0;
+    align-self: flex-start;
+  }
+}
+.spf-flatten-tool {
+  margin-top: 24px;
+  border: 1px solid #dce4da;
+  border-radius: 14px;
+  background: white;
+  overflow: hidden;
+}
+.spf-flatten-tool > summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 22px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.spf-flatten-tool > summary span {
+  font-size: 11px;
+  color: #627d51;
+  white-space: nowrap;
+}
+.flatten-body {
+  padding: 0 24px 24px;
+}
+.flatten-warning {
+  border-left: 3px solid #b89554;
+  padding: 12px 16px;
+  background: #faf5e9;
+}
+.flatten-error {
+  color: #a83e30 !important;
+  overflow-wrap: anywhere;
+}
+.flatten-result {
+  margin-top: 20px;
+}
+.flatten-result pre {
+  padding: 16px;
+  background: #f1f5ee;
+  border-radius: 9px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.flatten-comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+.flatten-comparison h4 {
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+.flatten-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 18px 0;
+}
+.flatten-result details {
+  padding: 16px 0;
+  border-top: 1px solid #dce4da;
+}
+.flatten-result summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+.flatten-result ul {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+.flatten-result li span {
+  display: block;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  padding: 8px 0;
+}
+@media (max-width: 600px) {
+  .flatten-comparison {
+    grid-template-columns: 1fr;
+  }
+  .flatten-body {
+    padding: 0 16px 18px;
+  }
+  .spf-flatten-tool > summary {
+    padding: 18px;
+    flex-wrap: wrap;
+  }
 }
