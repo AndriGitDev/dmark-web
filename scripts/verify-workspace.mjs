@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { chromium } from "@playwright/test";
 import { fileURLToPath } from "node:url";
@@ -35,12 +36,82 @@ await page.route("**/api/account/**", (r) =>
     json: { authenticated: false, available: false, csrf: "x".repeat(43) },
   }),
 );
+let improved = false;
+await page.route("**/api/scan/**", (route) =>
+  route.fulfill({
+    json: {
+      domain: route.request().postDataJSON().domain,
+      source: "live",
+      checkedAt: new Date().toISOString(),
+      status: improved ? "PASS" : "FAIL",
+      audit: { grade: improved ? "A" : "F" },
+      spf: { valid: true, lookups: 2, record: "v=spf1 -all" },
+      dmarc: {
+        valid: true,
+        policy: improved ? "reject" : "none",
+        record: improved ? "v=DMARC1; p=reject" : "v=DMARC1; p=none",
+      },
+      assessment: {
+        incomplete: false,
+        spfState: "green",
+        dmarcState: improved ? "green" : "red",
+        dkimState: improved ? "green" : "red",
+        pct: 100,
+        spfReason: "",
+        dmarcReason: "",
+        dkimReason: "",
+        warnings: [],
+      },
+      authentication: {
+        bimi: {
+          state: "missing",
+          record: "",
+          name: "default._bimi.example.com",
+        },
+      },
+    },
+  }),
+);
+let flattenFailure = false;
+await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+await page.route("**/api/spf/flatten/**", (route) => {
+  if (flattenFailure)
+    return route.fulfill({
+      status: 422,
+      json: { code: "UNSUPPORTED_TERM", target: "example.com", term: "mx" },
+    });
+  return route.fulfill({
+    json: {
+      domain: "example.com",
+      original: "v=spf1 include:vendor.com ~all",
+      flattened: "v=spf1 ip4:192.0.2.1 ~all",
+      generatedAt: new Date().toISOString(),
+      dependencies: 1,
+      lookupTerms: 1,
+      zoneValue: '"v=spf1 ip4:192.0.2.1 ~all"',
+      sources: [
+        {
+          network: "ip4:192.0.2.1",
+          domain: "vendor.com",
+          mechanism: "ip4:192.0.2.1",
+        },
+      ],
+    },
+  });
+});
 await page.goto("http://localhost:3000/en/");
 await page.locator("#add-domain").fill("example.com");
 await page.getByRole("button", { name: "Add domain", exact: true }).click();
 
+await page.locator(".scan-grade > strong").filter({ hasText: "60" }).waitFor();
 await page.getByRole("tab").last().click();
+await page
+  .locator(".next-step-panel h3")
+  .filter({ hasText: "Confirm a published DKIM key" })
+  .waitFor();
 await page.getByRole("checkbox").nth(1).check();
+if (!(await page.locator(".readiness-total").textContent()).includes("60"))
+  throw Error("Manual checkbox changed score");
 await page.reload();
 await page
   .getByRole("button", { name: "example.com", exact: true })
@@ -50,7 +121,79 @@ await page.getByRole("tab").last().click();
 if (!(await page.getByRole("checkbox").nth(1).isChecked()))
   throw Error("Checklist not persisted");
 await page.locator(".app-logo").click();
+await page
+  .locator(".domain-score > strong")
+  .filter({ hasText: "60" })
+  .waitFor();
+improved = true;
+await page.getByRole("button", { name: "Refresh score", exact: true }).click();
+await page
+  .locator(".domain-score > strong")
+  .filter({ hasText: "100" })
+  .waitFor();
+await page.getByRole("button", { name: "Improve domain", exact: true }).click();
+if (
+  (await page.getByRole("tab").last().getAttribute("aria-selected")) !== "true"
+)
+  throw Error("Improve domain did not open guided plan");
+await page
+  .getByRole("heading", { name: "All assessed DNS checks pass", exact: true })
+  .waitFor();
+if ((await page.locator(".guided-checks .verified").count()) !== 5)
+  throw Error("Recheck did not verify five checks");
+await page.locator(".spf-flatten-tool > summary").click();
+await page
+  .getByRole("button", { name: "Generate flattened SPF", exact: true })
+  .click();
+await page
+  .locator(".flatten-comparison pre")
+  .last()
+  .filter({ hasText: "v=spf1 ip4:192.0.2.1 ~all" })
+  .waitFor();
+if (!(await page.locator(".readiness-total").textContent()).includes("100"))
+  throw Error("Generation changed the score");
+await page.getByRole("button", { name: "Copy record", exact: true }).click();
+if (
+  (await page.evaluate(() => navigator.clipboard.readText())) !==
+  "v=spf1 ip4:192.0.2.1 ~all"
+)
+  throw Error("Wrong copied record");
+const downloadPromise = page.waitForEvent("download");
+await page
+  .getByRole("button", { name: "Download snapshot", exact: true })
+  .click();
+const download = await downloadPromise;
+const exportPath = await download.path();
+if (!readFileSync(exportPath, "utf8").includes("vendor.com"))
+  throw Error("Export lost provenance");
+await page.screenshot({ path: "/tmp/dmark-spf-generator.png", fullPage: true });
+flattenFailure = true;
+await page
+  .getByRole("button", { name: "Regenerate record", exact: true })
+  .click();
+await page
+  .getByRole("alert")
+  .filter({ hasText: "cannot safely flatten" })
+  .waitFor();
+if (await page.locator(".flatten-result").count())
+  throw Error("Failed regeneration left a copyable stale candidate");
+flattenFailure = false;
+await page.screenshot({
+  path: "/tmp/dmark-guided-desktop.png",
+  fullPage: true,
+});
+await page.locator(".app-logo").click();
+await page.screenshot({
+  path: "/tmp/dmark-score-dashboard.png",
+  fullPage: true,
+});
 await page.setViewportSize({ width: 360, height: 900 });
+await page
+  .getByRole("button", { name: "example.com", exact: true })
+  .first()
+  .click();
+await page.getByRole("tab").last().click();
+await page.screenshot({ path: "/tmp/dmark-guided-mobile.png", fullPage: true });
 const overflow = await page.evaluate(() => ({
   width: innerWidth,
   scroll: document.documentElement.scrollWidth,
@@ -191,7 +334,7 @@ await blockedPage
   .waitFor();
 if (errors.length) throw Error(errors.join("\n"));
 console.log(
-  "Guest persistence, checklist, dialog, IS/EN, mobile, account import/save/conflict/logout and blocked-cookie flows passed.",
+  "Dashboard score, cached reload, guided next action, verified improvement, manual-progress separation, mobile guide, guest/account persistence and blocked-cookie flows passed.",
 );
 await browser.close();
 server.kill();
