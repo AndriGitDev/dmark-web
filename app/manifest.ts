@@ -14,10 +14,10 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#F2B705",
     icons: [
       {
-        src: "/brand/dmark-icon.png",
-        sizes: "512x512",
+        src: "/brand/kastro/star-yellow.png",
+        sizes: "1842x1688",
         type: "image/png",
-        purpose: "maskable",
+        purpose: "any",
       },
     ],
   };

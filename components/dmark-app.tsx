@@ -1,6 +1,9 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import kastroYellow from "@/public/brand/kastro/star-yellow.png";
+import kastroInk from "@/public/brand/kastro/star-ink.png";
 import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/routing";
 import {
@@ -812,7 +815,7 @@ export function DmarkApp() {
                       <ArrowRight size={15} />
                     </button>
                   </div>
-                  <KastroStar className="nudge-star" />
+                  <KastroStar className="nudge-star" variant="ink" />
                 </div>
               ) : dirty ? (
                 <p className="unsaved-note">{t("unsaved")}</p>
@@ -1276,11 +1279,14 @@ function ScanView({
   );
 }
 
-function KastroStar({ className }: { className: string }) {
+function KastroStar({ className, variant = "yellow" }: { className: string; variant?: "yellow" | "ink" }) {
   return (
-    <svg className={className} viewBox="0 0 200 200" aria-hidden="true" focusable="false">
-      <path fill="currentColor" d="M100 0 118 55 150 13 145 68 187 50 155 91 200 100 155 118 187 150 132 145 150 187 109 155 100 200 82 155 50 187 55 132 13 150 45 109 0 100 45 82 13 50 68 55 50 13 91 45Z" />
-      <circle cx="100" cy="100" r="23" fill="var(--paper)" />
-    </svg>
+    <Image
+      className={className}
+      src={variant === "ink" ? kastroInk : kastroYellow}
+      alt=""
+      aria-hidden="true"
+      sizes={className === "logo-star" ? "34px" : className === "hero-star" ? "210px" : "260px"}
+    />
   );
 }
