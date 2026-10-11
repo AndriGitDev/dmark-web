@@ -1,8 +1,9 @@
 import { setRequestLocale } from "next-intl/server";
-import { DmarkMarketing } from "@/components/dmark-marketing";
+import { DmarkApp } from "@/components/dmark-app";
 
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  return <DmarkMarketing />;
+  return <DmarkApp />;
 }
+

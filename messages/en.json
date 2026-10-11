@@ -1,231 +1,4 @@
 {
-  "Marketing": {
-    "skip": "Skip to domain check",
-    "hero": {
-      "badge": "Free email security by Kastro",
-      "title": "Safer email. <brand>Start with your domain.</brand>",
-      "text": "Check your domain for free, keep a setup checklist, and work through SPF, DKIM, DMARC and BIMI. Get help from Kastro when you need someone to handle the setup.",
-      "cta_scan": "Check your domain",
-      "cta_saas": "Get help from Kastro",
-      "signals": {
-        "live": {
-          "label": "Live DNS lookup",
-          "value": "Public records",
-          "detail": "Your domain is sent to Kastro Lookup to assess its public DNS records."
-        },
-        "beta": {
-          "label": "Real-world review",
-          "value": "By Kastro",
-          "detail": "Kastro can review actual DNS evidence and scope the right remediation work."
-        },
-        "operator": {
-          "label": "For your email provider",
-          "value": "Kastro",
-          "detail": "Kastro verifies DNS changes before they go live."
-        },
-        "target": {
-          "label": "DMARC target",
-          "value": "p=reject",
-          "detail": "Progress through monitor, quarantine, reject without breaking legitimate mail."
-        }
-      }
-    },
-    "header": {
-      "logo_aria": "dmark.is home",
-      "logo_sr": "Email authentication",
-      "threat": "Threat",
-      "workflow": "How it works",
-      "features": "Features",
-      "saas": "Kastro service",
-      "cta_scan": "Check your domain",
-      "cta_scan_short": "Check domain",
-      "domains": "My domains",
-      "help": "Get help"
-    },
-    "threat": {
-      "eyebrow": "01 / The difference",
-      "title": "Your name should only speak for you.",
-      "text": "A familiar sender is not always a trusted sender. Explore how an enforced DMARC policy helps receiving mail servers reject impersonation."
-    },
-    "workflow": {
-      "eyebrow": "02 / A clear path forward",
-      "title": "From public records to informed decisions.",
-      "text": "Check published SPF and DMARC configuration, then verify legitimate senders and reporting before changing enforcement.",
-      "steps": {
-        "discover": {
-          "title": "Discover",
-          "detail": "Check public DNS records, then add your domain to a checklist saved in this browser.",
-          "tag": "No login"
-        },
-        "stabilize": {
-          "title": "Stabilize",
-          "detail": "Review every sending service, remove obsolete SPF entries only after verification, and enable DKIM at each provider.",
-          "tag": "Reversible"
-        },
-        "enforce": {
-          "title": "Enforce",
-          "detail": "Advance DMARC from none to quarantine to reject with report-backed confidence.",
-          "tag": "p=reject"
-        }
-      },
-      "ladder": {
-        "title": "The enforcement ladder",
-        "detail": "Most domains never leave the first rung.",
-        "none": "p=none — watch only",
-        "quarantine": "p=quarantine — suspicious mail diverted",
-        "reject": "p=reject — request rejection of unauthenticated mail"
-      }
-    },
-    "features": {
-      "eyebrow": "03 / Beneath the surface",
-      "title": "Four standards. Practical next steps.",
-      "text": "Use the free check and setup checklist at your own pace. Dmark does not publish or change DNS records for you.",
-      "list": {
-        "spf": {
-          "title": "SPF",
-          "detail": "Review authorized senders, duplicate records and the 10-lookup limit. Clean up unnecessary includes with evidence; Dmark does not offer hosted SPF flattening."
-        },
-        "dkim": {
-          "title": "DKIM",
-          "detail": "Enable signing at each sending service. Check a selector from your provider or a message header, then verify real signed messages."
-        },
-        "dmarc": {
-          "title": "DMARC",
-          "detail": "Inventory senders and review aggregate reports before tightening enforcement. Use an existing reporting service, including Cloudflare where available."
-        },
-        "bimi": {
-          "title": "BIMI",
-          "detail": "An optional branding step after authentication. Check the default BIMI record and review logo, enforcement and certificate requirements. Certificates may cost money; logo display is not guaranteed."
-        }
-      }
-    },
-    "footer_cta": {
-      "eyebrow": "Ready when you are",
-      "title": "Put your name behind every email.",
-      "cta_scan": "Check your domain",
-      "cta_saas": "Discuss with Kastro"
-    },
-    "footer": {
-      "text": "A free email security tool from Kastro. SPF, DKIM, DMARC and BIMI guidance, with optional setup assistance.",
-      "credit": "A <kastro>Kastro</kastro> made product.",
-      "cta_scan": "Check your domain",
-      "cta_saas": "Discuss with Kastro"
-    },
-    "scanner": {
-      "badge": "dmark · domain check",
-      "online": "live lookup",
-      "label": "Check public email authentication records",
-      "shortcut": "press /",
-      "input_label": "Domain",
-      "placeholder": "yourcompany.is",
-      "scan": "Check domain",
-      "scanning": "Checking",
-      "try": "Try",
-      "steps": {
-        "dns": {
-          "title": "DNS authority",
-          "detail": "NS + TXT records"
-        },
-        "spf": {
-          "title": "SPF chain",
-          "detail": "include · a · mx · redirect"
-        },
-        "dmarc": {
-          "title": "DMARC policy",
-          "detail": "p · pct · rua · aspf"
-        },
-        "spoof": {
-          "title": "Spoof exposure",
-          "detail": "alignment + audit grade"
-        }
-      },
-      "waiting": "Checking public records. This may take up to 50 seconds.",
-      "errors": {
-        "rate_limit": "The lookup service is busy. Please try again in a minute.",
-        "timeout": "The lookup timed out. Please try again.",
-        "failed": "The lookup could not be completed. Please try again.",
-        "invalid_domain": "Enter a valid domain such as example.com, without an email address or spaces.",
-        "invalid_selector": "Enter a selector such as selector1 or google, without a domain name or spaces."
-      },
-      "selector": "DKIM selector (optional)",
-      "selector_help": "From your email provider or the s= value in a DKIM-Signature header. Leave blank for common-selector discovery."
-    },
-    "results": {
-      "badge": "Live SPF / DMARC rating",
-      "spoofable_default": "Review authentication and sender alignment before changing DNS.",
-      "secure_default": "This domain has enforcing DMARC posture. Keep monitoring for sender and DNS drift.",
-      "stats": {
-        "status": "Status",
-        "risk": "Risk",
-        "risk_high": "critical",
-        "risk_low": "low",
-        "time": "Time",
-        "checked_at": "Checked {date}"
-      },
-      "findings": {
-        "spf": "SPF status",
-        "dmarc": "DMARC status",
-        "dkim": "DKIM discovery"
-      },
-      "sequence": {
-        "label": "Recommended sequence"
-      },
-      "cta_unlock": "Get help with setup",
-      "cta_another": "Check another domain",
-      "incomplete": "Assessment incomplete",
-      "dkim_limit": "Only common selectors are checked. A missing key is not proof that DKIM is absent; a published key does not verify signatures or alignment.",
-      "no_record": "No record found."
-    },
-    "demo": {
-      "toggle_off": "p=none · example",
-      "toggle_on": "p=reject · example",
-      "inbox_label": "Inbox — bjorn@northwind.is",
-      "inbox_count_on": "1 message · 1 rejected",
-      "inbox_count_off": "2 messages",
-      "caption_on": "Illustration: a receiver honoring p=reject rejects this unaligned message. Receiver decisions can vary.",
-      "caption_off": "Illustration: p=none does not request rejection. Other spam and security filters can still block mail.",
-      "steps": [
-        {
-          "title": "An attacker sends mail “from” your domain",
-          "detail": "No password needed. SMTP lets anyone write your address in the From field."
-        },
-        {
-          "title": "Your domain has p=none or none at all",
-          "detail": "A monitoring policy does not request rejection for DMARC failures. Other receiver protections still apply."
-        },
-        {
-          "title": "A familiar name can look convincing",
-          "detail": "Your logo, your name, your customer — a convincing invoice or password reset."
-        }
-      ],
-      "footer": {
-        "title": "DMARC helps protect your domain.",
-        "text": "Dmark helps you understand the settings. Confirm legitimate senders and alignment before moving to enforcement; DMARC does not stop every form of phishing."
-      },
-      "mail": {
-        "sender": "Northwind Billing",
-        "pass": "✓ DKIM PASS",
-        "fail": "✕ SPF FAIL · UNALIGNED",
-        "via": " · sent via {ip}",
-        "rejected": "Rejected at receiver",
-        "safe": {
-          "subject": "Your March statement is ready",
-          "body": "Hi Björn — your monthly statement is attached…"
-        },
-        "exposed": {
-          "subject": "URGENT: Update your payment details now",
-          "body": "Your account is on hold. Confirm your card to avoid suspension…"
-        }
-      }
-    },
-    "help": {
-      "eyebrow": "05 / Need a hand?",
-      "title": "The tool is free. Expert help is optional.",
-      "text": "There is no paid Dmark plan and no subscription required. Kastro can quote separately for sender review, DNS setup and verification. You keep control of your domain and email provider.",
-      "cta": "Talk to Kastro",
-      "guides": "Official setup guides"
-    }
-  },
   "Metadata": {
     "title": "dmark.is | Free email security by Kastro",
     "description": "Check SPF, DMARC, DKIM selectors and BIMI records for free. Save domain checklists in your browser and get practical setup guidance from Kastro.",
@@ -302,6 +75,106 @@
     "dkim": {
       "title": "DKIM · selected selector",
       "limit": "A published key does not prove signing, key strength or alignment. Verify an actual message from this sender."
+    }
+  },
+  "App": {
+    "skip": "Skip to workspace",
+    "workspace": "Workspace",
+    "navigation": "Workspace navigation",
+    "my_domains": "My domains",
+    "domains": "Domains",
+    "setup_guide": "Setup guide",
+    "sidebar_empty": "Your domains will appear here.",
+    "account_workspace": "Account workspace",
+    "guest_workspace": "Guest workspace",
+    "cookie_note": "Saved in this browser. No account needed.",
+    "kastro_help": "Need help? Talk to Kastro",
+    "create_account": "Create account / sign in",
+    "save_workspace": "Save workspace",
+    "sign_out": "Sign out",
+    "overview_text": "A place to check your email security and work through the setup.",
+    "add_domain": "Add domain",
+    "domain_placeholder": "yourcompany.is",
+    "add_hint": "Add a domain to get a live DNS check and its own setup checklist.",
+    "saved_domains": "Saved domains",
+    "checked_session": "Checked this visit",
+    "storage": "Saved to",
+    "account": "Your account",
+    "this_browser": "This browser",
+    "domain_list": "Domain workspace",
+    "filter_domains": "Filter domains",
+    "remove_domain": "Remove {domain}",
+    "not_checked": "Not checked this visit",
+    "tasks_done": "{count}/{total} tasks marked",
+    "open_workspace": "Open workspace",
+    "no_matches": "No domains match your search.",
+    "empty_title": "Start with your first domain",
+    "empty_text": "Check the records, understand the findings, and keep track of what needs to be done. Everything here is free to use.",
+    "add_first": "Add your first domain",
+    "nudge_title": "Keep your work across devices",
+    "nudge_text": "Create a free account when you want to save your domains and progress beyond this browser.",
+    "unsaved": "You have unsaved changes. Save the workspace to keep them in your account.",
+    "back_domains": "← All domains",
+    "last_checked": "Last checked: {time}",
+    "domain_intro": "Your domain, its records, and your next steps.",
+    "check_domain": "Check records",
+    "checking": "Checking…",
+    "domain_sections": "Domain sections",
+    "your_progress": "Your setup progress",
+    "official_guides": "Official setup guides",
+    "selector": "DKIM selector",
+    "selector_help": "Optional. Use the selector from your email provider or s= in a DKIM-Signature header.",
+    "checking_records": "Checking public DNS records",
+    "checking_note": "This can take up to 50 seconds. No changes are made to your domain.",
+    "ready_check": "Ready for a closer look",
+    "ready_check_text": "Run a live check to see SPF and DMARC findings, DKIM discovery and the default BIMI record.",
+    "reference": "Reference library",
+    "guide_intro": "Work through these steps at your own pace. Verify legitimate senders before changing enforcement.",
+    "free_by_kastro": "Free email security by Kastro",
+    "checks_note": "DNS observations are not a security certification.",
+    "close": "Close",
+    "free_account": "Free Dmark account",
+    "account_title": "Make this your workspace",
+    "account_text": "Save domains and checklist progress to your account. Use an email link to register or sign in, then import your browser domains when you are ready.",
+    "email": "Email address",
+    "send_link": "Send sign-in link",
+    "email_sent": "Check your inbox",
+    "email_sent_text": "Open the link in this same browser and confirm your sign-in. The link expires shortly and can only be used once.",
+    "account_privacy": "Your email is used for sign-in, not marketing. Domains and manual progress are stored only when you save them to your account.",
+    "continue_guest": "Continue without an account",
+    "account_unavailable": "The account service could not be reached. Your guest workspace still works; try again later.",
+    "login_rate": "Too many sign-in requests. Wait a minute and try again.",
+    "link_error": "The link expired, was already used, or was opened in a different browser. Request a new sign-in link.",
+    "import_title": "{count} browser domains are ready to import",
+    "import_text": "Merge them with this account, then save. Existing domains are kept.",
+    "import_domains": "Import browser domains",
+    "import_ready": "Browser domains merged. Save the workspace to finish the import.",
+    "saved_account": "Workspace saved to your account.",
+    "save_failed": "Could not save the change. Your work is still here; please try again.",
+    "save_conflict": "This account changed in another tab or device. Copy any unsaved work, then reload before saving.",
+    "invalid_domain": "Enter a valid domain, without an email address.",
+    "invalid_selector": "Enter a valid DKIM selector, such as selector1 or google.",
+    "domain_limit": "This workspace supports up to {count} domains. Remove one before adding another.",
+    "cookie_limit": "This browser’s saved workspace is full. Remove a domain or shorten a selector to make room.",
+    "cookie_blocked": "Cookies are blocked. You can keep working, but these changes will only last for this visit.",
+    "scan_failed": "The check could not be completed. Try again.",
+    "scan_timeout": "The check timed out. Try again.",
+    "rate_limited": "The lookup service is busy. Wait a minute before rechecking.",
+    "no_record": "No record found.",
+    "record_note": "Verify real mail and sender alignment before changing policy.",
+    "dkim_note": "A published key does not prove message signing or alignment.",
+    "spf_dmarc_rating": "SPF / DMARC rating",
+    "observed_configuration": "What your records show",
+    "selector_checked": "Custom selector checked",
+    "common_selectors": "Common selector discovery",
+    "optional_branding": "Optional branding",
+    "bimi_summary": "Review the Records tab for BIMI publication. Logo and certificate compliance are not verified by this check.",
+    "next_step": "Work through the setup",
+    "open_checklist": "Open checklist",
+    "tabs": {
+      "summary": "Overview",
+      "records": "DNS records",
+      "setup": "Setup checklist"
     }
   }
 }

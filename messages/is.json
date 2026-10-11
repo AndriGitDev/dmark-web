@@ -1,231 +1,4 @@
 {
-  "Marketing": {
-    "skip": "Fara í lénaskoðun",
-    "hero": {
-      "badge": "Ókeypis tölvupóstöryggi frá Kastro",
-      "title": "Öruggari tölvupóstur. <brand>Byrjaðu á léninu þínu.</brand>",
-      "text": "Skoðaðu lénið þitt ókeypis, vistaðu gátlista og fáðu leiðsögn um SPF, DKIM, DMARC og BIMI. Kastro getur aðstoðað ef þú vilt fá hjálp við uppsetninguna.",
-      "cta_scan": "Athuga lénið þitt",
-      "cta_saas": "Fá aðstoð hjá Kastro",
-      "signals": {
-        "live": {
-          "label": "Rauntímaskoðun DNS",
-          "value": "Opinberar færslur",
-          "detail": "Lénið er sent til Kastro Lookup til að meta opinberar DNS-færslur."
-        },
-        "beta": {
-          "label": "Raunveruleg yfirferð",
-          "value": "Hjá Kastro",
-          "detail": "Kastro getur yfirfarið raunveruleg DNS gögn og afmarkað réttar úrbætur."
-        },
-        "operator": {
-          "label": "Fyrir póstþjónustuna þína",
-          "value": "Kastro",
-          "detail": "Kastro staðfestir DNS breytingar áður en þær eru gerðar virkar."
-        },
-        "target": {
-          "label": "DMARC markmið",
-          "value": "p=reject",
-          "detail": "Leiðin frá eftirliti yfir í höfnun án þess að trufla lögmætan póst."
-        }
-      }
-    },
-    "header": {
-      "logo_aria": "dmark.is heim",
-      "logo_sr": "Tölvupóstauðkenning",
-      "threat": "Ógnin",
-      "workflow": "Hvernig það virkar",
-      "features": "Eiginleikar",
-      "saas": "Kastro þjónusta",
-      "cta_scan": "Athuga lénið þitt",
-      "cta_scan_short": "Athuga lén",
-      "domains": "Mín lén",
-      "help": "Fá aðstoð"
-    },
-    "threat": {
-      "eyebrow": "01 / Munurinn",
-      "title": "Þitt nafn á aðeins að tala fyrir þig.",
-      "text": "Kunnuglegt nafn sendanda segir ekki alla söguna. Sjáðu hvernig virk DMARC-stefna hjálpar póstþjónum að hafna fölsuðum sendingum."
-    },
-    "workflow": {
-      "eyebrow": "02 / Skýr leið áfram",
-      "title": "Frá opinberum færslum að upplýstum ákvörðunum.",
-      "text": "Skoðaðu SPF- og DMARC-stillingar og staðfestu lögmæta sendendur og skýrslur áður en þú breytir stefnunni.",
-      "steps": {
-        "discover": {
-          "title": "Uppgötva",
-          "detail": "Skoðaðu opinberar DNS-færslur og bættu léninu við gátlista sem vistast í þessum vafra.",
-          "tag": "Engin innskráning"
-        },
-        "stabilize": {
-          "title": "Stöðugleiki",
-          "detail": "Farðu yfir allar þjónustur sem senda póst, fjarlægðu úreltar SPF-færslur eftir staðfestingu og virkjaðu DKIM hjá hverjum sendanda.",
-          "tag": "Afturkallanlegt"
-        },
-        "enforce": {
-          "title": "Fullgilda",
-          "detail": "Færðu DMARC úr eftirliti yfir í sóttkví og loks í höfnun með skýrslubakað sjálfstraust.",
-          "tag": "p=reject"
-        }
-      },
-      "ladder": {
-        "title": "Stiginn að vörn",
-        "detail": "Flest lén komast aldrei af fyrsta þrepinu.",
-        "none": "p=none — aðeins fylgst með",
-        "quarantine": "p=quarantine — grunsamlegum pósti beint annað",
-        "reject": "p=reject — óska eftir höfnun á óstaðfestum pósti"
-      }
-    },
-    "features": {
-      "eyebrow": "03 / Undir yfirborðinu",
-      "title": "Fjórir staðlar. Skýr næstu skref.",
-      "text": "Notaðu ókeypis skoðunina og gátlistann á þínum hraða. Dmark birtir ekki DNS-færslur og breytir þeim ekki fyrir þig.",
-      "list": {
-        "spf": {
-          "title": "SPF",
-          "detail": "Farðu yfir heimilaða sendendur, tvíteknar færslur og hámark 10 uppflettinga. Fjarlægðu óþarfa include-færslur eftir staðfestingu. Dmark býður ekki hýsta SPF-samþjöppun."
-        },
-        "dkim": {
-          "title": "DKIM",
-          "detail": "Virkjaðu undirritun hjá hverri póstþjónustu. Skoðaðu selector sem þjónustan gefur upp eða kemur fram í pósthaus og staðfestu síðan undirritun í raunverulegum pósti."
-        },
-        "dmarc": {
-          "title": "DMARC",
-          "detail": "Skráðu sendendur og yfirfarðu DMARC-skýrslur áður en þú herðir stefnuna. Notaðu skýrsluþjónustu sem hentar þér, til dæmis Cloudflare þar sem hún er í boði."
-        },
-        "bimi": {
-          "title": "BIMI",
-          "detail": "Valfrjáls birting vörumerkis eftir að auðkenning er komin í lag. Skoðaðu sjálfgefna BIMI-færslu og kröfur um lógó, DMARC-stefnu og vottorð. Vottorð geta kostað og birting lógós er ekki tryggð."
-        }
-      }
-    },
-    "footer_cta": {
-      "eyebrow": "Taktu fyrsta skrefið",
-      "title": "Láttu orðspor þitt fylgja hverjum pósti.",
-      "cta_scan": "Athuga lénið þitt",
-      "cta_saas": "Ræða við Kastro"
-    },
-    "footer": {
-      "text": "Ókeypis tölvupóstöryggistól frá Kastro. Leiðsögn um SPF, DKIM, DMARC og BIMI með valfrjálsri aðstoð við uppsetningu.",
-      "credit": "Vara frá <kastro>Kastro</kastro>.",
-      "cta_scan": "Athuga lénið þitt",
-      "cta_saas": "Ræða við Kastro"
-    },
-    "scanner": {
-      "badge": "dmark · lénaskoðun",
-      "online": "lifandi gögn",
-      "label": "Skoðaðu auðkenningarfærslur tölvupósts",
-      "shortcut": "ýttu á /",
-      "input_label": "Lén",
-      "placeholder": "fyrirtaeki.is",
-      "scan": "Athuga lén",
-      "scanning": "Skoða",
-      "try": "Prófa",
-      "steps": {
-        "dns": {
-          "title": "DNS-færslur",
-          "detail": "NS + TXT færslur"
-        },
-        "spf": {
-          "title": "SPF keðja",
-          "detail": "include · a · mx · redirect"
-        },
-        "dmarc": {
-          "title": "DMARC stefna",
-          "detail": "p · pct · rua · aspf"
-        },
-        "spoof": {
-          "title": "Hætta á fölsun",
-          "detail": "samræmi + einkunn"
-        }
-      },
-      "waiting": "Skoða opinberar færslur. Skoðunin getur tekið allt að 50 sekúndur.",
-      "errors": {
-        "rate_limit": "Mikið álag er á þjónustunni. Reyndu aftur eftir mínútu.",
-        "timeout": "Skoðunin tók of langan tíma. Reyndu aftur.",
-        "failed": "Ekki tókst að ljúka skoðuninni. Reyndu aftur.",
-        "invalid_domain": "Sláðu inn gilt lén, til dæmis fyrirtaeki.is, án netfangs eða bilstafa.",
-        "invalid_selector": "Sláðu inn selector, til dæmis selector1 eða google, án léns eða bilstafa."
-      },
-      "selector": "DKIM selector (valfrjálst)",
-      "selector_help": "Frá póstþjónustunni eða s= gildið í DKIM-Signature pósthaus. Skildu eftir autt til að leita að algengum lyklum."
-    },
-    "results": {
-      "badge": "SPF / DMARC-einkunn úr lifandi gögnum",
-      "spoofable_default": "Farðu yfir auðkenningu og samræmi sendenda áður en þú breytir DNS.",
-      "secure_default": "Þetta lén er með virka DMARC vörn. Haltu áfram að fylgjast með breytingum.",
-      "stats": {
-        "status": "Staða",
-        "risk": "Áhætta",
-        "risk_high": "alvarleg",
-        "risk_low": "lág",
-        "time": "Tími",
-        "checked_at": "Skoðað {date}"
-      },
-      "findings": {
-        "spf": "SPF staða",
-        "dmarc": "DMARC staða",
-        "dkim": "DKIM-leit"
-      },
-      "sequence": {
-        "label": "Ráðlögð röð"
-      },
-      "cta_unlock": "Fá hjálp við uppsetningu",
-      "cta_another": "Athuga annað lén",
-      "incomplete": "Mati er ólokið",
-      "dkim_limit": "Aðeins er leitað að algengum lyklum. Ófundinn lykill sannar ekki að DKIM vanti og birtur lykill staðfestir hvorki undirritun né samræmi sendanda.",
-      "no_record": "Engin færsla fannst."
-    },
-    "demo": {
-      "toggle_off": "p=none · dæmi",
-      "toggle_on": "p=reject · dæmi",
-      "inbox_label": "Innhólf — bjorn@northwind.is",
-      "inbox_count_on": "1 skilaboð · 1 hafnað",
-      "inbox_count_off": "2 skilaboð",
-      "caption_on": "Sýnidæmi: móttakandi sem fylgir p=reject hafnar þessum ósamræmda pósti. Móttakendur geta tekið aðrar ákvarðanir.",
-      "caption_off": "Sýnidæmi: p=none óskar ekki eftir höfnun. Aðrar ruslpóstsíur og öryggisvarnir geta samt stöðvað póst.",
-      "steps": [
-        {
-          "title": "Árásarmaður sendir póst „frá“ léninu þínu",
-          "detail": "Ekkert lykilorð þarf. SMTP leyfir hverjum sem er að skrifa netfangið þitt í From-reitinn."
-        },
-        {
-          "title": "Lénið þitt er með p=none eða enga stefnu",
-          "detail": "Eftirlitsstefna óskar ekki eftir höfnun þegar DMARC stenst ekki. Aðrar varnir móttakanda gilda áfram."
-        },
-        {
-          "title": "Kunnuglegt nafn getur verið sannfærandi",
-          "detail": "Þitt lógó, þitt nafn, þinn viðskiptavinur — sannfærandi reikningur eða endurstilling lykilorðs."
-        }
-      ],
-      "footer": {
-        "title": "DMARC hjálpar til við að verja lénið þitt.",
-        "text": "Dmark hjálpar þér að skilja stillingarnar. Staðfestu lögmæta sendendur og samræmi áður en þú herðir stefnuna. DMARC stöðvar ekki allar tegundir vefveiða."
-      },
-      "mail": {
-        "sender": "Northwind Bókhald",
-        "pass": "✓ DKIM STANDST",
-        "fail": "✕ SPF STENST EKKI · ÓSAMRÆMI",
-        "via": " · sent í gegnum {ip}",
-        "rejected": "Hafnað hjá móttakanda",
-        "safe": {
-          "subject": "Yfirlit fyrir mars er tilbúið",
-          "body": "Hæ Björn — mánaðaryfirlitið þitt er í viðhengi..."
-        },
-        "exposed": {
-          "subject": "ÁRÍÐANDI: Uppfærðu greiðsluupplýsingar núna",
-          "body": "Aðgangurinn þinn er í bið. Staðfestu kortið þitt til að forðast lokun..."
-        }
-      }
-    },
-    "help": {
-      "eyebrow": "05 / Vantar aðstoð?",
-      "title": "Tólið er ókeypis. Aðstoð er valfrjáls.",
-      "text": "Dmark er ókeypis og krefst ekki áskriftar. Kastro getur gert sértilboð í yfirferð sendenda, DNS-uppsetningu og staðfestingu. Þú heldur stjórn á léninu og póstþjónustunni.",
-      "cta": "Ræða við Kastro",
-      "guides": "Uppsetningarleiðbeiningar"
-    }
-  },
   "Metadata": {
     "title": "dmark.is | Ókeypis tölvupóstöryggi frá Kastro",
     "description": "Skoðaðu SPF, DMARC, DKIM-lykla og BIMI-færslur ókeypis. Vistaðu gátlista fyrir lén í vafranum og fáðu leiðsögn um uppsetningu frá Kastro.",
@@ -302,6 +75,106 @@
     "dkim": {
       "title": "DKIM · valinn selector",
       "limit": "Birtur lykill staðfestir ekki undirritun, styrk lykils eða samræmi. Staðfestu raunverulegan póst frá þessum sendanda."
+    }
+  },
+  "App": {
+    "skip": "Fara í vinnusvæði",
+    "workspace": "Vinnusvæði",
+    "navigation": "Valmynd vinnusvæðis",
+    "my_domains": "Mín lén",
+    "domains": "Lén",
+    "setup_guide": "Leiðbeiningar",
+    "sidebar_empty": "Lénin þín birtast hér.",
+    "account_workspace": "Vinnusvæði aðgangs",
+    "guest_workspace": "Vinnusvæði án aðgangs",
+    "cookie_note": "Vistast í þessum vafra. Enginn aðgangur nauðsynlegur.",
+    "kastro_help": "Vantar aðstoð? Ræddu við Kastro",
+    "create_account": "Stofna aðgang / skrá inn",
+    "save_workspace": "Vista vinnusvæði",
+    "sign_out": "Skrá út",
+    "overview_text": "Skoðaðu tölvupóstöryggi lénanna þinna og farðu yfir uppsetninguna.",
+    "add_domain": "Bæta við léni",
+    "domain_placeholder": "fyrirtaeki.is",
+    "add_hint": "Bættu við léni til að skoða DNS-færslur og halda utan um uppsetninguna.",
+    "saved_domains": "Vistuð lén",
+    "checked_session": "Skoðuð í þessari heimsókn",
+    "storage": "Vistast í",
+    "account": "Aðganginum þínum",
+    "this_browser": "Þessum vafra",
+    "domain_list": "Lénayfirlit",
+    "filter_domains": "Leita að léni",
+    "remove_domain": "Fjarlægja {domain}",
+    "not_checked": "Óskoðað í þessari heimsókn",
+    "tasks_done": "{count}/{total} atriði merkt",
+    "open_workspace": "Opna vinnusvæði",
+    "no_matches": "Ekkert lén fannst.",
+    "empty_title": "Byrjaðu á fyrsta léninu",
+    "empty_text": "Skoðaðu færslurnar, skildu niðurstöðurnar og haltu utan um það sem þarf að gera. Hér er allt ókeypis.",
+    "add_first": "Bæta við fyrsta léninu",
+    "nudge_title": "Haltu áfram í öðru tæki",
+    "nudge_text": "Stofnaðu ókeypis aðgang þegar þú vilt vista lén og framvindu utan þessa vafra.",
+    "unsaved": "Þú átt óvistaðar breytingar. Vistaðu vinnusvæðið til að halda þeim í aðganginum þínum.",
+    "back_domains": "← Öll lén",
+    "last_checked": "Síðast skoðað: {time}",
+    "domain_intro": "Lénið þitt, færslurnar og næstu skref.",
+    "check_domain": "Skoða færslur",
+    "checking": "Skoða…",
+    "domain_sections": "Hlutar léns",
+    "your_progress": "Framvinda yfirferðar",
+    "official_guides": "Leiðbeiningar þjónustuaðila",
+    "selector": "DKIM selector",
+    "selector_help": "Valfrjálst. Notaðu selector frá póstþjónustunni eða s= gildið í DKIM-Signature pósthaus.",
+    "checking_records": "Skoða opinberar DNS-færslur",
+    "checking_note": "Þetta getur tekið allt að 50 sekúndur. Engum stillingum lénsins er breytt.",
+    "ready_check": "Tilbúið fyrir skoðun",
+    "ready_check_text": "Skoðaðu SPF- og DMARC-færslur, DKIM-lykla og sjálfgefna BIMI-færslu með lifandi uppflettingu.",
+    "reference": "Uppsetning og yfirferð",
+    "guide_intro": "Farðu yfir þessi atriði á þínum hraða. Staðfestu lögmæta sendendur áður en þú herðir DMARC-stefnuna.",
+    "free_by_kastro": "Ókeypis tölvupóstöryggi frá Kastro",
+    "checks_note": "DNS-skoðun er ekki öryggisvottun.",
+    "close": "Loka",
+    "free_account": "Ókeypis Dmark aðgangur",
+    "account_title": "Vistaðu vinnusvæðið þitt",
+    "account_text": "Vistaðu lén og framvindu í aðganginum þínum. Notaðu hlekk í tölvupósti til að stofna aðgang eða skrá þig inn og flyttu svo lénin úr vafranum þegar þú ert það hentar þér.",
+    "email": "Netfang",
+    "send_link": "Senda innskráningarhlekk",
+    "email_sent": "Skoðaðu innhólfið þitt",
+    "email_sent_text": "Opnaðu hlekkinn í þessum sama vafra og staðfestu innskráningu. Hlekkurinn rennur fljótlega út og er aðeins hægt að nota einu sinni.",
+    "account_privacy": "Netfangið er notað við innskráningu en ekki markaðssetningu. Lén og framvinda vistast í aðganginum þegar þú vistar vinnusvæðið.",
+    "continue_guest": "Halda áfram án aðgangs",
+    "account_unavailable": "Ekki náðist samband við aðgangsþjónustuna. Þú getur áfram notað vinnusvæðið án aðgangs og reynt aftur síðar.",
+    "login_rate": "Of margar innskráningarbeiðnir. Bíddu í mínútu og reyndu aftur.",
+    "link_error": "Hlekkurinn rann út, var þegar notaður eða var opnaður í öðrum vafra. Biddu um nýjan innskráningarhlekk.",
+    "import_title": "{count} lén úr vafranum eru tilbúin til innflutnings",
+    "import_text": "Sameinaðu þau við lén aðgangsins og vistaðu síðan. Fyrri lén haldast.",
+    "import_domains": "Flytja inn lén úr vafra",
+    "import_ready": "Lénin úr vafranum hafa verið sameinuð. Vistaðu vinnusvæðið til að ljúka innflutningi.",
+    "saved_account": "Vinnusvæðið var vistað í aðganginum þínum.",
+    "save_failed": "Ekki tókst að vista breytinguna. Vinnan er enn hér. Reyndu aftur.",
+    "save_conflict": "Aðganginum var breytt í öðrum flipa eða tæki. Afritaðu óvistaða vinnu og endurhladdu síðunni áður en þú vistar.",
+    "invalid_domain": "Sláðu inn gilt lén, án netfangs.",
+    "invalid_selector": "Sláðu inn gildan DKIM selector, til dæmis selector1 eða google.",
+    "domain_limit": "Hægt er að vista allt að {count} lén í vinnusvæðinu. Fjarlægðu lén áður en þú bætir öðru við.",
+    "cookie_limit": "Vistun vinnusvæðisins í vafranum er full. Fjarlægðu lén eða styttu selector til að losa pláss.",
+    "cookie_blocked": "Vafrinn leyfir ekki kökur. Þú getur haldið áfram en breytingarnar geymast aðeins í þessari heimsókn.",
+    "scan_failed": "Ekki tókst að ljúka skoðuninni. Reyndu aftur.",
+    "scan_timeout": "Skoðunin tók of langan tíma. Reyndu aftur.",
+    "rate_limited": "Mikið álag er á uppflettingu. Bíddu í mínútu áður en þú skoðar aftur.",
+    "no_record": "Engin færsla fannst.",
+    "record_note": "Staðfestu raunverulegan póst og samræmi sendenda áður en þú breytir stefnunni.",
+    "dkim_note": "Birtur lykill staðfestir ekki undirritun eða samræmi raunverulegs pósts.",
+    "spf_dmarc_rating": "SPF / DMARC einkunn",
+    "observed_configuration": "Það sem færslurnar sýna",
+    "selector_checked": "Valinn selector skoðaður",
+    "common_selectors": "Leit að algengum lyklum",
+    "optional_branding": "Valfrjálst vörumerki",
+    "bimi_summary": "Skoðaðu birtingu BIMI í Færslur. Skoðunin staðfestir ekki að lógó eða vottorð uppfylli kröfur.",
+    "next_step": "Farðu yfir uppsetninguna",
+    "open_checklist": "Opna gátlista",
+    "tabs": {
+      "summary": "Yfirlit",
+      "records": "Færslur",
+      "setup": "Gátlisti"
     }
   }
 }
