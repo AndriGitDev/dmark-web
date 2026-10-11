@@ -3,8 +3,8 @@ import test from 'node:test';
 import { loadTSModule } from './load-ts.mjs';
 
 const scan = loadTSModule('lib/scan.ts');
-const workspace = loadTSModule('lib/domain-workspace.ts', { './scan': scan });
 const records = loadTSModule('lib/authentication-records.ts');
+const workspace = loadTSModule('lib/domain-workspace.ts', { './scan': scan, './authentication-records': records });
 
 test('saved domains normalize, deduplicate and discard untrusted fields and checklist IDs', () => {
   const result = workspace.parseWorkspace(JSON.stringify([
@@ -43,4 +43,19 @@ test('DNS failures remain unknown, while revoked keys and duplicate records are 
   assert.equal(absent.bimi.state,'missing');
   const revoked=await records.lookupAuthenticationRecords('example.com','s',async name=>name.includes('_bimi')?[['v=BIMI1; l=https://example.com/logo.svg'],['v=BIMI1; l=https://example.com/other.svg']]:[['v=DKIM1; p=']]);
   assert.equal(revoked.bimi.state,'invalid');assert.equal(revoked.dkim.state,'invalid');
+});
+
+
+test('cookie workspace preserves selectors and tasks without scan data', () => {
+ const domains=[{domain:'example.com',completed:['spf','bimi'],selector:'selector1'}];
+ const cookie=workspace.workspaceCookie+'='+workspace.encodeWorkspace(domains);
+ assert.deepEqual(JSON.parse(JSON.stringify(workspace.readWorkspaceCookie('unrelated=1; '+cookie))),domains);
+ for(const value of ['%ZZ',encodeURIComponent('{"v":99,"d":[]}'),encodeURIComponent('{"v":2,"d":[["example.com",99,"s"]]}')])assert.equal(workspace.readWorkspaceCookie(workspace.workspaceCookie+'='+value).length,0);
+ assert.throws(()=>workspace.encodeWorkspace(Array.from({length:21},(_,i)=>({domain:`d${i}.com`,completed:[]}))),/COOKIE_LIMIT/);
+ assert.throws(()=>workspace.encodeWorkspace(Array.from({length:20},(_,i)=>({domain:`d${i}.${'a'.repeat(60)}.${'b'.repeat(60)}.com`,completed:[],selector:'s'.repeat(60)}))),/COOKIE_LIMIT/);
+});
+
+test('explicit account import merges checklist work rather than replacing it', () => {
+ const merged=workspace.mergeWorkspaces([{domain:'example.com',completed:['dmarc'],selector:'old'}],[{domain:'example.com',completed:['spf'],selector:'new'},{domain:'kastro.is',completed:[]}]);
+ assert.deepEqual(JSON.parse(JSON.stringify(merged)),[{domain:'example.com',completed:['spf','dmarc'],selector:'new'},{domain:'kastro.is',completed:[],selector:''}]);
 });
