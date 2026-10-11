@@ -156,6 +156,7 @@ export function SpfFlattenTool({
             "Þú sérð um að viðhalda þessari stöðumynd. Breytt IP svið veitenda uppfæra ekki DNS sjálfkrafa. Yfirfarðu heimilaða sendendur áður en þú skiptir út núverandi færslu, búðu hana til aftur þegar veitendur breytast og athugaðu DNS eftir birtingu.",
           )}
         </p>
+        <p className="sr-only" role="status">{busy ? text("Resolving SPF dependencies", "Leysi SPF tilvísanir") : result ? text("Flattened SPF candidate generated. Review before publishing.", "Tillaga að útflattri SPF færslu er tilbúin. Yfirfarðu hana áður en þú birtir.") : ""}</p>
         <button
           className="app-button dark"
           disabled={busy}

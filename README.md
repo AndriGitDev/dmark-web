@@ -12,6 +12,7 @@ npm run dev
 npm test
 npm run lint
 npm run build
+npm run test:launch
 npx playwright install chromium
 npm run test:browser
 ```
@@ -64,3 +65,9 @@ This deliberately restricted generator refuses a/mx/ptr/exists, macros, non-posi
 The app shows original/candidate records, generation time, dependency counts, provenance, copy controls and a downloadable snapshot. Generating or exporting does not change DNS, account state or the score. Users must review their senders, publish manually, recheck, and regenerate when provider IPs change. No hosted SPF endpoint, background refresh or automatic DNS editing is provided. An over-limit original may currently yield SPF permerror; generation preserves the supported authorisation rules, not that resource-limit failure. The displayed term count is the expanded include/redirect graph, not an observed message-delivery result.
 
 SPF semantics reference: https://www.rfc-editor.org/rfc/rfc7208.html (sections 4.6.4, 5.1, 5.2, 5.6 and 6.1).
+
+## Launch readiness
+
+The redesign and its discovery/accessibility work are documented in [LAUNCH_READINESS.md](docs/LAUNCH_READINESS.md). `npm run test:launch` verifies the production build output in both languages, social images, icons, structured content, sitemap, indexing directives and declared color contrast. Run it after `npm run build`.
+
+The browser suite includes axe-core checks for WCAG A/AA rules, keyboard tabs, invalid-input and dialog focus, responsive overflow and the existing account/scan/SPF flows. Browser checks use mocked account and DNS responses: passing them does not confirm a deployed backend or real email delivery. Real account saving needs the backend configuration described above.

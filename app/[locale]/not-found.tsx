@@ -21,7 +21,7 @@ export default function NotFound() {
         <div className="mt-7 flex justify-center">
           <Link
             href="/"
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded bg-brand-ink px-5 font-semibold text-white shadow-glow transition hover:bg-brand"
+            className="app-button"
           >
             <Search className="h-4 w-4" aria-hidden="true" />
             {te("backToScanner")}
@@ -31,3 +31,4 @@ export default function NotFound() {
     </main>
   );
 }
+

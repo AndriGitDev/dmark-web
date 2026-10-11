@@ -1,6 +1,9 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import kastroYellow from "@/public/brand/kastro/star-yellow.png";
+import kastroInk from "@/public/brand/kastro/star-ink.png";
 import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/routing";
 import {
@@ -53,7 +56,7 @@ type Account = {
 type View = "overview" | "domain" | "guide";
 type Tab = "summary" | "records" | "setup";
 
-export function DmarkApp() {
+export function DmarkApp({ reference }: { reference: ReactNode }) {
   const t = useTranslations("App");
   const w = useTranslations("Workspace");
   const locale = useLocale();
@@ -64,6 +67,9 @@ export function DmarkApp() {
   const [view, setView] = useState<View>("overview");
   const [tab, setTab] = useState<Tab>("summary");
   const [input, setInput] = useState("");
+  const [domainInputError, setDomainInputError] = useState("");
+  const heading = useRef<HTMLHeadingElement>(null);
+  const previousView = useRef("overview:");
   const [filter, setFilter] = useState("");
   const [ready, setReady] = useState(false);
   const [notice, setNotice] = useState("");
@@ -72,6 +78,7 @@ export function DmarkApp() {
   const [observedAt, setObservedAt] = useState(0);
   const [scores, setScores] = useState<Record<string, ScoreSnapshot>>({});
   const [busy, setBusy] = useState("");
+  const [scanMessage, setScanMessage] = useState("");
   const controller = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [account, setAccount] = useState<Account | null>(null);
@@ -167,6 +174,16 @@ export function DmarkApp() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
 
+  useEffect(() => {
+    const nextView = `${view}:${view === "domain" ? selected : ""}`;
+    if (previousView.current !== nextView) {
+      heading.current?.focus();
+      previousView.current = nextView;
+    }
+    const label = view === "domain" ? selected : view === "guide" ? t("setup_guide") : null;
+    document.title = label ? `${label} | Dmark by Kastro` : (locale === "en" ? "Dmark | Free SPF, DKIM & DMARC checker by Kastro" : "Dmark | Ókeypis SPF, DKIM og DMARC athugun frá Kastro");
+  }, [view, selected, locale, t]);
+
   const current = domains.find((item) => item.domain === selected);
   const result =
     current &&
@@ -222,9 +239,11 @@ export function DmarkApp() {
     event.preventDefault();
     const value = validateScannableDomain(input);
     if (value.error) {
-      setError(t("invalid_domain"));
+      setDomainInputError(t("invalid_domain"));
+      inputRef.current?.focus();
       return;
     }
+    setDomainInputError("");
     const existing = domains.find((item) => item.domain === value.domain);
     if (!existing && domains.length >= maxSavedDomains) {
       setError(t("domain_limit", { count: maxSavedDomains }));
@@ -295,6 +314,7 @@ export function DmarkApp() {
     const abort = new AbortController();
     controller.current = abort;
     setBusy(domain);
+    setScanMessage("");
     setError("");
     const timeout = window.setTimeout(() => abort.abort(), 55000);
     trackPrivacyEvent("scan_start", { source: "live_scanner" });
@@ -326,6 +346,7 @@ export function DmarkApp() {
         selector,
       };
       setScores((previous) => ({ ...previous, [domain]: snapshot }));
+      setScanMessage(`${domain}: ${presentScan(data, locale).status}. ${text("DNS readiness", "DNS staða")}: ${snapshot.score ?? "—"}/100.`);
       try {
         const cached = parseScoreCache(localStorage.getItem(scoreCacheKey));
         cached[domain] = snapshot;
@@ -427,6 +448,7 @@ export function DmarkApp() {
     setAuthError("");
     setEmailState("idle");
     dialog.current?.showModal();
+    dialog.current?.querySelector<HTMLInputElement>("#account-email")?.focus();
   }
   async function startLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -472,14 +494,16 @@ export function DmarkApp() {
           onClick={() => setView("overview")}
           aria-label="Dmark"
         >
-          <span>
-            dmark<span>.</span>
+          <KastroStar className="logo-star" />
+          <span className="app-wordmark">
+            <span>dmark<span>.</span></span>
+            <span className="app-logo-tag">by Kastro</span>
           </span>
-          <span className="app-logo-tag">by Kastro</span>
         </button>
         <div className="sidebar-caption">{t("workspace")}</div>
         <nav aria-label={t("navigation")} className="app-nav">
           <button
+            aria-current={view === "overview" ? "page" : undefined}
             className={view !== "guide" ? "active" : ""}
             onClick={() => setView("overview")}
           >
@@ -488,6 +512,7 @@ export function DmarkApp() {
             <span>{domains.length}</span>
           </button>
           <button
+            aria-current={view === "guide" ? "page" : undefined}
             className={view === "guide" ? "active" : ""}
             onClick={() => setView("guide")}
           >
@@ -500,14 +525,16 @@ export function DmarkApp() {
           {domains.map((item) => (
             <button
               key={item.domain}
+              aria-label={item.domain}
+              aria-current={view === "domain" && selected === item.domain ? "page" : undefined}
               className={
                 view === "domain" && item.domain === selected ? "selected" : ""
               }
               onClick={() => select(item.domain)}
             >
-              <Globe2 size={15} />
+              <span className="status-dot" />
               <span>{item.domain}</span>
-              <ChevronRight size={14} />
+              <small>{scores[item.domain]?.selector === (item.selector?.trim() || "") ? scores[item.domain]?.score ?? "—" : "—"}</small>
             </button>
           ))}
           {!domains.length ? <p>{t("sidebar_empty")}</p> : null}
@@ -521,7 +548,7 @@ export function DmarkApp() {
           </div>
           <p>{account?.authenticated ? account.email : t("cookie_note")}</p>
           <a
-            href={`https://kastro.is/${locale}/services/dmark`}
+            href={`https://kastro.is/${locale}/contact`}
             target="_blank"
             rel="noreferrer"
           >
@@ -588,6 +615,7 @@ export function DmarkApp() {
           </div>
         </header>
         <main id="workspace" className="app-main" tabIndex={-1}>
+          <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">{busy ? t("checking_records") : scanMessage}</p>
           {notice ? (
             <div className="app-notice" role="status">
               {notice}
@@ -611,17 +639,13 @@ export function DmarkApp() {
           ) : null}
           {view === "overview" ? (
             <>
-              <div className="app-page-heading">
+              <div className="app-page-heading overview-heading">
                 <div>
                   <p className="app-eyebrow">SPF / DKIM / DMARC / BIMI</p>
-                  <h1>{t("my_domains")}</h1>
+                  <h1 ref={heading} tabIndex={-1}>{t("my_domains")}</h1>
                   <p>{t("overview_text")}</p>
                 </div>
-                <span className="mode-pill">
-                  {account?.authenticated
-                    ? t("account_workspace")
-                    : t("guest_workspace")}
-                </span>
+                <KastroStar className="hero-star" />
               </div>
               <form onSubmit={add} className="app-add-form">
                 <label htmlFor="add-domain">{t("add_domain")}</label>
@@ -631,10 +655,15 @@ export function DmarkApp() {
                     id="add-domain"
                     ref={inputRef}
                     value={input}
-                    onChange={(event) => setInput(event.target.value)}
+                    onChange={(event) => { setInput(event.target.value); setDomainInputError(""); }}
                     placeholder={t("domain_placeholder")}
                     disabled={!ready}
                     autoComplete="off"
+                    autoCapitalize="none"
+                    inputMode="url"
+                    maxLength={512}
+                    aria-invalid={!!domainInputError}
+                    aria-describedby={`add-domain-hint${domainInputError ? " add-domain-error" : ""}`}
                     spellCheck={false}
                   />
                   <button className="app-button dark" disabled={!ready}>
@@ -642,7 +671,8 @@ export function DmarkApp() {
                     {t("add_domain")}
                   </button>
                 </div>
-                <p>{t("add_hint")}</p>
+                <p id="add-domain-hint">{t("add_hint")}</p>
+                {domainInputError ? <p id="add-domain-error" className="app-error" role="alert">{domainInputError}</p> : null}
               </form>
               <div className="workspace-stats">
                 <div>
@@ -675,7 +705,7 @@ export function DmarkApp() {
                     </label>
                   </div>
                   <div className="domain-grid">
-                    {filtered.map((item) => {
+                    {filtered.map((item, index) => {
                       const score =
                         scores[item.domain]?.selector ===
                         (item.selector?.trim() || "")
@@ -685,11 +715,9 @@ export function DmarkApp() {
                         score &&
                         observedAt - Date.parse(score.checkedAt) > 86400000;
                       return (
-                        <article key={item.domain} className="domain-card">
+                        <article key={item.domain} className={`domain-card ${score?.score === 100 ? "perfect" : ""}`}>
                           <div className="domain-card-top">
-                            <span className="domain-icon">
-                              <Globe2 size={21} />
-                            </span>
+                            <span className="domain-index">{String(index + 1).padStart(2, "0")}</span>
                             <button
                               className="icon-button"
                               aria-label={t("remove_domain", {
@@ -709,20 +737,16 @@ export function DmarkApp() {
                           </button>
                           <div
                             className={`domain-score ${score?.score === 100 ? "perfect" : ""}`}
+                            role="group"
+                            aria-label={`${text("DNS readiness", "DNS staða")}: ${score?.score ?? "—"}/100; SPF / DMARC: ${score?.grade || "—"}`}
                           >
                             <strong>
                               {score?.score ?? "—"}
                               <small>/100</small>
                             </strong>
                             <span>
-                              {text("DNS readiness", "DNS staða")}
-                              <small>
-                                {text(
-                                  "SPF / DMARC grade",
-                                  "SPF / DMARC einkunn",
-                                )}
-                                : {score?.grade || "—"}
-                              </small>
+                              <small>SPF / DMARC</small>
+                              <b className="grade-badge">{score?.grade || "—"}</b>
                             </span>
                           </div>
                           <div className="domain-card-status">
@@ -810,15 +834,19 @@ export function DmarkApp() {
               )}
               {!account?.authenticated ? (
                 <div className="account-nudge">
-                  <ShieldCheck size={22} />
                   <div>
+                    <p className="app-eyebrow">{t("free_account")}</p>
                     <strong>{t("nudge_title")}</strong>
                     <p>{t("nudge_text")}</p>
                   </div>
-                  <button className="app-text-button" onClick={openAccount}>
-                    {t("create_account")}
-                    <ArrowRight size={15} />
-                  </button>
+                  <div className="nudge-action">
+                    <p id="account-dialog-description">{t("account_text")}</p>
+                    <button className="app-button" onClick={openAccount}>
+                      {t("create_account")}
+                      <ArrowRight size={15} />
+                    </button>
+                  </div>
+                  <KastroStar className="nudge-star" variant="ink" />
                 </div>
               ) : dirty ? (
                 <p className="unsaved-note">{t("unsaved")}</p>
@@ -826,7 +854,7 @@ export function DmarkApp() {
             </>
           ) : view === "domain" && current ? (
             <>
-              <div className="app-page-heading">
+              <div className="app-page-heading domain-heading">
                 <div>
                   <button
                     className="back-link"
@@ -834,7 +862,7 @@ export function DmarkApp() {
                   >
                     {t("back_domains")}
                   </button>
-                  <h1 className="domain-title">{current.domain}</h1>
+                  <h1 ref={heading} tabIndex={-1} className="domain-title">{current.domain}</h1>
                   <p>
                     {result
                       ? t("last_checked", {
@@ -878,34 +906,34 @@ export function DmarkApp() {
                     id={`tab-${value}`}
                     role="tab"
                     aria-selected={tab === value}
-                    aria-controls={`panel-${value}`}
+                    aria-controls="domain-panel"
                     tabIndex={tab === value ? 0 : -1}
                     onClick={() => setTab(value)}
                     onKeyDown={(event) => {
                       if (
                         event.key === "ArrowLeft" ||
-                        event.key === "ArrowRight"
+                        event.key === "ArrowRight" ||
+                        event.key === "Home" ||
+                        event.key === "End"
                       ) {
                         event.preventDefault();
                         const values: Tab[] = ["summary", "records", "setup"];
-                        const next =
-                          values[
-                            (values.indexOf(value) +
-                              (event.key === "ArrowRight" ? 1 : 2)) %
-                              3
-                          ];
+                        const next = event.key === "Home" ? values[0] : event.key === "End" ? values[2] : values[(values.indexOf(value) + (event.key === "ArrowRight" ? 1 : 2)) % 3];
                         setTab(next);
                         document.getElementById(`tab-${next}`)?.focus();
                       }
                     }}
                   >
+                    <span className="tab-number">0{["summary", "records", "setup"].indexOf(value) + 1}</span>
                     {t(`tabs.${value}`)}
                   </button>
                 ))}
               </div>
               <section
-                id={`panel-${tab}`}
+                id="domain-panel"
                 role="tabpanel"
+                tabIndex={0}
+                aria-busy={busy === current.domain}
                 aria-labelledby={`tab-${tab}`}
               >
                 {tab === "setup" ? (
@@ -1057,7 +1085,7 @@ export function DmarkApp() {
               <div className="app-page-heading">
                 <div>
                   <p className="app-eyebrow">{t("reference")}</p>
-                  <h1>{t("setup_guide")}</h1>
+                  <h1 ref={heading} tabIndex={-1}>{t("setup_guide")}</h1>
                   <p>{t("guide_intro")}</p>
                 </div>
               </div>
@@ -1095,9 +1123,16 @@ export function DmarkApp() {
               </section>
             </>
           )}
+          {view === "overview" ? reference : null}
           <footer className="app-footer">
             <span>{t("free_by_kastro")}</span>
             <span>{t("checks_note")}</span>
+            <nav aria-label={text("Policies and contact", "Skilmálar og samband")}>
+              <a href={`https://kastro.is/${locale}/privacy`}>{text("Privacy", "Persónuvernd")}</a>
+              <a href={`https://kastro.is/${locale}/terms`}>{text("Terms", "Skilmálar")}</a>
+              <a href={`https://kastro.is/${locale}/security`}>{text("Report a vulnerability", "Tilkynna öryggisveikleika")}</a>
+              <a href={`https://kastro.is/${locale}/contact`}>{text("Contact", "Hafa samband")}</a>
+            </nav>
           </footer>
         </main>
       </div>
@@ -1105,6 +1140,7 @@ export function DmarkApp() {
         ref={dialog}
         className="account-dialog"
         aria-labelledby="account-dialog-title"
+        aria-describedby="account-dialog-description"
       >
         <button
           type="button"
@@ -1135,6 +1171,7 @@ export function DmarkApp() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
+              aria-describedby={authError ? "account-error" : "account-dialog-description"}
               maxLength={254}
               autoComplete="email"
               placeholder="you@company.is"
@@ -1152,7 +1189,7 @@ export function DmarkApp() {
           </form>
         )}
         {authError ? (
-          <p className="app-error" role="alert">
+          <p id="account-error" className="app-error" role="alert">
             {authError}
           </p>
         ) : null}
@@ -1278,5 +1315,17 @@ function ScanView({
         </button>
       </div>
     </>
+  );
+}
+
+function KastroStar({ className, variant = "yellow" }: { className: string; variant?: "yellow" | "ink" }) {
+  return (
+    <Image
+      className={className}
+      src={variant === "ink" ? kastroInk : kastroYellow}
+      alt=""
+      aria-hidden="true"
+      sizes={className === "logo-star" ? "34px" : className === "hero-star" ? "210px" : "260px"}
+    />
   );
 }
