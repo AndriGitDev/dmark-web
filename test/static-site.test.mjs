@@ -13,10 +13,10 @@ function fixture() {
   dkim:{state:'red',reason:'No common selector found'},
  }};
 }
-test('Next includes a request-time route; marketing has no simulated fallback',()=>{
+test('Next includes a request-time route; public workspace has no simulated fallback',()=>{
  assert.doesNotMatch(readFileSync(join(root,'next.config.mjs'),'utf8'),/output:\s*["']export/);
- const component=readFileSync(join(root,'components/dmark-marketing.tsx'),'utf8');
- assert.match(component,/fetch\("\/api\/scan\//); assert.doesNotMatch(component,/mockScan/);
+ const component=readFileSync(join(root,'components/dmark-app.tsx'),'utf8');
+ assert.match(component,/fetch\(["']\/api\/scan\//); assert.doesNotMatch(component,/mockScan/);
 });
 test('live ratings reflect records, not domain-name substrings',()=>{
  const data=fixture();let result=live.mapLookupResponse(data,'example.com',20);

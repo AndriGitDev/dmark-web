@@ -19,7 +19,8 @@ export function loadTSModule(relativePath, imports = {}) {
   const cjsModule = { exports: {} };
   const sandbox = {
     console,
-    Response, Request, URL, TextDecoder, AbortController,
+    Response, Request, URL, URLSearchParams, TextDecoder, AbortController, AbortSignal, Buffer,
+    process: {env: {}},
     fetch: (...args) => imports.fetch(...args),
     exports: cjsModule.exports,
     module: cjsModule,
@@ -34,4 +35,5 @@ export function loadTSModule(relativePath, imports = {}) {
   vm.runInNewContext(outputText, sandbox, { filename });
   return cjsModule.exports;
 }
+
 
