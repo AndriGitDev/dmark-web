@@ -4,6 +4,8 @@ const withNextIntl = createNextIntlPlugin();
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
+  async redirects() { return [{"source": "/:path*", "has": [{"type": "host", "value": "dmark.is"}], "destination": "https://www.dmark.is/:path*", "permanent": true},{"source": "/", "destination": "/is/", "permanent": false}]; },
   trailingSlash: true,
   images: {
     unoptimized: true,
