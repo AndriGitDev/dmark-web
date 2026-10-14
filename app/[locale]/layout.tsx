@@ -3,7 +3,6 @@ import {getMessages, setRequestLocale} from 'next-intl/server';
 import {notFound} from 'next/navigation';
 import type { Metadata, Viewport } from "next";
 import { contentForLocale } from "@/lib/public-content";
-import { Analytics } from "@vercel/analytics/next";
 import localFont from "next/font/local";
 import { PrivacyAnalytics } from "@/components/privacy-analytics";
 import {routing} from "@/i18n/routing";
@@ -111,7 +110,7 @@ export default async function RootLayout({
         </NextIntlClientProvider>
         <noscript><p className="noscript-notice">{locale === "en" ? "Enable JavaScript to check domains and save your progress. Product information and answers remain available below." : "Virkjaðu JavaScript til að athuga lén og vista yfirferð. Upplýsingar um tólið og svör við spurningum eru áfram aðgengileg hér á síðunni."}</p></noscript>
         <PrivacyAnalytics />
-        <Analytics />
+
       </body>
     </html>
   );
