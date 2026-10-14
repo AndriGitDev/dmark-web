@@ -7,3 +7,5 @@ Coolify builds GitHub `main` using `Dockerfile.coolify` on Baracoa, publishes `g
 The container listens on port 3000. Docker and Coolify probe `/api/healthz` every 30 seconds, with a five-second timeout and three retries. Verify actual page and API behavior separately from liveness. Git pushes deploy automatically. Page-view analytics are disabled. Vercel deployments remain available for rollback; automatic Vercel builds are disabled after successful cutover.
 
 Build locally with `docker build -f Dockerfile.coolify .`. Never copy production environment values into the repository. Existing mail and unrelated DNS records must remain unchanged.
+
+Account sync is optional and disabled while no `DMARK_ACCOUNT_API_URL` is configured. Guest workspaces and DNS scanning remain available. Configure a working account backend URL and redeploy before enabling account sync; the retired default hostname must not be probed on page load.

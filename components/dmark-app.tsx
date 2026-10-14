@@ -56,7 +56,7 @@ type Account = {
 type View = "overview" | "domain" | "guide";
 type Tab = "summary" | "records" | "setup";
 
-export function DmarkApp({ reference }: { reference: ReactNode }) {
+export function DmarkApp({ reference, accountEnabled = false }: { reference: ReactNode; accountEnabled?: boolean }) {
   const t = useTranslations("App");
   const w = useTranslations("Workspace");
   const locale = useLocale();
@@ -132,6 +132,10 @@ export function DmarkApp({ reference }: { reference: ReactNode }) {
       history.replaceState(null, "", location.pathname);
     const abort = new AbortController();
     async function loadAccount() {
+      if (!accountEnabled) {
+        setAccount({ authenticated: false, available: false, csrf: "" });
+        return;
+      }
       try {
         const response = await fetch("/api/account/me/", {
           cache: "no-store",
@@ -161,7 +165,7 @@ export function DmarkApp({ reference }: { reference: ReactNode }) {
       abort.abort();
       controller.current?.abort();
     };
-  }, [t]);
+  }, [t, accountEnabled]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
