@@ -464,3 +464,6 @@ html { scroll-padding-top: 100px; }
 .status-dot.dot-exposed { background: var(--red); }
 .fix-steps > li, .fix-step details, .step-body, .record-list, .record-row { min-width: 0; }
 .fix-step summary strong { min-width: 0; overflow-wrap: anywhere; }
+.fix-plan { overflow-wrap: anywhere; min-width: 0; }
+.fix-plan .app-button { white-space: normal; text-align: left; max-width: 100%; }
+.verdict > div { min-width: 0; }
