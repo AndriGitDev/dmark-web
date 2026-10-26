@@ -40,7 +40,8 @@ for (const locale of ['is', 'en']) {
   assert.ok(html.includes('href="#workspace"'));
   assert.ok(html.includes('id="add-domain-hint"'));
   assert.ok(html.includes('aria-describedby="add-domain-hint"'));
-  assert.ok(html.includes('id="account-dialog-description"'));
+  assert.ok(html.includes('id="privacy-card-title"'));
+  assert.ok(!/api\/account|account-dialog/.test(html), 'Account UI removed');
   assert.deepEqual(pngDimensions(read(`social/${locale}.body`)), [1200, 630]);
   const imageHeaders = JSON.parse(read(`social/${locale}.meta`)).headers;
   assert.match(imageHeaders['content-type'], /image\/png/);
@@ -74,7 +75,7 @@ function luminance(hex) {
 function contrast(a, b) { const values = [luminance(a), luminance(b)].sort((x,y) => y-x); return (values[0]+0.05)/(values[1]+0.05); }
 for (const [front, back] of [['ink','paper'], ['ink','dark'], ['muted','surface'], ['dim','paper'], ['dim','surface'], ['paper','lime'], ['green','paper'], ['red','paper']])
   assert.ok(contrast(colors[front],colors[back]) >= 4.5, `Text contrast: ${front} on ${back}`);
-const border = css.match(/\.account-dialog input \{ border-color: (#[0-9a-f]{6});/i)[1];
+const border = css.match(/\.guided-selector input \{ border-color: (#[0-9a-f]{6});/i)[1];
 assert.ok(contrast(border, colors.surface) >= 3, 'Input boundary contrast');
 assert.ok(contrast(colors.lime, colors.paper) >= 3, 'Focus contrast');
 console.log('Contrast checks passed for declared text, controls and focus colors.');

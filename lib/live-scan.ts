@@ -1,4 +1,4 @@
-import type { ScanPayload } from "./scan";
+import type { MailRouting, ScanPayload } from "./scan";
 
 type ObjectValue = Record<string, unknown>;
 function object(value: unknown): ObjectValue {
@@ -17,6 +17,35 @@ function strings(value: unknown): string[] {
 function state(value: unknown): "red" | "yellow" | "green" {
   if (value !== "red" && value !== "yellow" && value !== "green") throw new Error("Invalid assessment state");
   return value;
+}
+
+const hostname = /^(?=.{1,253}$)[a-z0-9_](?:[a-z0-9_-]{0,62})(?:\.[a-z0-9_](?:[a-z0-9_-]{0,62}))*$/;
+function host(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const name = value.trim().toLowerCase().replace(/\.$/, "");
+  return hostname.test(name) ? name : null;
+}
+
+/** MX and NS hosts let the app name the mail provider and DNS host. */
+export function mapMailRouting(value: unknown): MailRouting {
+  const empty = { mx: [], ns: [], mxKnown: false, nsKnown: false };
+  if (!value || typeof value !== "object" || Array.isArray(value)) return empty;
+  const dns = value as ObjectValue;
+  const errors = dns.recordErrors && typeof dns.recordErrors === "object" ? dns.recordErrors as ObjectValue : {};
+  const mxRecords = Array.isArray(dns.mx) ? dns.mx.slice(0, 20) : null;
+  const mx = (mxRecords ?? [])
+    .filter((entry): entry is ObjectValue => !!entry && typeof entry === "object")
+    .map((entry) => ({ name: host(entry.exchange), priority: Number.isFinite(entry.priority) ? entry.priority as number : 0 }))
+    .filter((entry): entry is { name: string; priority: number } => !!entry.name)
+    .sort((a, b) => a.priority - b.priority)
+    .map((entry) => entry.name);
+  const ns = (Array.isArray(dns.ns) ? dns.ns.slice(0, 20) : []).map(host).filter((name): name is string => !!name);
+  return {
+    mx: Array.from(new Set(mx)),
+    ns: Array.from(new Set(ns)).sort(),
+    mxKnown: !!mxRecords && !errors.MX,
+    nsKnown: Array.isArray(dns.ns) && !errors.NS,
+  };
 }
 
 /** Adapt observed upstream evidence; never substitute fabricated results. */
@@ -62,6 +91,7 @@ export function mapLookupResponse(value: unknown, domain: string, durationMs: nu
     spf: {valid: validSpf, lookups, record: spfRecord},
     dmarc: {valid: validDmarc, policy, record: dmarcRecord},
     spoofable: !enforcing,
+    mail: mapMailRouting(data.dns),
     assessment: {
       incomplete, spfState, dmarcState, pct: pct as number,
       spfReason: record(spf.reason), dmarcReason: record(dmarc.reason),
