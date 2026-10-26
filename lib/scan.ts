@@ -42,6 +42,16 @@ export type ScanPayload = {
   };
   spoofable: boolean;
   authentication?: AuthenticationRecords;
+  /** Public mail and name servers, used only to tailor setup instructions. */
+  mail?: MailRouting;
+};
+
+export type MailRouting = {
+  mx: string[];
+  ns: string[];
+  /** False when the lookup failed, so an empty list is not proof of absence. */
+  mxKnown: boolean;
+  nsKnown: boolean;
 };
 
 export type ScanRemediationStep = {

@@ -59,12 +59,10 @@ await page.route("**/api/scan/**", (route) =>
       checkedAt: new Date().toISOString(),
       status: improved ? "PASS" : "FAIL",
       audit: { grade: improved ? "A" : "F" },
-      spf: { valid: true, lookups: 2, record: "v=spf1 -all" },
-      dmarc: {
-        valid: true,
-        policy: improved ? "reject" : "none",
-        record: improved ? "v=DMARC1; p=reject" : "v=DMARC1; p=none",
-      },
+      spf: { valid: true, lookups: 1, record: "v=spf1 include:spf.protection.outlook.com -all" },
+      dmarc: improved
+        ? { valid: true, policy: "reject", record: "v=DMARC1; p=reject" }
+        : { valid: false, policy: "unknown", record: "" },
       assessment: {
         incomplete: false,
         spfState: "green",
@@ -83,6 +81,7 @@ await page.route("**/api/scan/**", (route) =>
           name: "default._bimi.example.com",
         },
       },
+      mail: { mx: ["example-com.mail.protection.outlook.com"], ns: ["ana.ns.cloudflare.com"], mxKnown: true, nsKnown: true },
     },
   }),
 );
@@ -114,66 +113,49 @@ await page.route("**/api/spf/flatten/**", (route) => {
   });
 });
 await page.goto("http://localhost:3000/en/");
-await page.getByRole("button", { name: "Add domain", exact: true }).waitFor();
-await checkAccessibility("English empty workspace");
+await page.getByRole("heading", { name: "Is your email protected?", exact: true }).waitFor();
+await checkAccessibility("English empty homepage");
 await page.locator("#add-domain").fill("not-a-domain");
-await page.getByRole("button", { name: "Add domain", exact: true }).click();
+await page.getByRole("button", { name: "Check", exact: true }).click();
 await page.locator("#add-domain-error").waitFor();
 if (await page.locator("#add-domain").getAttribute("aria-invalid") !== "true") throw Error("Missing input invalid state");
 if (await page.evaluate(() => document.activeElement?.id) !== "add-domain") throw Error("Invalid input did not receive focus");
 await checkAccessibility("Domain validation error");
 await page.locator("#add-domain").fill("example.com");
-await page.getByRole("button", { name: "Add domain", exact: true }).click();
+await page.getByRole("button", { name: "Check", exact: true }).click();
 
-await page.locator(".scan-grade > strong").filter({ hasText: "60" }).waitFor();
-await checkAccessibility("Domain summary");
-const summaryTab = page.getByRole("tab").first();
-await summaryTab.focus();
-await page.keyboard.press("End");
-if (await page.getByRole("tab").last().getAttribute("aria-selected") !== "true") throw Error("End key did not select last tab");
-await page.keyboard.press("Home");
-if (await summaryTab.getAttribute("aria-selected") !== "true") throw Error("Home key did not select first tab");
-for (const control of await page.getByRole("tab").evaluateAll(items => items.map(item => item.getAttribute("aria-controls")))) {
-  if (await page.locator(`#${control}`).count() !== 1) throw Error("Missing tab panel target");
-}
-await page.getByRole("tab").last().click();
-await page
-  .locator(".next-step-panel h3")
-  .filter({ hasText: "Confirm a published DKIM key" })
-  .waitFor();
-await checkAccessibility("Guided setup");
-await page.getByRole("checkbox").nth(1).check();
-if (!(await page.locator(".readiness-total").textContent()).includes("60"))
-  throw Error("Manual checkbox changed score");
+// Plain-language verdict, detected provider and DNS host, and the next step open.
+await page.locator("#verdict-title").filter({ hasText: "Anyone can send email pretending to be example.com" }).waitFor();
+await page.locator(".verdict-facts").filter({ hasText: "Microsoft 365" }).filter({ hasText: "Cloudflare" }).waitFor();
+if ((await page.locator(".fix-step.step-done").count()) !== 1) throw Error("SPF should already be done");
+await page.locator(".fix-step.step-now summary").filter({ hasText: "Turn on email signing (DKIM)" }).waitFor();
+await page.locator(".step-now .step-wait").filter({ hasText: "DNS only" }).waitFor();
+await checkAccessibility("Fix plan");
+
+// Exact records are copyable, including from a later step.
+await page.locator(".fix-step summary").filter({ hasText: "Add a DMARC record" }).click();
+await page.getByRole("button", { name: "Copy value for _dmarc", exact: true }).first().click();
+if ((await page.evaluate(() => navigator.clipboard.readText())) !== "v=DMARC1; p=none;")
+  throw Error("Wrong DMARC record copied");
+const mailto = await page.getByRole("link", { name: "Open in email" }).getAttribute("href");
+if (!mailto?.startsWith("mailto:?") || !decodeURIComponent(mailto).includes("_dmarc.example.com") || !decodeURIComponent(mailto).includes("selector1._domainkey.example.com"))
+  throw Error("IT message lacks the records");
+await page.screenshot({ path: "/tmp/dmark-fix-plan.png", fullPage: true });
+
+// The saved domain survives a reload and reopening it rechecks automatically.
 await page.reload();
-await page
-  .getByRole("button", { name: "example.com", exact: true })
-  .first()
-  .click();
-await page.getByRole("tab").last().click();
-if (!(await page.getByRole("checkbox").nth(1).isChecked()))
-  throw Error("Checklist not persisted");
-await page.locator(".app-logo").click();
-await page
-  .locator(".domain-score > strong")
-  .filter({ hasText: "60" })
-  .waitFor();
+await page.locator(".domain-card .pill-exposed").filter({ hasText: "Not protected" }).waitFor();
 improved = true;
-await page.getByRole("button", { name: "Refresh score", exact: true }).click();
-await page
-  .locator(".domain-score > strong")
-  .filter({ hasText: "100" })
-  .waitFor();
-await page.getByRole("button", { name: "Improve domain", exact: true }).click();
-if (
-  (await page.getByRole("tab").last().getAttribute("aria-selected")) !== "true"
-)
-  throw Error("Improve domain did not open guided plan");
-await page
-  .getByRole("heading", { name: "All assessed DNS checks pass", exact: true })
-  .waitFor();
-if ((await page.locator(".guided-checks .verified").count()) !== 5)
-  throw Error("Recheck did not verify five checks");
+await page.locator(".domain-card .domain-open").filter({ hasText: "example.com" }).click();
+await page.locator("#verdict-title").filter({ hasText: "example.com is protected against email spoofing" }).waitFor();
+if ((await page.locator(".fix-step.step-done").count()) !== 5) throw Error("Recheck did not complete all steps");
+await page.getByRole("heading", { name: "Everything is in place", exact: true }).waitFor();
+if (await page.locator(".send-to-it").count()) throw Error("Send-to-IT shown for a protected domain");
+
+// Technical details keep the advanced tools.
+await page.locator(".tech-details > summary").click();
+if (!(await page.locator(".readiness-total").textContent()).includes("100"))
+  throw Error("Technical readiness missing");
 await page.locator(".spf-flatten-tool > summary").click();
 await page
   .getByRole("button", { name: "Generate flattened SPF", exact: true })
@@ -183,8 +165,6 @@ await page
   .last()
   .filter({ hasText: "v=spf1 ip4:192.0.2.1 ~all" })
   .waitFor();
-if (!(await page.locator(".readiness-total").textContent()).includes("100"))
-  throw Error("Generation changed the score");
 await page.getByRole("button", { name: "Copy record", exact: true }).click();
 if (
   (await page.evaluate(() => navigator.clipboard.readText())) !==
@@ -200,7 +180,6 @@ const exportPath = await download.path();
 if (!readFileSync(exportPath, "utf8").includes("vendor.com"))
   throw Error("Export lost provenance");
 await checkAccessibility("SPF generated result");
-await page.screenshot({ path: "/tmp/dmark-spf-generator.png", fullPage: true });
 flattenFailure = true;
 await page
   .getByRole("button", { name: "Regenerate record", exact: true })
@@ -212,33 +191,22 @@ await page
 if (await page.locator(".flatten-result").count())
   throw Error("Failed regeneration left a copyable stale candidate");
 flattenFailure = false;
-await page.screenshot({
-  path: "/tmp/dmark-guided-desktop.png",
-  fullPage: true,
-});
 await page.locator(".app-logo").click();
-await page.screenshot({
-  path: "/tmp/dmark-score-dashboard.png",
-  fullPage: true,
-});
-await checkAccessibility("Scored workspace");
+await page.locator(".domain-card .pill-protected").filter({ hasText: "Protected" }).waitFor();
+await checkAccessibility("Saved domains");
 for (const width of [320, 360, 768, 1440]) {
   await page.setViewportSize({ width, height: 900 });
-  await noOverflow(`workspace ${width}`);
+  await noOverflow(`homepage ${width}`);
 }
+improved = false;
 await page.setViewportSize({ width: 360, height: 900 });
-await page
-  .getByRole("button", { name: "example.com", exact: true })
-  .first()
-  .click();
-await page.getByRole("tab").last().click();
-await page.screenshot({ path: "/tmp/dmark-guided-mobile.png", fullPage: true });
-const overflow = await page.evaluate(() => ({
-  width: innerWidth,
-  scroll: document.documentElement.scrollWidth,
-}));
-if (overflow.scroll > overflow.width)
-  throw Error("Mobile overflow " + JSON.stringify(overflow));
+await page.locator(".domain-card .domain-open").filter({ hasText: "example.com" }).click();
+await page.locator(".verdict .app-button").click();
+await page.locator("#verdict-title").filter({ hasText: "Anyone can send email" }).waitFor();
+await page.screenshot({ path: "/tmp/dmark-fix-plan-mobile.png", fullPage: true });
+await noOverflow("fix plan 360");
+await page.setViewportSize({ width: 320, height: 900 });
+await noOverflow("fix plan 320");
 if (await page.getByText(/sign in|create account/i).count()) throw Error("Account UI still visible");
 await page.goto("http://localhost:3000/en/");
 await page.getByText("We never ask who you are.", { exact: true }).waitFor();
@@ -266,7 +234,7 @@ const blockedPage = await blocked.newPage();
 await blockedPage.goto("http://localhost:3000/en/");
 await blockedPage.locator("#add-domain").fill("example.com");
 await blockedPage
-  .getByRole("button", { name: "Add domain", exact: true })
+  .getByRole("button", { name: "Check", exact: true })
   .click();
 await blockedPage
   .getByRole("status")
@@ -274,7 +242,7 @@ await blockedPage
   .waitFor();
 if (errors.length) throw Error(errors.join("\n"));
 console.log(
-  "WCAG axe checks, keyboard tabs, form errors, responsive overflow, dashboard score, cached reload, guided next action, verified improvement, manual-progress separation, mobile guide, cookie-only persistence, privacy card and blocked-cookie flows passed.",
+  "WCAG axe checks, form errors, plain-language verdict, provider and DNS host detection, copyable records, send-to-IT message, saved-domain reload with automatic recheck, verified improvement, technical SPF tools, responsive overflow, cookie-only persistence, privacy card and blocked-cookie flows passed.",
 );
 await browser.close();
 server.kill();
