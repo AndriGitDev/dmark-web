@@ -223,9 +223,26 @@ await page.getByText("We never ask who you are.", { exact: true }).waitFor();
 await page.getByText("No account · No email", { exact: true }).first().waitFor();
 await page.goto("http://localhost:3000/is/");
 await checkAccessibility("Icelandic workspace");
-await page.locator(".app-nav button").last().click();
-await checkAccessibility("Icelandic reference guide");
-await noOverflow("Icelandic guide 360");
+await page.locator(".app-nav a").click();
+await page.getByRole("heading", { name: "Leiðbeiningar um tölvupóstöryggi", exact: true }).waitFor();
+await checkAccessibility("Icelandic guide index");
+await noOverflow("Icelandic guide index 360");
+for (const path of ["/is/leidbeiningar/microsoft-365/", "/en/guides/google-workspace/", "/en/guides/domain-without-email/", "/is/leidbeiningar/hvad-er-dmarc/"]) {
+  for (const width of [320, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(`http://localhost:3000${path}`);
+    await page.locator(".guide-answer").waitFor();
+    await noOverflow(`${path} ${width}`);
+  }
+  await checkAccessibility(path);
+}
+await page.goto("http://localhost:3000/en/guides/microsoft-365/");
+await page.getByRole("button", { name: "Copy v=spf1 include:spf.protection.outlook.com -all", exact: true }).click();
+if ((await page.evaluate(() => navigator.clipboard.readText())) !== "v=spf1 include:spf.protection.outlook.com -all")
+  throw Error("Guide copy button copied the wrong record");
+await page.screenshot({ path: "/tmp/dmark-guide-mobile.png", fullPage: true });
+await page.getByRole("link", { name: "Íslenska", exact: true }).click();
+await page.waitForURL("**/is/leidbeiningar/microsoft-365/");
 
 // Cookie blocking must keep the app usable and display a truthful persistence warning.
 const blocked = await browser.newContext({
@@ -252,7 +269,7 @@ await blockedPage
   .waitFor();
 if (errors.length) throw Error(errors.join("\n"));
 console.log(
-  "WCAG axe checks, form errors, plain-language verdict, provider and DNS host detection, copyable records, send-to-IT message, saved-domain reload with automatic recheck, verified improvement, technical SPF tools, responsive overflow, cookie-only persistence, privacy card and blocked-cookie flows passed.",
+  "WCAG axe checks, form errors, plain-language verdict, provider and DNS host detection, copyable records, send-to-IT message, saved-domain reload with automatic recheck, verified improvement, technical SPF tools, guide pages (a11y, overflow, copy, language switch), responsive overflow, cookie-only persistence, privacy card and blocked-cookie flows passed.",
 );
 await browser.close();
 server.kill();

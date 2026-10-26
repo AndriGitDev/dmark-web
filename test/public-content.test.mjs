@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { loadTSModule } from './load-ts.mjs';
-const { contentForLocale, publicStructuredData } = loadTSModule('lib/public-content.ts');
+const site = loadTSModule('lib/site.ts');
+const { contentForLocale, publicStructuredData } = loadTSModule('lib/public-content.ts', { './site': site });
 for (const locale of ['is', 'en']) {
   test(`${locale}: public schema uses the same FAQ answers as visible content and declares a free app honestly`, () => {
     const content = contentForLocale(locale);
@@ -14,7 +15,7 @@ for (const locale of ['is', 'en']) {
       assert.equal(faq.mainEntity[i].acceptedAnswer.text, item.answer);
     });
     const app = graph.find(node => node['@type'] === 'WebApplication');
-    assert.equal(app.url, `https://dmark.is/${locale}/`);
+    assert.equal(app.url, `https://www.dmark.is/${locale}/`);
     assert.equal(app.description, content.intro);
     assert.equal(app.isAccessibleForFree, true);
     assert.equal(app.offers.price, '0');

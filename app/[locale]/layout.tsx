@@ -3,6 +3,7 @@ import {getMessages, setRequestLocale} from 'next-intl/server';
 import {notFound} from 'next/navigation';
 import type { Metadata, Viewport } from "next";
 import { contentForLocale } from "@/lib/public-content";
+import { siteURL } from "@/lib/site";
 import localFont from "next/font/local";
 import { PrivacyAnalytics } from "@/components/privacy-analytics";
 import {routing} from "@/i18n/routing";
@@ -40,7 +41,7 @@ export async function generateMetadata({
   const content = contentForLocale(locale);
 
   return {
-    metadataBase: new URL("https://dmark.is"),
+    metadataBase: new URL(siteURL),
     title: content.title,
     description: content.description,
     alternates: {
@@ -53,11 +54,11 @@ export async function generateMetadata({
     },
     openGraph: {
       type: "website",
-      url: `https://dmark.is/${locale}/`,
-      siteName: "Dmark by Kastro",
+      url: `${siteURL}/${locale}/`,
+      siteName: "dmark by Kastro",
       locale: locale === "en" ? "en_GB" : "is_IS",
       alternateLocale: locale === "en" ? ["is_IS"] : ["en_GB"],
-      title: content.title,
+      title: content.ogTitle,
       description: content.description,
       images: [
         {
@@ -70,7 +71,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: content.title,
+      title: content.ogTitle,
       description: content.description,
       images: [{ url: `/social/${locale}/`, alt: `${content.shareHeading} ${content.shareDescription}` }],
     },

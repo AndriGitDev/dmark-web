@@ -1,4 +1,4 @@
 Contact: mailto:andri@kastro.is
 Expires: 2027-09-25T00:00:00Z
 Preferred-Languages: en, is
-Canonical: https://dmark.is/.well-known/security.txt
+Canonical: https://www.dmark.is/.well-known/security.txt
