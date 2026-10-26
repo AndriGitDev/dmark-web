@@ -1,15 +1,17 @@
-export const siteURL = "https://dmark.is";
+import { kastroOrganization, siteURL } from "./site";
+export { siteURL };
 export const publicContent = {
   en: {
-    title: "Dmark | Free SPF, DKIM & DMARC checker by Kastro",
-    description: "Check SPF, DKIM, DMARC and BIMI records for free. See in plain language whether someone can send email as you, and get the exact records to fix it. No account, no email.",
+    title: "Free DMARC, SPF and DKIM checker in plain language | dmark",
+    ogTitle: "Is your email protected?",
+    description: "Check for free whether someone can send fake email as your domain, then get the exact DMARC, SPF and DKIM records to fix it. No account, no email address.",
     heading: "Free email authentication checks from Kastro",
     intro: "Dmark checks public DNS records for SPF, DKIM, DMARC and BIMI. Enter a domain to see whether someone can send email pretending to be you, then follow a step-by-step fix with the exact records for your email provider. There are no accounts: your saved domains stay in your browser.",
     faqHeading: "How Dmark works",
     help: "Dmark is a free tool from Kastro. If you want help reviewing your domain’s email configuration, contact Kastro.",
     helpLabel: "Talk to Kastro",
-    shareHeading: "Understand your email security.",
-    shareDescription: "Free check. Plain answers. Exact records to fix it.",
+    shareHeading: "Is your email protected?",
+    shareDescription: "Free check in two seconds. Exact records to fix it. No sign-up.",
     faqs: [
       { question: "What does the result mean?", answer: "Not protected means DMARC is missing or only monitoring, so anyone can send email that looks like it comes from your domain. Partly protected means fake email goes to spam. Protected means receivers reject it outright. The steps show exactly which records to add, in a safe order. The result describes your public DNS settings, not whether every email you send is delivered." },
       { question: "What do SPF, DKIM, DMARC and BIMI do?", answer: "SPF publishes which servers may send mail for a domain. DKIM publishes a key used to verify signed messages; Dmark checks the DNS key record, not message signatures. DMARC checks alignment with the From domain and publishes a policy and reporting destinations. BIMI publishes brand information that supported email providers may display, subject to their logo and certificate requirements." },
@@ -20,15 +22,16 @@ export const publicContent = {
     ],
   },
   is: {
-    title: "Dmark | Ókeypis SPF, DKIM og DMARC athugun frá Kastro",
-    description: "Athugaðu SPF, DKIM, DMARC og BIMI færslur ókeypis. Sjáðu á mannamáli hvort hægt sé að senda póst í þínu nafni og fáðu nákvæmar færslur til að laga það. Enginn aðgangur, ekkert netfang.",
+    title: "Ókeypis DMARC, SPF og DKIM athugun á mannamáli | dmark",
+    ogTitle: "Er tölvupósturinn þinn varinn?",
+    description: "Athugaðu ókeypis hvort hægt sé að senda falsaðan póst í nafni lénsins þíns og fáðu nákvæmar DMARC, SPF og DKIM færslur til að laga það. Engin skráning, ekkert netfang.",
     heading: "Ókeypis athugun á tölvupóststillingum frá Kastro",
     intro: "Dmark athugar opinberar DNS færslur fyrir SPF, DKIM, DMARC og BIMI. Sláðu inn lén til að sjá hvort hægt sé að senda póst í þínu nafni og fylgdu síðan skref-fyrir-skref lagfæringu með nákvæmum færslum fyrir þína póstþjónustu. Engir aðgangar eru til: vistuð lén eru geymd í vafranum þínum.",
     faqHeading: "Svona virkar Dmark",
     help: "Dmark er ókeypis tól frá Kastro. Hafðu samband við Kastro ef þú vilt aðstoð við að yfirfara tölvupóststillingar lénsins.",
     helpLabel: "Hafa samband við Kastro",
-    shareHeading: "Yfirsýn yfir tölvupóstöryggi.",
-    shareDescription: "Ókeypis athugun. Skýr svör. Nákvæmar færslur til að laga.",
+    shareHeading: "Er tölvupósturinn þinn varinn?",
+    shareDescription: "Ókeypis athugun á tveimur sekúndum. Nákvæmar færslur til að laga. Engin skráning.",
     faqs: [
       { question: "Hvað þýðir niðurstaðan?", answer: "Óvarið þýðir að DMARC vantar eða er aðeins í eftirliti, svo hver sem er getur sent póst sem lítur út fyrir að koma frá léninu. Að hluta varið þýðir að falsaður póstur fer í ruslpóst. Varið þýðir að póstþjónar hafna honum alveg. Skrefin sýna nákvæmlega hvaða færslum á að bæta við, í öruggri röð. Niðurstaðan lýsir opinberum DNS-stillingum, ekki því hvort allur póstur frá ykkur berist." },
       { question: "Til hvers eru SPF, DKIM, DMARC og BIMI?", answer: "SPF tilgreinir hvaða netþjónar mega senda póst fyrir lén. DKIM birtir lykil til að sannreyna undirritaðan póst; Dmark athugar DNS lykilfærsluna, ekki undirritun skilaboða. DMARC athugar samsvörun við lénið í From hausnum og birtir stefnu og skýrslumóttakendur. BIMI birtir upplýsingar um vörumerki sem studdar póstveitur geta sýnt, að uppfylltum kröfum þeirra um merki og vottorð." },
@@ -51,7 +54,7 @@ export function publicStructuredData(locale: string) {
   return {
     "@context": "https://schema.org",
     "@graph": [
-      { "@type": "Organization", "@id": "https://kastro.is/#organization", name: "Kastro", url: "https://kastro.is/", logo: `${siteURL}/brand/kastro/star-yellow.png` },
+      kastroOrganization,
       { "@type": "WebSite", "@id": `${siteURL}/#website`, name: "Dmark by Kastro", url: siteURL, inLanguage: ["is", "en"], publisher: { "@id": "https://kastro.is/#organization" } },
       { "@type": "WebApplication", "@id": `${siteURL}/#app`, name: "Dmark", url, description: content.intro, applicationCategory: "SecurityApplication", operatingSystem: "Web browser", inLanguage: ["is", "en"], isAccessibleForFree: true, offers: { "@type": "Offer", price: "0", priceCurrency: "ISK" }, publisher: { "@id": "https://kastro.is/#organization" } },
       { "@type": "FAQPage", "@id": `${url}#about-dmark`, url, inLanguage: language, isPartOf: { "@id": `${siteURL}/#website` }, about: { "@id": `${siteURL}/#app` }, mainEntity: content.faqs.map(({ question, answer }) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },

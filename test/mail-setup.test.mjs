@@ -2,7 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { loadTSModule } from "./load-ts.mjs";
 
-const setup = loadTSModule("lib/mail-setup.ts");
+const site = loadTSModule("lib/site.ts");
+const guides = loadTSModule("lib/guides.ts", { "./site": site });
+const setup = loadTSModule("lib/mail-setup.ts", { "./guides": guides });
 const { mapMailRouting } = loadTSModule("lib/live-scan.ts");
 const plain = (value) => JSON.parse(JSON.stringify(value));
 

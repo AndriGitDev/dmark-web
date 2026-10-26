@@ -15,11 +15,11 @@ for (const locale of ['is', 'en']) {
   const tags = [...html.matchAll(/<(?:meta|link)\b[^>]*>/g)].map(([tag]) => attrs(tag));
   const meta = name => tags.find(tag => tag.name === name || tag.property === name)?.content;
   assert.match(html, new RegExp(`<html[^>]*lang="${locale}"`));
-  assert.equal(tags.find(tag => tag.rel === 'canonical')?.href, `https://dmark.is/${locale}/`);
+  assert.equal(tags.find(tag => tag.rel === 'canonical')?.href, `https://www.dmark.is/${locale}/`);
   for (const [language, target] of [['is', 'is'], ['en', 'en'], ['x-default', 'is']])
-    assert.equal(tags.find(tag => tag.hreflang === language)?.href, `https://dmark.is/${target}/`);
-  assert.equal(meta('og:url'), `https://dmark.is/${locale}/`);
-  assert.equal(meta('og:image'), `https://dmark.is/social/${locale}/`);
+    assert.equal(tags.find(tag => tag.hreflang === language)?.href, `https://www.dmark.is/${target}/`);
+  assert.equal(meta('og:url'), `https://www.dmark.is/${locale}/`);
+  assert.equal(meta('og:image'), `https://www.dmark.is/social/${locale}/`);
   assert.equal(meta('twitter:image'), meta('og:image'));
   assert.equal(meta('twitter:card'), 'summary_large_image');
   assert.equal(meta('og:image:width'), '1200');
@@ -48,14 +48,14 @@ for (const locale of ['is', 'en']) {
 }
 const sitemap = read('sitemap.xml.body').toString();
 for (const locale of ['is', 'en']) {
-  assert.ok(sitemap.includes(`<loc>https://dmark.is/${locale}/</loc>`));
+  assert.ok(sitemap.includes(`<loc>https://www.dmark.is/${locale}/</loc>`));
   assert.ok(sitemap.includes(`hreflang="${locale}"`));
 }
 assert.ok(sitemap.includes('hreflang="x-default"'));
 const robots = read('robots.txt.body').toString();
 assert.ok(robots.includes('Allow: /'));
 assert.ok(robots.includes('Disallow: /api/'));
-assert.ok(robots.includes('Sitemap: https://dmark.is/sitemap.xml'));
+assert.ok(robots.includes('Sitemap: https://www.dmark.is/sitemap.xml'));
 const manifest = JSON.parse(read('manifest.webmanifest.body'));
 for (const icon of manifest.icons) {
   const size = Number(icon.sizes.split('x')[0]);
@@ -64,6 +64,43 @@ for (const icon of manifest.icons) {
 assert.deepEqual(pngDimensions(read('icons/180.body')), [180, 180]);
 const headers = JSON.parse(readFileSync(join(root, '.next/routes-manifest.json'))).headers;
 assert.ok(headers.some(rule => rule.source === '/api/:path*' && rule.headers.some(h => h.key === 'X-Robots-Tag' && h.value.includes('noindex'))));
+// Guide pages: static, canonical on www, paired hreflang, one H1, schema matching visible FAQ, own social card.
+const guideFiles = {
+  is: ['leidbeiningar', 'leidbeiningar/microsoft-365', 'leidbeiningar/google-workspace', 'leidbeiningar/len-sem-sendir-ekki-post', 'leidbeiningar/hvad-er-dmarc', 'leidbeiningar/hvad-er-spf', 'leidbeiningar/hvad-er-dkim'],
+  en: ['guides', 'guides/microsoft-365', 'guides/google-workspace', 'guides/domain-without-email', 'guides/what-is-dmarc', 'guides/what-is-spf', 'guides/what-is-dkim'],
+};
+const llms = read('llms.txt.body').toString();
+for (const locale of ['is', 'en']) {
+  for (const path of guideFiles[locale]) {
+    const html = read(`${locale}/${path}.html`).toString();
+    const tags = [...html.matchAll(/<(?:meta|link)\b[^>]*>/g)].map(([tag]) => attrs(tag));
+    const url = `https://www.dmark.is/${locale}/${path}/`;
+    assert.equal(tags.find(tag => tag.rel === 'canonical')?.href, url, path);
+    assert.equal(tags.find(tag => tag.hreflang === locale)?.href, url, path);
+    assert.ok(tags.find(tag => tag.hreflang === (locale === 'is' ? 'en' : 'is'))?.href.startsWith(`https://www.dmark.is/${locale === 'is' ? 'en' : 'is'}/`), path);
+    assert.equal([...html.matchAll(/<h1\b[^>]*>/g)].length, 1, path);
+    assert.match(html, new RegExp(`<html[^>]*lang="${locale}"`));
+    assert.ok(llms.includes(url), `llms.txt missing ${url}`);
+    const graph = JSON.parse([...html.matchAll(/<script\b[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)][0][1])['@graph'];
+    const faq = graph.find(node => node['@type'] === 'FAQPage');
+    const visible = decode(html.replace(/<script\b[\s\S]*?<\/script>/g, '').replace(/<[^>]*>/g, ''));
+    for (const question of faq?.mainEntity ?? []) {
+      assert.ok(visible.includes(question.name), `Missing visible question: ${question.name}`);
+      assert.ok(visible.includes(question.acceptedAnswer.text), `Missing visible answer: ${question.name}`);
+    }
+    if (path.includes('/')) {
+      const image = attrs(html.match(/<meta property="og:image"[^>]*>/)[0]).content;
+      const id = image.split('/').filter(Boolean).at(-1);
+      assert.deepEqual(pngDimensions(read(`social/${locale}/${id}.body`)), [1200, 630]);
+      assert.ok(graph.some(node => node['@type'] === 'TechArticle'));
+      assert.ok(graph.some(node => node['@type'] === 'BreadcrumbList'));
+    }
+  }
+  assert.ok(sitemap.includes(`<loc>https://www.dmark.is/${locale}/${guideFiles[locale][0]}/</loc>`));
+}
+assert.ok(robots.includes('User-Agent: GPTBot') && robots.includes('User-Agent: ClaudeBot') && robots.includes('User-Agent: PerplexityBot'));
+assert.ok(!/https:\/\/dmark\.is\//.test(sitemap + robots + llms), 'Apex URLs must not be published');
+console.log('Guide checks passed: 14 guide pages with canonical/hreflang, schema/FAQ agreement, social cards, sitemap, robots AI rules and llms.txt.');
 console.log('Launch checks passed: both rendered locales, canonical/hreflang, social metadata and PNGs, visible schema/FAQ agreement, one H1, form descriptions, sitemap, robots, app icons and API noindex headers.');
 
 const css = readFileSync(join(root, 'app/globals.css'), 'utf8');

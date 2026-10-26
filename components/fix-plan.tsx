@@ -24,7 +24,7 @@ async function copyText(value: string) {
   }
 }
 
-function CopyButton({ value, label }: { value: string; label: string }) {
+export function CopyButton({ value, label }: { value: string; label: string }) {
   const locale = useLocale();
   const [copied, setCopied] = useState(false);
   return (
