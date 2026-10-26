@@ -33,6 +33,16 @@ const context = await browser.newContext({
 const page = await context.newPage();
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
+// Surface failures as GitHub annotations so they are readable without the raw job log.
+process.on("uncaughtException", async (error) => {
+  const message = String(error?.message || error).split("\n").filter(Boolean).slice(0, 4).join(" | ");
+  let state = "";
+  try {
+    state = await page.evaluate(() => [location.pathname, document.querySelector("#verdict-title")?.textContent, document.querySelector(".app-error")?.textContent, document.querySelector(".fix-step.step-now summary")?.textContent].map((v) => v ?? "-").join(" | "));
+  } catch {}
+  console.log(`::error title=Browser suite::${message} || page: ${state}`.replace(/\r?\n/g, " "));
+  process.exit(1);
+});
 // Cookie-only privacy: the app must never call an account backend.
 await page.route("**/api/account/**", (r) => {
   errors.push("Unexpected account request " + r.request().url());
