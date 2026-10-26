@@ -8,4 +8,4 @@ The container listens on port 3000. Docker and Coolify probe `/api/healthz` ever
 
 Build locally with `docker build -f Dockerfile.coolify .`. Never copy production environment values into the repository. Existing mail and unrelated DNS records must remain unchanged.
 
-Account sync is optional and disabled while no `DMARK_ACCOUNT_API_URL` is configured. Guest workspaces and DNS scanning remain available. Configure a working account backend URL and redeploy before enabling account sync; the retired default hostname must not be probed on page load.
+Dmark has no accounts; `DMARK_ACCOUNT_API_URL` and `DMARK_FRONTEND_ORIGIN` are no longer read and can be removed. Optional `KASTRO_LOOKUP_TOKEN` gives scans their own Kastro Lookup rate-limit bucket; it must match one of Lookup's `LOOKUP_SERVICE_TOKENS`. Generate it with `openssl rand -hex 32` and set it on both apps.

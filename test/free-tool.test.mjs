@@ -55,7 +55,3 @@ test('cookie workspace preserves selectors and tasks without scan data', () => {
  assert.throws(()=>workspace.encodeWorkspace(Array.from({length:20},(_,i)=>({domain:`d${i}.${'a'.repeat(60)}.${'b'.repeat(60)}.com`,completed:[],selector:'s'.repeat(60)}))),/COOKIE_LIMIT/);
 });
 
-test('explicit account import merges checklist work rather than replacing it', () => {
- const merged=workspace.mergeWorkspaces([{domain:'example.com',completed:['dmarc'],selector:'old'}],[{domain:'example.com',completed:['spf'],selector:'new'},{domain:'kastro.is',completed:[]}]);
- assert.deepEqual(JSON.parse(JSON.stringify(merged)),[{domain:'example.com',completed:['spf','dmarc'],selector:'new'},{domain:'kastro.is',completed:[],selector:''}]);
-});

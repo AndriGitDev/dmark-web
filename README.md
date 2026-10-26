@@ -2,7 +2,7 @@
 
 Dmark is a free email-authentication tool from Kastro, with optional separately quoted setup assistance. There is no paid Dmark plan or new hosted SPF flattening offering. The current scope and safe legacy retirement sequence are defined in [FREE_PRODUCT_PLAN.md](docs/FREE_PRODUCT_PLAN.md).
 
-A bilingual public app for dmark.is: the domain workspace is the homepage. Visitors add domains, run live checks, inspect records and work through their checklist without signing up. Guest work is saved in a browser cookie. Optional free email-link accounts save domains and progress across devices. Checklist completion is user-declared progress, not a security certificate.
+A bilingual public app for dmark.is: the domain workspace is the homepage. Visitors add domains, run live checks, inspect records and work through their checklist. There are no accounts by design: no sign-up, password or email address. Saved work lives only in a first-party browser cookie, and check results are not stored server-side. Checklist completion is user-declared progress, not a security certificate.
 
 ## Development and verification
 
@@ -17,13 +17,15 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-Pages: `/is/` and `/en/`. Deploy using Vercel's standard Next.js preset. Leave the output directory at its framework default; do not override it to `out`. The pages are prerendered, while the scan and account routes run as Node.js functions. Static export is intentionally disabled to support this route.
+Pages: `/is/` and `/en/`. Production runs on Coolify (see [COOLIFY.md](COOLIFY.md)). The pages are prerendered, while the scan and SPF routes run as Node.js handlers. Static export is intentionally disabled to support these routes.
 
 ## Live scanner
 
-The browser sends a domain to the same-origin scan route. The route validates it, calls the fixed `https://lookup.kastro.is/api/lookup?q=...` endpoint from `AndriGitDev/whois-there`, validates its response, and returns only email-security evidence. It does not forward cookies, credentials, user IP headers, WHOIS data or unrelated infrastructure details. The anonymous scanner needs no runtime secrets.
+The browser sends a domain to the same-origin scan route. The route validates it, calls the fixed `https://lookup.kastro.is/api/lookup?q=...&scope=mail` endpoint from `AndriGitDev/whois-there`, validates its response, and returns only email-security evidence. The mail scope makes Lookup run DNS and mail-auth checks only, with no WHOIS, TLS, DNSSEC or GeoIP calls. The route does not forward cookies, credentials, user IP headers or unrelated infrastructure details, and stores nothing.
 
-The upstream deadline is 45 seconds; the function budget is 60 seconds. Responses are not cached. Upstream failures and rate limits produce explicit errors with no simulated fallback. Kastro Lookup currently rate-limits its general endpoint to 30 requests per minute per observed source; proxy requests can share that quota. For significant traffic, provide a dedicated mail-only upstream endpoint and a shared rate limiter. Do not forward caller-supplied IP headers to evade that limit.
+Checks typically complete in under two seconds. The upstream deadline is 45 seconds; the function budget is 60 seconds. Responses are not cached. Upstream failures and rate limits produce explicit errors with no simulated fallback.
+
+All dmark scans reach Lookup from the dmark server, so they share one Lookup rate-limit bucket. The mail scope allows 120 requests per minute per source. Set the optional `KASTRO_LOOKUP_TOKEN` environment variable to a value listed in Lookup's `LOOKUP_SERVICE_TOKENS` to give dmark its own bucket of 1,200 requests per minute. Do not forward caller-supplied IP headers to evade limits.
 
 ### Rating scope
 
@@ -33,13 +35,9 @@ Ratings describe observed SPF/DMARC configuration, not whether an individual mes
 
 Guest domains, six checklist flags and an optional DKIM selector are saved in the compact `dmark_workspace_v2` first-party cookie (one year, SameSite=Lax, Secure on HTTPS). It contains no scan results, credentials or email addresses. Browser cookie size can limit the workspace below the 20-domain ceiling; overflow is reported rather than silently truncating work. If cookies are blocked, the app remains usable for that visit. Existing `dmark:domains:v1` localStorage work is migrated only after cookie persistence succeeds.
 
-## Optional account saving
+## No accounts
 
-Create account / sign in opens an email-link form inside the same app. `/api/account/*` proxies to the Go service; its session is mapped to a separate HttpOnly `dmark_account` cookie. Start, finish, save and logout require same-origin requests and a backend CSRF token. Login confirmation requires a deliberate POST and the browser that requested the link, so a mail scanner's GET cannot consume it. Guest domains are imported explicitly and cleared from the guest cookie only after the import is successfully saved. Saves use a version number; a stale save gets a conflict rather than overwriting another device's work. Account edits require Save workspace; full scan evidence remains visit-only. Compact last-score snapshots are cached locally for the dashboard; these are not synced to the account.
-
-Deploy the companion dmark-app free-account change and PostgreSQL migration 00009 first. Configure the email sender and `FRONTEND_BASE_URL=https://dmark.is` on that backend. On Vercel, set `DMARK_ACCOUNT_API_URL` to the backend HTTPS origin (default `https://dmark.kastro.is`) and `DMARK_FRONTEND_ORIGIN` to the frontend origin (default `https://dmark.is`). For local development use `http://localhost:8080` and `http://localhost:3000`, with matching backend `FRONTEND_BASE_URL`. Preview domains need their own trusted frontend setting; never accept a browser-supplied callback URL. A missing/unavailable backend reports a real error while the guest workspace continues working.
-
-There are no subscriptions, hosted SPF records, automatic DNS changes or scheduled monitoring. The backend currently uses in-memory 24-hour sessions, so a restart requires signing in again; the saved workspace remains in PostgreSQL. Use shared session/rate-limit storage before scaling account serving across replicas.
+Accounts were removed deliberately: Dmark never asks for an email address, never creates a session and has no account API routes. There are no subscriptions, hosted SPF records, automatic DNS changes or scheduled monitoring. Clearing the `dmark_workspace_v2` cookie and `dmark:scores:v1` localStorage removes everything Dmark knows about a visitor's workspace.
 
 The scanner accepts one optional DKIM selector and performs bounded Node DNS TXT resolution for that selector and `default._bimi`. DNS timeouts are shown as unknown, distinct from a missing record. The new observations do not alter the SPF/DMARC grade and do not fetch remote logos, certificates or arbitrary URLs. They check basic publication only, not cryptographic or full standards validity. Public scan traffic still needs a shared deployment-level rate limiter for substantial use; the new lookups are bounded per request and do not forward caller IP headers.
 
@@ -62,7 +60,7 @@ The domain improvement plan includes an advanced SPF generator (`POST /api/spf/f
 
 This deliberately restricted generator refuses a/mx/ptr/exists, macros, non-positive mechanisms, +all, exp/unknown modifiers, unreachable/ambiguous terms, missing/duplicate records and invalid addresses. DNS failures never return partial results. Generation is bounded to 40 TXT requests, 12 recursion levels, 100 expanded lookup terms, 200 source entries, a 12-second DNS deadline and a conservative 450-character output cap. TXT chunk formatting emits one record with multiple quoted strings where needed; it never creates multiple SPF records.
 
-The app shows original/candidate records, generation time, dependency counts, provenance, copy controls and a downloadable snapshot. Generating or exporting does not change DNS, account state or the score. Users must review their senders, publish manually, recheck, and regenerate when provider IPs change. No hosted SPF endpoint, background refresh or automatic DNS editing is provided. An over-limit original may currently yield SPF permerror; generation preserves the supported authorisation rules, not that resource-limit failure. The displayed term count is the expanded include/redirect graph, not an observed message-delivery result.
+The app shows original/candidate records, generation time, dependency counts, provenance, copy controls and a downloadable snapshot. Generating or exporting does not change DNS or the score. Users must review their senders, publish manually, recheck, and regenerate when provider IPs change. No hosted SPF endpoint, background refresh or automatic DNS editing is provided. An over-limit original may currently yield SPF permerror; generation preserves the supported authorisation rules, not that resource-limit failure. The displayed term count is the expanded include/redirect graph, not an observed message-delivery result.
 
 SPF semantics reference: https://www.rfc-editor.org/rfc/rfc7208.html (sections 4.6.4, 5.1, 5.2, 5.6 and 6.1).
 
@@ -70,4 +68,4 @@ SPF semantics reference: https://www.rfc-editor.org/rfc/rfc7208.html (sections 4
 
 The redesign and its discovery/accessibility work are documented in [LAUNCH_READINESS.md](docs/LAUNCH_READINESS.md). `npm run test:launch` verifies the production build output in both languages, social images, icons, structured content, sitemap, indexing directives and declared color contrast. Run it after `npm run build`.
 
-The browser suite includes axe-core checks for WCAG A/AA rules, keyboard tabs, invalid-input and dialog focus, responsive overflow and the existing account/scan/SPF flows. Browser checks use mocked account and DNS responses: passing them does not confirm a deployed backend or real email delivery. Real account saving needs the backend configuration described above.
+The browser suite includes axe-core checks for WCAG A/AA rules, keyboard tabs, invalid-input focus, responsive overflow, the privacy card, and the scan/SPF flows. It fails if the app ever calls an account route. Browser checks use mocked DNS responses: passing them does not confirm the deployed Lookup upstream.
