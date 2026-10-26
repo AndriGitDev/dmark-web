@@ -33,6 +33,8 @@ import { validSelector } from "@/lib/authentication-records";
 import { validateScannableDomain, type ScanPayload } from "@/lib/scan";
 import { DomainGuidance } from "@/components/domain-guidance";
 import { FixPlan } from "@/components/fix-plan";
+import { guidePath } from "@/lib/guides";
+import { contentForLocale } from "@/lib/public-content";
 import { buildMailPlan, type Verdict } from "@/lib/mail-setup";
 import {
   domainReadiness,
@@ -114,7 +116,7 @@ export function DmarkApp({ reference }: { reference: ReactNode }) {
       previousView.current = nextView;
     }
     const label = view === "domain" ? selected : view === "guide" ? t("setup_guide") : null;
-    document.title = label ? `${label} | Dmark by Kastro` : (locale === "en" ? "Dmark | Free SPF, DKIM & DMARC checker by Kastro" : "Dmark | Ókeypis SPF, DKIM og DMARC athugun frá Kastro");
+    document.title = label ? `${label} | dmark` : contentForLocale(locale).title;
   }, [view, selected, locale, t]);
 
   const current = domains.find((item) => item.domain === selected);
@@ -316,14 +318,10 @@ export function DmarkApp({ reference }: { reference: ReactNode }) {
             {t("my_domains")}
             <span>{domains.length}</span>
           </button>
-          <button
-            aria-current={view === "guide" ? "page" : undefined}
-            className={view === "guide" ? "active" : ""}
-            onClick={() => setView("guide")}
-          >
+          <a href={guidePath(locale)}>
             <BookOpen size={18} />
             {t("setup_guide")}
-          </button>
+          </a>
         </nav>
         <div className="sidebar-domains">
           <div className="sidebar-caption">{t("domains")}</div>

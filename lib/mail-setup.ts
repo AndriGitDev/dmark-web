@@ -1,4 +1,5 @@
 import type { ScanPayload } from "./scan";
+import { guideById, guidePath } from "./guides";
 
 /**
  * Turns a scan into a plain-language verdict and an ordered list of steps with
@@ -165,6 +166,7 @@ export function buildMailPlan(result: ScanPayload, locale = "is"): MailPlan {
   const complete = result.source === "live" && !!result.assessment && !result.assessment.incomplete;
   const pct = result.assessment?.pct ?? 100;
   const policy = result.dmarc.valid ? result.dmarc.policy : "missing";
+  const guideLink = (id: Parameters<typeof guidePath>[1] & string) => ({ label: guideById(locale, id).title, url: guidePath(locale, id) });
   const hostLinks = dnsHost?.help ? [{ label: t(`Adding a record at ${dnsHost.help.label}`, `Að bæta við færslu hjá ${dnsHost.help.label}`), url: dnsHost.help.url }] : [];
   const providerLabel =
     provider === "google" || provider === "microsoft"
@@ -192,7 +194,7 @@ export function buildMailPlan(result: ScanPayload, locale = "is"): MailPlan {
         t("Save, wait a few minutes, then check again here.", "Vistaðu, bíddu í nokkrar mínútur og athugaðu svo aftur hér."),
       ],
       records: [record(domain, "TXT", "@", "v=spf1 -all"), record(domain, "TXT", "_dmarc", withDmarcPolicy(result.dmarc.record, "reject"))],
-      links: hostLinks,
+      links: [...hostLinks, guideLink("no-email")],
       wait: t(
         "Only do this if nothing sends email as this domain, such as a web shop, invoicing system or newsletter. If something does, tell us and use the full setup instead.",
         "Gerðu þetta aðeins ef ekkert sendir póst í nafni lénsins, t.d. vefverslun, reikningakerfi eða fréttabréf. Ef eitthvað gerir það skaltu fylgja fullri uppsetningu í staðinn.",
@@ -235,6 +237,7 @@ export function buildMailPlan(result: ScanPayload, locale = "is"): MailPlan {
         ...hostLinks,
         ...(provider === "microsoft" ? [{ label: t("Microsoft: set up SPF", "Microsoft: uppsetning SPF"), url: "https://learn.microsoft.com/en-us/defender-office-365/email-authentication-spf-configure" }] : []),
         ...(provider === "google" ? [{ label: t("Google: set up SPF", "Google: uppsetning SPF"), url: "https://support.google.com/a/answer/33786" }] : []),
+        provider === "microsoft" ? guideLink("microsoft-365") : provider === "google" ? guideLink("google-workspace") : guideLink("spf"),
       ],
       replaces: !!result.spf.record,
     });
@@ -310,7 +313,7 @@ export function buildMailPlan(result: ScanPayload, locale = "is"): MailPlan {
         t("Save, wait a few minutes, then check again here.", "Vistaðu, bíddu í nokkrar mínútur og athugaðu svo aftur hér."),
       ],
       records: [record(domain, "TXT", "_dmarc", withDmarcPolicy(result.dmarc.valid ? result.dmarc.record : "", "none"))],
-      links: hostLinks,
+      links: [...hostLinks, guideLink("dmarc")],
       replaces: !!result.dmarc.record,
     });
 
