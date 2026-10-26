@@ -58,9 +58,14 @@ export async function POST(request: Request) {
   try {
     const url = new URL(upstreamUrl);
     url.searchParams.set("q", domain);
+    // DNS and mail-auth only: Lookup skips WHOIS, TLS, DNSSEC and GeoIP for this scope.
+    url.searchParams.set("scope", "mail");
+    const headers: Record<string, string> = {Accept: "application/json"};
+    // Optional first-party token gives dmark its own Lookup rate-limit bucket.
+    const token = process.env.KASTRO_LOOKUP_TOKEN?.trim();
+    if (token) headers["X-Kastro-Service-Token"] = token;
     const response = await fetch(url, {
-      signal: controller.signal, cache: "no-store", redirect: "error",
-      headers: {Accept: "application/json"},
+      signal: controller.signal, cache: "no-store", redirect: "error", headers,
     });
     if (response.status === 429) {
       await response.body?.cancel();

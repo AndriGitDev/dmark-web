@@ -9,7 +9,6 @@ import { Link, usePathname } from "@/i18n/routing";
 import {
   ArrowRight,
   BookOpen,
-  Check,
   ChevronRight,
   ExternalLink,
   Globe2,
@@ -19,12 +18,10 @@ import {
   Search,
   ShieldCheck,
   Trash2,
-  X,
 } from "lucide-react";
 import {
   encodeWorkspace,
   maxSavedDomains,
-  mergeWorkspaces,
   parseWorkspace,
   readWorkspaceCookie,
   setupSteps,
@@ -47,22 +44,15 @@ import { presentScan } from "@/lib/scan-presentation";
 import { AuthenticationFindings } from "@/components/authentication-findings";
 import { trackPrivacyEvent } from "@/lib/privacy-events";
 
-type Account = {
-  authenticated: boolean;
-  email?: string;
-  csrf: string;
-  available: boolean;
-};
 type View = "overview" | "domain" | "guide";
 type Tab = "summary" | "records" | "setup";
 
-export function DmarkApp({ reference, accountEnabled = false }: { reference: ReactNode; accountEnabled?: boolean }) {
+export function DmarkApp({ reference }: { reference: ReactNode }) {
   const t = useTranslations("App");
   const w = useTranslations("Workspace");
   const locale = useLocale();
   const pathname = usePathname();
   const [domains, setDomains] = useState<SavedDomain[]>([]);
-  const guest = useRef<SavedDomain[]>([]);
   const [selected, setSelected] = useState("");
   const [view, setView] = useState<View>("overview");
   const [tab, setTab] = useState<Tab>("summary");
@@ -81,18 +71,6 @@ export function DmarkApp({ reference, accountEnabled = false }: { reference: Rea
   const [scanMessage, setScanMessage] = useState("");
   const controller = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [account, setAccount] = useState<Account | null>(null);
-  const [version, setVersion] = useState(0);
-  const [dirty, setDirty] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [importCount, setImportCount] = useState(0);
-  const [imported, setImported] = useState(false);
-  const [email, setEmail] = useState("");
-  const [emailState, setEmailState] = useState<"idle" | "sending" | "sent">(
-    "idle",
-  );
-  const [authError, setAuthError] = useState("");
-  const dialog = useRef<HTMLDialogElement>(null);
 
   // Cookie hydration keeps the server and first browser render identical.
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -123,60 +101,13 @@ export function DmarkApp({ reference, accountEnabled = false }: { reference: Rea
     } catch {
       /* Existing cookie data still works if old storage is blocked. */
     }
-    guest.current = initial;
     setDomains(initial);
     setReady(true);
-    const params = new URLSearchParams(location.search);
-    if (params.get("account") === "link-error") setNotice(t("link_error"));
-    if (params.has("account"))
-      history.replaceState(null, "", location.pathname);
-    const abort = new AbortController();
-    async function loadAccount() {
-      if (!accountEnabled) {
-        setAccount({ authenticated: false, available: false, csrf: "" });
-        return;
-      }
-      try {
-        const response = await fetch("/api/account/me/", {
-          cache: "no-store",
-          signal: abort.signal,
-        });
-        if (!response.ok) throw Error("account");
-        const me: Account = await response.json();
-        if (me.authenticated) {
-          const stored = await fetch("/api/account/workspace/", {
-            cache: "no-store",
-            signal: abort.signal,
-          });
-          if (!stored.ok) throw Error("workspace");
-          const data = await stored.json();
-          setDomains(parseWorkspace(JSON.stringify(data.domains)));
-          setVersion(data.version);
-          setImportCount(guest.current.length);
-        }
-        setAccount(me);
-      } catch {
-        if (!abort.signal.aborted)
-          setAccount({ authenticated: false, available: false, csrf: "" });
-      }
-    }
-    void loadAccount();
     return () => {
-      abort.abort();
       controller.current?.abort();
     };
-  }, [t, accountEnabled]);
+  }, []);
   /* eslint-enable react-hooks/set-state-in-effect */
-
-  useEffect(() => {
-    if (!dirty) return;
-    const warn = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty]);
 
   useEffect(() => {
     const nextView = `${view}:${view === "domain" ? selected : ""}`;
@@ -205,14 +136,8 @@ export function DmarkApp({ reference, accountEnabled = false }: { reference: Rea
   const text = (en: string, is: string) => (locale === "en" ? en : is);
 
   function persist(next: SavedDomain[]) {
-    if (saving) return false;
     setError("");
     setNotice("");
-    if (account?.authenticated) {
-      setDomains(next);
-      setDirty(true);
-      return true;
-    }
     try {
       const value = encodeWorkspace(next);
       writeWorkspaceCookie(value);
@@ -222,7 +147,6 @@ export function DmarkApp({ reference, accountEnabled = false }: { reference: Rea
           .some((part) => part.trim() === `${workspaceCookie}=${value}`)
       )
         throw Error("COOKIE_BLOCKED");
-      guest.current = next;
       setDomains(next);
       return true;
     } catch (storageError) {
@@ -233,7 +157,6 @@ export function DmarkApp({ reference, accountEnabled = false }: { reference: Rea
         setError(t("cookie_limit"));
         return false;
       }
-      guest.current = next;
       setDomains(next);
       setNotice(t("cookie_blocked"));
       return true;
@@ -381,112 +304,6 @@ export function DmarkApp({ reference, accountEnabled = false }: { reference: Rea
       controller.current = null;
     }
   }
-  async function saveAccount() {
-    if (!account?.authenticated || saving) return;
-    setSaving(true);
-    setError("");
-    try {
-      const response = await fetch("/api/account/workspace/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": account.csrf,
-        },
-        body: JSON.stringify({ domains, version }),
-      });
-      if (response.status === 409) throw Error("save_conflict");
-      if (!response.ok) throw Error("save_failed");
-      const data = await response.json();
-      setVersion(data.version);
-      setDirty(false);
-      setNotice(t("saved_account"));
-      if (imported) {
-        writeWorkspaceCookie("", true);
-        guest.current = [];
-        setImportCount(0);
-        setImported(false);
-      }
-    } catch (e) {
-      setError(
-        t(
-          e instanceof Error && e.message === "save_conflict"
-            ? "save_conflict"
-            : "save_failed",
-        ),
-      );
-    } finally {
-      setSaving(false);
-    }
-  }
-  function importGuest() {
-    if (saving) return;
-    try {
-      const next = mergeWorkspaces(domains, guest.current);
-      setDomains(next);
-      setDirty(true);
-      setImported(true);
-      setNotice(t("import_ready"));
-    } catch {
-      setError(t("domain_limit", { count: maxSavedDomains }));
-    }
-  }
-  async function signOut() {
-    if (!account) return;
-    setError("");
-    const response = await fetch("/api/account/logout/", {
-      method: "POST",
-      headers: { "X-CSRF-Token": account.csrf },
-    }).catch(() => null);
-    if (!response?.ok) {
-      setError(t("save_failed"));
-      return;
-    }
-    setAccount({ authenticated: false, available: true, csrf: "" });
-    setDomains(guest.current);
-    setResults({});
-    setSelected("");
-    setView("overview");
-    setDirty(false);
-  }
-  function openAccount() {
-    setAuthError("");
-    setEmailState("idle");
-    dialog.current?.showModal();
-    dialog.current?.querySelector<HTMLInputElement>("#account-email")?.focus();
-  }
-  async function startLogin(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setEmailState("sending");
-    setAuthError("");
-    try {
-      const meResponse = await fetch("/api/account/me/", { cache: "no-store" });
-      if (!meResponse.ok) throw Error("unavailable");
-      const me: Account = await meResponse.json();
-      if (!me.available || !me.csrf) throw Error("unavailable");
-      setAccount(me);
-      const response = await fetch("/api/account/start/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": me.csrf,
-        },
-        body: JSON.stringify({ email, locale }),
-      });
-      if (!response.ok)
-        throw Error(response.status === 429 ? "rate" : "unavailable");
-      setEmailState("sent");
-    } catch (e) {
-      setAuthError(
-        t(
-          e instanceof Error && e.message === "rate"
-            ? "login_rate"
-            : "account_unavailable",
-        ),
-      );
-      setEmailState("idle");
-    }
-  }
-
   return (
     <div className="app-shell">
       <a className="skip-link" href="#workspace">
@@ -546,11 +363,9 @@ export function DmarkApp({ reference, accountEnabled = false }: { reference: Rea
         <div className="sidebar-bottom">
           <div className="guest-badge">
             <span className="status-dot" />
-            {account?.authenticated
-              ? t("account_workspace")
-              : t("guest_workspace")}
+            {t("guest_workspace")}
           </div>
-          <p>{account?.authenticated ? account.email : t("cookie_note")}</p>
+          <p>{t("cookie_note")}</p>
           <a
             href={`https://kastro.is/${locale}/contact`}
             target="_blank"
@@ -591,31 +406,10 @@ export function DmarkApp({ reference, accountEnabled = false }: { reference: Rea
                 EN
               </Link>
             </div>
-            {account?.authenticated ? (
-              <>
-                <button
-                  className="app-button compact primary"
-                  disabled={!dirty || saving}
-                  onClick={() => void saveAccount()}
-                >
-                  {saving ? <Loader2 className="spin" size={15} /> : null}
-                  {t("save_workspace")}
-                </button>
-                <button
-                  className="app-text-button"
-                  disabled={saving || dirty}
-                  title={dirty ? t("unsaved") : undefined}
-                  onClick={() => void signOut()}
-                >
-                  {t("sign_out")}
-                </button>
-              </>
-            ) : (
-              <button className="app-button compact dark" onClick={openAccount}>
-                {t("create_account")}
-                <ArrowRight size={15} />
-              </button>
-            )}
+            <span className="privacy-chip">
+              <ShieldCheck size={15} aria-hidden="true" />
+              {t("privacy_chip")}
+            </span>
           </div>
         </header>
         <main id="workspace" className="app-main" tabIndex={-1}>
@@ -628,17 +422,6 @@ export function DmarkApp({ reference, accountEnabled = false }: { reference: Rea
           {error ? (
             <div className="app-error" role="alert">
               {error}
-            </div>
-          ) : null}
-          {account?.authenticated && importCount > 0 ? (
-            <div className="import-banner">
-              <div>
-                <strong>{t("import_title", { count: importCount })}</strong>
-                <p>{t("import_text")}</p>
-              </div>
-              <button className="app-button compact" onClick={importGuest}>
-                {t("import_domains")}
-              </button>
             </div>
           ) : null}
           {view === "overview" ? (
@@ -690,7 +473,7 @@ export function DmarkApp({ reference, accountEnabled = false }: { reference: Rea
                 <div>
                   <span>{t("storage")}</span>
                   <strong className="stat-label">
-                    {account?.authenticated ? t("account") : t("this_browser")}
+                    {t("this_browser")}
                   </strong>
                 </div>
               </div>
@@ -836,25 +619,21 @@ export function DmarkApp({ reference, accountEnabled = false }: { reference: Rea
                   </div>
                 </section>
               )}
-              {!account?.authenticated ? (
-                <div className="account-nudge">
-                  <div>
-                    <p className="app-eyebrow">{t("free_account")}</p>
-                    <strong>{t("nudge_title")}</strong>
-                    <p>{t("nudge_text")}</p>
-                  </div>
-                  <div className="nudge-action">
-                    <p id="account-dialog-description">{t("account_text")}</p>
-                    <button className="app-button" onClick={openAccount}>
-                      {t("create_account")}
-                      <ArrowRight size={15} />
-                    </button>
-                  </div>
-                  <KastroStar className="nudge-star" variant="ink" />
+              <section className="privacy-card" aria-labelledby="privacy-card-title">
+                <div>
+                  <p className="app-eyebrow">{t("privacy_eyebrow")}</p>
+                  <strong id="privacy-card-title">{t("privacy_title")}</strong>
                 </div>
-              ) : dirty ? (
-                <p className="unsaved-note">{t("unsaved")}</p>
-              ) : null}
+                <div className="privacy-points">
+                  <p>{t("privacy_text")}</p>
+                  <ul>
+                    <li>{t("privacy_point_account")}</li>
+                    <li>{t("privacy_point_storage")}</li>
+                    <li>{t("privacy_point_lookup")}</li>
+                  </ul>
+                </div>
+                <KastroStar className="privacy-star" variant="ink" />
+              </section>
             </>
           ) : view === "domain" && current ? (
             <>
@@ -1082,7 +861,6 @@ export function DmarkApp({ reference, accountEnabled = false }: { reference: Rea
                   </>
                 )}
               </section>
-              {dirty ? <p className="unsaved-note">{t("unsaved")}</p> : null}
             </>
           ) : (
             <>
@@ -1140,71 +918,6 @@ export function DmarkApp({ reference, accountEnabled = false }: { reference: Rea
           </footer>
         </main>
       </div>
-      <dialog
-        ref={dialog}
-        className="account-dialog"
-        aria-labelledby="account-dialog-title"
-        aria-describedby="account-dialog-description"
-      >
-        <button
-          type="button"
-          className="dialog-close icon-button"
-          onClick={() => dialog.current?.close()}
-          aria-label={t("close")}
-        >
-          <X size={20} />
-        </button>
-        <span className="account-icon">
-          <ShieldCheck size={28} />
-        </span>
-        <p className="app-eyebrow">{t("free_account")}</p>
-        <h2 id="account-dialog-title">{t("account_title")}</h2>
-        <p>{t("account_text")}</p>
-        {emailState === "sent" ? (
-          <div className="email-sent" role="status">
-            <Check size={22} />
-            <strong>{t("email_sent")}</strong>
-            <p>{t("email_sent_text")}</p>
-          </div>
-        ) : (
-          <form onSubmit={startLogin}>
-            <label htmlFor="account-email">{t("email")}</label>
-            <input
-              id="account-email"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-              aria-describedby={authError ? "account-error" : "account-dialog-description"}
-              maxLength={254}
-              autoComplete="email"
-              placeholder="you@company.is"
-            />
-            <button
-              className="app-button dark"
-              disabled={emailState === "sending"}
-            >
-              {emailState === "sending" ? (
-                <Loader2 size={17} className="spin" />
-              ) : null}
-              {t("send_link")}
-              <ArrowRight size={17} />
-            </button>
-          </form>
-        )}
-        {authError ? (
-          <p id="account-error" className="app-error" role="alert">
-            {authError}
-          </p>
-        ) : null}
-        <p className="account-privacy">{t("account_privacy")}</p>
-        <button
-          className="app-text-button"
-          onClick={() => dialog.current?.close()}
-        >
-          {t("continue_guest")}
-        </button>
-      </dialog>
     </div>
   );
 }

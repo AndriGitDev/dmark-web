@@ -33,12 +33,11 @@ const context = await browser.newContext({
 const page = await context.newPage();
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
-await page.route("**/api/account/**", (r) =>
-  r.fulfill({
-    status: 200,
-    json: { authenticated: false, available: false, csrf: "x".repeat(43) },
-  }),
-);
+// Cookie-only privacy: the app must never call an account backend.
+await page.route("**/api/account/**", (r) => {
+  errors.push("Unexpected account request " + r.request().url());
+  return r.fulfill({ status: 404, json: {} });
+});
 async function checkAccessibility(label) {
   await page.addScriptTag({ path: axeScript });
   const findings = await page.evaluate(async () => {
@@ -240,117 +239,16 @@ const overflow = await page.evaluate(() => ({
 }));
 if (overflow.scroll > overflow.width)
   throw Error("Mobile overflow " + JSON.stringify(overflow));
-await page
-  .getByRole("button", { name: "Create account / sign in", exact: true })
-  .first()
-  .click();
-if (!(await page.locator("dialog").evaluate((e) => e.open)))
-  throw Error("Dialog closed");
-await checkAccessibility("Account dialog");
-const firstInput = page.locator("#account-email");
-if (!(await firstInput.evaluate(input => input === document.activeElement))) throw Error("Dialog did not focus email field");
-await page.keyboard.press("Escape");
+if (await page.getByText(/sign in|create account/i).count()) throw Error("Account UI still visible");
+await page.goto("http://localhost:3000/en/");
+await page.getByText("We never ask who you are.", { exact: true }).waitFor();
+await page.getByText("No account · No email", { exact: true }).first().waitFor();
 await page.goto("http://localhost:3000/is/");
 await checkAccessibility("Icelandic workspace");
 await page.locator(".app-nav button").last().click();
 await checkAccessibility("Icelandic reference guide");
 await noOverflow("Icelandic guide 360");
 
-// Account API mocks exercise UI transitions; backend session contracts have separate Go tests.
-await page.unroute("**/api/account/**");
-let signedIn = false;
-let cloud = {
-  version: 1,
-  domains: [{ domain: "account.com", completed: ["dkim"] }],
-};
-let conflict = false;
-await page.route("**/api/account/**", async (route) => {
-  const action = new URL(route.request().url()).pathname
-    .split("/")
-    .filter(Boolean)
-    .at(-1);
-  if (action === "me")
-    return route.fulfill({
-      json: {
-        authenticated: signedIn,
-        email: "owner@example.com",
-        available: true,
-        csrf: "a".repeat(43),
-      },
-    });
-  if (action === "start")
-    return route.fulfill({ status: 202, json: { sent: true } });
-  if (action === "logout") {
-    signedIn = false;
-    return route.fulfill({ json: { authenticated: false } });
-  }
-  if (action === "workspace" && route.request().method() === "GET")
-    return route.fulfill({ json: cloud });
-  if (action === "workspace" && route.request().method() === "POST") {
-    if (conflict)
-      return route.fulfill({
-        status: 409,
-        json: { code: "WORKSPACE_CONFLICT" },
-      });
-    const body = route.request().postDataJSON();
-    cloud = { domains: body.domains, version: cloud.version + 1 };
-    return route.fulfill({ json: cloud });
-  }
-  throw Error("Unexpected account route " + action);
-});
-await page.goto("http://localhost:3000/en/");
-await page
-  .getByRole("button", { name: "Create account / sign in", exact: true })
-  .first()
-  .click();
-await page.getByLabel("Email address").fill("owner@example.com");
-await page
-  .getByRole("button", { name: "Send sign-in link", exact: true })
-  .click();
-await page.getByText("Check your inbox", { exact: true }).waitFor();
-await page.keyboard.press("Escape");
-signedIn = true;
-await page.reload();
-await page
-  .getByRole("button", { name: "Import browser domains", exact: true })
-  .click();
-await page.getByRole("button", { name: "Save workspace", exact: true }).click();
-await page
-  .getByText("Workspace saved to your account.", { exact: true })
-  .waitFor();
-if (cloud.domains.length !== 2) throw Error("Import overwrote account domains");
-if (
-  (await context.cookies()).some(
-    (cookie) => cookie.name === "dmark_workspace_v2",
-  )
-)
-  throw Error("Successful import did not clear guest cookie");
-await page.reload();
-await page
-  .getByRole("button", { name: "example.com", exact: true })
-  .first()
-  .click();
-await page.getByRole("tab").last().click();
-if (!(await page.getByRole("checkbox").nth(1).isChecked()))
-  throw Error("Imported checklist lost");
-conflict = true;
-await page.getByRole("checkbox").nth(2).check();
-await page.getByRole("button", { name: "Save workspace", exact: true }).click();
-await page
-  .getByRole("alert")
-  .filter({ hasText: "another tab or device" })
-  .waitFor();
-if (!(await page.getByRole("checkbox").nth(2).isChecked()))
-  throw Error("Conflict discarded work");
-conflict = false;
-await page.getByRole("button", { name: "Save workspace", exact: true }).click();
-await page
-  .getByText("Workspace saved to your account.", { exact: true })
-  .waitFor();
-await page.getByRole("button", { name: "Sign out", exact: true }).click();
-await page
-  .getByRole("heading", { name: "Start with your first domain", exact: true })
-  .waitFor();
 // Cookie blocking must keep the app usable and display a truthful persistence warning.
 const blocked = await browser.newContext({
   viewport: { width: 360, height: 900 },
@@ -362,11 +260,6 @@ await blocked.addInitScript(() =>
       return "";
     },
     set() {},
-  }),
-);
-await blocked.route("**/api/account/**", (route) =>
-  route.fulfill({
-    json: { authenticated: false, available: false, csrf: "x".repeat(43) },
   }),
 );
 const blockedPage = await blocked.newPage();
@@ -381,7 +274,7 @@ await blockedPage
   .waitFor();
 if (errors.length) throw Error(errors.join("\n"));
 console.log(
-  "WCAG axe checks, keyboard tabs, form errors, dialog focus, responsive overflow, dashboard score, cached reload, guided next action, verified improvement, manual-progress separation, mobile guide, guest/account persistence and blocked-cookie flows passed.",
+  "WCAG axe checks, keyboard tabs, form errors, responsive overflow, dashboard score, cached reload, guided next action, verified improvement, manual-progress separation, mobile guide, cookie-only persistence, privacy card and blocked-cookie flows passed.",
 );
 await browser.close();
 server.kill();

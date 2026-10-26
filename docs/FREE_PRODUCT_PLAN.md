@@ -1,6 +1,6 @@
 # Dmark: free email security by Kastro
 
-Decision date: 2026-10-10; public-app revision: 2026-10-11. This is the current product direction and overrides the commercial SaaS and hosted SPF plans in this repository.
+Decision date: 2026-10-10; public-app revision: 2026-10-11; accounts removed 2026-10-26 (cookie-only workspace as a privacy feature). This is the current product direction and overrides the commercial SaaS and hosted SPF plans in this repository.
 
 Dmark is a free, provider-neutral email-authentication tool and a source of qualified enquiries for Kastro. There is no paid Dmark subscription, premium security tier, hosted SPF flattening, customer DNS publishing or promise of managed email delivery. Revenue belongs to optional, separately quoted Kastro implementation work. A user must be able to get useful findings and setup guidance without contacting Kastro.
 

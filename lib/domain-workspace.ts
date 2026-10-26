@@ -104,26 +104,6 @@ export function readWorkspaceCookie(cookies: string): SavedDomain[] {
   }
 }
 
-export function mergeWorkspaces(
-  account: SavedDomain[],
-  guest: SavedDomain[],
-): SavedDomain[] {
-  const values = new Map(account.map((item) => [item.domain, item]));
-  for (const item of guest) {
-    const existing = values.get(item.domain);
-    values.set(item.domain, {
-      ...item,
-      completed: setupSteps.filter(
-        (step) =>
-          item.completed.includes(step) || existing?.completed.includes(step),
-      ),
-      selector: item.selector || existing?.selector || "",
-    });
-  }
-  if (values.size > maxSavedDomains) throw new Error("DOMAIN_LIMIT");
-  return Array.from(values.values());
-}
-
 /** Browser persistence lives outside React's render and state calculations. */
 export function writeWorkspaceCookie(value: string, expires = false) {
   document.cookie = `${workspaceCookie}=${value}; Path=/; Max-Age=${expires ? 0 : 31536000}; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;
