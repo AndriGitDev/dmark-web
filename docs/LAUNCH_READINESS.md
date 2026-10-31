@@ -1,4 +1,4 @@
-# Dmark launch readiness
+# dmark launch readiness
 
 ## Implemented
 
@@ -8,7 +8,7 @@
 - Prerendered product explanations and six FAQs cover the actual five-check scoring model, authentication concepts, guest/account storage, DNS boundaries, SPF snapshot maintenance and DKIM-selector limitations. The same content generates Organization, WebSite, WebApplication and FAQPage structured data. There are no invented reviews or ratings.
 - The interface retains a skip link, a single H1, named navigation, labels, dialog semantics and a keyboard-operable checklist. Changes add focus after in-app navigation, invalid-input descriptions and focus, scan/generation announcements, current-navigation states, Home/End tab keys, resolvable panel references, email-dialog focus and error descriptions.
 - Input boundaries, declared text colors and focus rings have contrast checks. Controls have minimum target dimensions, coarse-pointer controls are enlarged, sticky-header scroll clearance is provided, motion reduction is retained and forced-colors states are supported. These source-level checks are not a WCAG conformance certification.
-- The footer links to Kastro's privacy, terms, vulnerability-reporting and contact pages. Setup-help links go directly to contact instead of the old Dmark service URL, which now redirects to Labs.
+- The interface identifies the product as dmark, an open-source email security tool. Source links lead to both repositories, and the footer links to the AGPL license and the current operator’s policy, vulnerability-reporting and contact pages.
 - App icons are proper 180/192/512-pixel square PNGs. The manifest describes the dark appearance and uses the matching 192/512 icons. No offline or service-worker capability is claimed.
 - Base security headers cover framing, MIME sniffing, referrers, embedded objects and unused camera/microphone/geolocation permissions. Authentication confirmation retains its stricter CSP and no-referrer policy.
 
@@ -27,16 +27,16 @@ npm run test:browser
 
 `test:launch` reads real build output: both HTML locales, schema/visible-FAQ agreement, metadata, image dimensions/content types, canonical and hreflang links, sitemap, robots, icon files, API noindex rules and declared color contrast. Unit tests also check that schema content and the free-app claim remain consistent with the visible copy.
 
-The GitHub verification workflow runs those commands and retains browser screenshots. The expanded browser suite checks empty/scored workspaces, form errors, summaries, guided setup, SPF generation, sign-in dialogs and both languages with axe-core. It also exercises keyboard tabs, focus, mobile overflow, guest/account storage, import conflicts and blocked cookies.
+The GitHub verification workflow runs those commands and retains browser screenshots. The expanded browser suite checks empty/scored workspaces, form errors, summaries, guided setup, SPF generation, sign-in dialogs and both languages with axe-core. It also exercises keyboard tabs, focus, mobile overflow, browser storage and blocked cookies.
 
-The editing environment could build the app and inspect generated share images, but Chromium startup was blocked (`socket() failed: Operation not permitted`). Browser checks and a WCAG conformance claim are therefore unverified here. GitHub Actions must pass its browser job before this limitation is considered resolved. Browser API fixtures do not verify production account/email services or real DNS results.
+Local verification passes the production build, launch checks, unit tests, lint and Chromium browser suite, including axe checks, keyboard behavior, responsive layouts and browser workspace flows. The browser suite uses mocked DNS responses and verifies that no account routes are called. These checks do not verify the deployed Lookup service or real DNS results and do not constitute a WCAG conformance certification.
 
 ## After deployment
 
 - Confirm the deployed public pages, sitemap, robots, share images and square icons return successfully. Test a real domain and inspect its selector, record and guidance flows.
-- Test an actual email sign-in link and save/reload on another device. The companion backend, migration, email sender and `DMARK_ACCOUNT_API_URL` setup in the README are required for account functionality; the anonymous scanner does not need account secrets.
+- Confirm saved domains survive reload in the same browser, and clearing browser storage removes the workspace. No account backend is used by the public web app.
 - Inspect the public URLs and submit `https://dmark.is/sitemap.xml` in the site's Search Console property. Check canonical selection and language alternates after indexing.
-- Inspect a shared link in Meta's Sharing Debugger and LinkedIn's Post Inspector; older cached previews may need to be refreshed. Run Google's Rich Results Test and Schema Markup Validator on the deployed URLs. Markup does not guarantee a rich result; ordinary commercial FAQ pages are not promised FAQ rich results.
+- Inspect a shared link in Meta's Sharing Debugger and LinkedIn's Post Inspector; older cached previews may need to be refreshed. Run Google's Rich Results Test and Schema Markup Validator on the deployed URLs. Markup does not guarantee a rich result; ordinary FAQ pages are not promised FAQ rich results.
 - Complete a manual keyboard and screen-reader pass, browser zoom/reflow check and checks on real mobile devices. Measure production Core Web Vitals with real traffic; no Lighthouse score or performance guarantee is asserted from build output.
 
 ## Reference guidance

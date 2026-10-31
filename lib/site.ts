@@ -1,6 +1,6 @@
 /** Canonical origin. The apex dmark.is redirects here, so every public URL must use it. */
 export const siteURL = "https://www.dmark.is";
-export const siteName = "dmark by Kastro";
+export const siteName = "dmark";
 export const lastReviewed = "2026-10-26";
 export const kastroOrganization = {
   "@type": "Organization",

@@ -1,3 +1,4 @@
+import { sourceURL } from "@/lib/public-content";
 import type { ReactNode } from "react";
 import Image from "next/image";
 import kastroYellow from "@/public/brand/kastro/star-yellow.png";
@@ -5,8 +6,8 @@ import { ArrowRight, ShieldCheck } from "lucide-react";
 import { guidePath, toGuideLocale } from "@/lib/guides";
 
 const copy = {
-  is: { check: "Athuga lén", guides: "Leiðbeiningar", other: "English", privacy: "Persónuvernd", terms: "Skilmálar", contact: "Hafa samband", free: "Ókeypis tölvupóstöryggi frá Kastro", skip: "Fara í efni" },
-  en: { check: "Check a domain", guides: "Guides", other: "Íslenska", privacy: "Privacy", terms: "Terms", contact: "Contact", free: "Free email security by Kastro", skip: "Skip to content" },
+  is: { check: "Athuga lén", guides: "Leiðbeiningar", other: "English", privacy: "Persónuvernd", terms: "Skilmálar", contact: "Hafa samband", free: "Opinn hugbúnaður fyrir tölvupóstöryggi", skip: "Fara í efni" },
+  en: { check: "Check a domain", guides: "Guides", other: "Íslenska", privacy: "Privacy", terms: "Terms", contact: "Contact", free: "Open-source email security", skip: "Skip to content" },
 } as const;
 
 /** Static, crawlable shell for guide pages: no client state, plain links. */
@@ -31,6 +32,8 @@ export function GuideLayout({ locale, alternateHref, children }: { locale: strin
       <footer className="app-footer guide-footer">
         <span>{c.free}</span>
         <nav aria-label={c.free}>
+          <a href={sourceURL}>{l === "en" ? "Source code" : "Frumkóði"}</a>
+          <a href={`${sourceURL}/blob/main/LICENSE`}>AGPL-3.0</a>
           <a href={`https://kastro.is/${l}/privacy`}>{c.privacy}</a>
           <a href={`https://kastro.is/${l}/terms`}>{c.terms}</a>
           <a href={`https://kastro.is/${l}/contact`}>{c.contact}</a>

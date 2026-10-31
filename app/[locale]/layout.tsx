@@ -55,7 +55,7 @@ export async function generateMetadata({
     openGraph: {
       type: "website",
       url: `${siteURL}/${locale}/`,
-      siteName: "dmark by Kastro",
+      siteName: "dmark",
       locale: locale === "en" ? "en_GB" : "is_IS",
       alternateLocale: locale === "en" ? ["is_IS"] : ["en_GB"],
       title: content.ogTitle,
@@ -76,7 +76,7 @@ export async function generateMetadata({
       images: [{ url: `/social/${locale}/`, alt: `${content.shareHeading} ${content.shareDescription}` }],
     },
     robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } },
-    applicationName: "Dmark",
+    applicationName: "dmark",
     creator: "Kastro",
     category: "technology",
     referrer: "strict-origin-when-cross-origin",
