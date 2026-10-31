@@ -1,6 +1,8 @@
-# dmark-web
+# dmark
 
-Dmark is a free email-authentication tool from Kastro, with optional separately quoted setup assistance. There is no paid Dmark plan or new hosted SPF flattening offering. The current scope and safe legacy retirement sequence are defined in [FREE_PRODUCT_PLAN.md](docs/FREE_PRODUCT_PLAN.md).
+dmark is an open-source email security tool for inspecting SPF, DKIM, DMARC and BIMI records and working through domain setup guidance.
+
+This repository contains the bilingual web app. The [Go backend](https://github.com/AndriGitDev/dmark-app) contains additional email-authentication services. See [project scope](docs/PROJECT.md) and [contributing](CONTRIBUTING.md).
 
 A bilingual public app for dmark.is: the domain workspace is the homepage. Visitors add domains, run live checks, inspect records and work through their checklist. There are no accounts by design: no sign-up, password or email address. Saved work lives only in a first-party browser cookie, and check results are not stored server-side. Checklist completion is user-declared progress, not a security certificate.
 
@@ -37,13 +39,13 @@ Guest domains, six checklist flags and an optional DKIM selector are saved in th
 
 ## No accounts
 
-Accounts were removed deliberately: Dmark never asks for an email address, never creates a session and has no account API routes. There are no subscriptions, hosted SPF records, automatic DNS changes or scheduled monitoring. Clearing the `dmark_workspace_v2` cookie and `dmark:scores:v1` localStorage removes everything Dmark knows about a visitor's workspace.
+Accounts were removed deliberately: dmark never asks for an email address, never creates a session and has no account API routes. The public app provides on-demand checks and manual DNS guidance. Clearing the `dmark_workspace_v2` cookie and `dmark:scores:v1` localStorage removes everything dmark knows about a visitor's workspace.
 
 The scanner accepts one optional DKIM selector and performs bounded Node DNS TXT resolution for that selector and `default._bimi`. DNS timeouts are shown as unknown, distinct from a missing record. The new observations do not alter the SPF/DMARC grade and do not fetch remote logos, certificates or arbitrary URLs. They check basic publication only, not cryptographic or full standards validity. Public scan traffic still needs a shared deployment-level rate limiter for substantial use; the new lookups are bounded per request and do not forward caller IP headers.
 
 ## Analytics
 
-The domain is sent to Kastro Lookup for the requested check, but is not included in scanner analytics events. Events permit only status and source. Optional build-time analytics settings: `DMARK_ANALYTICS_PROVIDER`, `DMARK_ANALYTICS_DOMAIN`, `DMARK_ANALYTICS_SCRIPT_URL`, and `DMARK_ANALYTICS_SITE_ID`. Service links lead to Kastro.
+The domain is sent to Kastro Lookup for the requested check, but is not included in scanner analytics events. Events permit only status and source. Optional build-time analytics settings: `DMARK_ANALYTICS_PROVIDER`, `DMARK_ANALYTICS_DOMAIN`, `DMARK_ANALYTICS_SCRIPT_URL`, and `DMARK_ANALYTICS_SITE_ID`. Policy and contact links lead to Kastro, the current site operator.
 
 
 ## Domain scores and guided improvements
@@ -69,3 +71,7 @@ SPF semantics reference: https://www.rfc-editor.org/rfc/rfc7208.html (sections 4
 The redesign and its discovery/accessibility work are documented in [LAUNCH_READINESS.md](docs/LAUNCH_READINESS.md). `npm run test:launch` verifies the production build output in both languages, social images, icons, structured content, sitemap, indexing directives and declared color contrast. Run it after `npm run build`.
 
 The browser suite includes axe-core checks for WCAG A/AA rules, keyboard tabs, invalid-input focus, responsive overflow, the privacy card, and the scan/SPF flows. It fails if the app ever calls an account route. Browser checks use mocked DNS responses: passing them does not confirm the deployed Lookup upstream.
+
+## License
+
+Copyright (C) 2026 dmark contributors. Licensed under [GNU AGPL version 3](LICENSE) (`AGPL-3.0-only`). See [CONTRIBUTING.md](CONTRIBUTING.md).

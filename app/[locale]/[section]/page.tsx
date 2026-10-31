@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     openGraph: {
       type: "website",
       url: `${siteURL}${guidePath(l)}`,
-      siteName: "dmark by Kastro",
+      siteName: "dmark",
       locale: l === "en" ? "en_GB" : "is_IS",
       title: copy.title,
       description: copy.description,

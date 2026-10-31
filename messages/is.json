@@ -1,9 +1,9 @@
 {
   "Metadata": {
-    "title": "dmark.is | Ókeypis tölvupóstöryggi frá Kastro",
-    "description": "Skoðaðu SPF, DMARC, DKIM-lykla og BIMI-færslur ókeypis. Vistaðu gátlista fyrir lén í vafranum og fáðu leiðsögn um uppsetningu frá Kastro.",
+    "title": "dmark | Opinn hugbúnaður fyrir tölvupóstöryggi",
+    "description": "Opinn hugbúnaður til að athuga SPF, DKIM, DMARC og BIMI. Skoðaðu DNS-niðurstöður og fáðu leiðsögn. Engin skráning eða netfang nauðsynleg.",
     "ogTitle": "dmark.is | Ókeypis tölvupóstöryggi frá Kastro",
-    "ogDescription": "Skoðaðu SPF, DMARC, DKIM-lykla og BIMI-færslur ókeypis. Vistaðu gátlista fyrir lén í vafranum og fáðu leiðsögn um uppsetningu frá Kastro."
+    "ogDescription": "Opinn hugbúnaður til að athuga SPF, DKIM, DMARC og BIMI. Skoðaðu DNS-niðurstöður og fáðu leiðsögn. Engin skráning eða netfang nauðsynleg."
   },
   "Errors": {
     "somethingBroke": "Eitthvað fór úrskeiðis",
@@ -49,7 +49,7 @@
       },
       "reports": {
         "title": "Yfirfarðu DMARC-skýrslur",
-        "detail": "Veldu skýrsluþjónustu eða pósthólf sem þú stjórnar. Staðfestu heimild til skýrslugjafar á annað lén þar sem þess er krafist. Skoðaðu lögmæta og óþekkta sendendur yfir dæmigert rekstrartímabil. Þessi útgáfa Dmark tekur ekki við DMARC-skýrslum."
+        "detail": "Veldu skýrsluþjónustu eða pósthólf sem þú stjórnar. Staðfestu heimild til skýrslugjafar á annað lén þar sem þess er krafist. Skoðaðu lögmæta og óþekkta sendendur yfir dæmigert rekstrartímabil. Þessi útgáfa dmark tekur ekki við DMARC-skýrslum."
       },
       "dmarc": {
         "title": "Skipuleggðu DMARC-stefnuna",
@@ -87,7 +87,6 @@
     "sidebar_empty": "Lénin þín birtast hér.",
     "guest_workspace": "Einkavinnusvæði",
     "cookie_note": "Vistast aðeins í þessum vafra. Enginn aðgangur, aldrei.",
-    "kastro_help": "Vantar aðstoð? Ræddu við Kastro",
     "overview_text": "Skoðaðu tölvupóstöryggi lénanna þinna og farðu yfir uppsetninguna.",
     "add_domain": "Bæta við léni",
     "domain_placeholder": "fyrirtaeki.is",
@@ -122,7 +121,6 @@
     "ready_check_text": "Skoðaðu SPF- og DMARC-færslur, DKIM-lykla og sjálfgefna BIMI-færslu með lifandi uppflettingu.",
     "reference": "Uppsetning og yfirferð",
     "guide_intro": "Farðu yfir þessi atriði á þínum hraða. Staðfestu lögmæta sendendur áður en þú herðir DMARC-stefnuna.",
-    "free_by_kastro": "Ókeypis tölvupóstöryggi frá Kastro",
     "checks_note": "DNS-skoðun er ekki öryggisvottun.",
     "invalid_domain": "Sláðu inn gilt lén, án netfangs.",
     "invalid_selector": "Sláðu inn gildan DKIM selector, til dæmis selector1 eða google.",
@@ -151,11 +149,11 @@
     "privacy_chip": "Enginn aðgangur · Ekkert netfang",
     "privacy_eyebrow": "Persónuvernd frá grunni",
     "privacy_title": "Við spyrjum aldrei hver þú ert.",
-    "privacy_text": "Dmark er viljandi án aðganga. Lénalistinn þinn býr í vafranum þínum, ekki í gagnagrunni hjá okkur.",
+    "privacy_text": "dmark er viljandi án aðganga. Lénalistinn þinn býr í vafranum þínum, ekki í gagnagrunni hjá okkur.",
     "privacy_point_account": "Engin skráning, ekkert lykilorð, ekkert netfang.",
     "privacy_point_storage": "Vistuð lén geymast í vafraköku á þessu tæki. Eyddu henni og þau eru farin.",
     "privacy_point_lookup": "Við athugun er aðeins lénsheitið, og valfrjáls DKIM selector, sent til að fletta upp opinberum DNS-færslum. Niðurstöður eru ekki vistaðar á netþjónum okkar.",
-    "hero_eyebrow": "Ókeypis samfélagsþjónusta frá Kastro",
+    "hero_eyebrow": "Opinn hugbúnaður fyrir tölvupóstöryggi",
     "hero_title": "Er tölvupósturinn þinn varinn?",
     "hero_text": "Sláðu inn lénið þitt og við segjum þér á mannamáli hvort hægt sé að senda póst í ykkar nafni, og nákvæmlega hvernig á að laga það.",
     "hero_label": "Lénið þitt",
@@ -172,6 +170,8 @@
     "verdict_almost": "Að hluta varið",
     "verdict_exposed": "Óvarið",
     "verdict_unknown": "Óathugað",
-    "check_again": "Athuga aftur"
+    "check_again": "Athuga aftur",
+    "source_code": "Skoða frumkóða á GitHub",
+    "open_source": "Opinn hugbúnaður fyrir tölvupóstöryggi"
   }
 }
