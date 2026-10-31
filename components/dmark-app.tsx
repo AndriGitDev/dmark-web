@@ -1,5 +1,7 @@
 "use client";
 
+import { contentForLocale, sourceURL } from "@/lib/public-content";
+
 import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import kastroYellow from "@/public/brand/kastro/star-yellow.png";
@@ -34,7 +36,6 @@ import { validateScannableDomain, type ScanPayload } from "@/lib/scan";
 import { DomainGuidance } from "@/components/domain-guidance";
 import { FixPlan } from "@/components/fix-plan";
 import { guidePath } from "@/lib/guides";
-import { contentForLocale } from "@/lib/public-content";
 import { buildMailPlan, type Verdict } from "@/lib/mail-setup";
 import {
   domainReadiness,
@@ -299,12 +300,12 @@ export function DmarkApp({ reference }: { reference: ReactNode }) {
         <button
           className="app-logo"
           onClick={() => setView("overview")}
-          aria-label="Dmark"
+          aria-label="dmark"
         >
           <KastroStar className="logo-star" />
           <span className="app-wordmark">
             <span>dmark<span>.</span></span>
-            <span className="app-logo-tag">by Kastro</span>
+            <span className="app-logo-tag">{text("Open source", "Opinn hugbúnaður")}</span>
           </span>
         </button>
         <div className="sidebar-caption">{t("workspace")}</div>
@@ -348,11 +349,11 @@ export function DmarkApp({ reference }: { reference: ReactNode }) {
           </div>
           <p>{t("cookie_note")}</p>
           <a
-            href={`https://kastro.is/${locale}/contact`}
+            href={sourceURL}
             target="_blank"
             rel="noreferrer"
           >
-            {t("kastro_help")}
+            {t("source_code")}
             <ExternalLink size={14} />
           </a>
         </div>
@@ -665,9 +666,11 @@ export function DmarkApp({ reference }: { reference: ReactNode }) {
           )}
           {view === "overview" ? reference : null}
           <footer className="app-footer">
-            <span>{t("free_by_kastro")}</span>
+            <span>{t("open_source")}</span>
             <span>{t("checks_note")}</span>
             <nav aria-label={text("Policies and contact", "Skilmálar og samband")}>
+              <a href={sourceURL} target="_blank" rel="noreferrer">{t("source_code")}</a>
+              <a href={`${sourceURL}/blob/main/LICENSE`}>AGPL-3.0</a>
               <a href={`https://kastro.is/${locale}/privacy`}>{text("Privacy", "Persónuvernd")}</a>
               <a href={`https://kastro.is/${locale}/terms`}>{text("Terms", "Skilmálar")}</a>
               <a href={`https://kastro.is/${locale}/security`}>{text("Report a vulnerability", "Tilkynna öryggisveikleika")}</a>

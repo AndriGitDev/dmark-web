@@ -1,9 +1,9 @@
 {
   "Metadata": {
-    "title": "dmark.is | Free email security by Kastro",
-    "description": "Check SPF, DMARC, DKIM selectors and BIMI records for free. Save domain checklists in your browser and get practical setup guidance from Kastro.",
+    "title": "dmark | Open-source email security",
+    "description": "Open-source SPF, DKIM, DMARC and BIMI checks. Review public DNS findings and follow setup guidance. No account or email address required.",
     "ogTitle": "dmark.is | Free email security by Kastro",
-    "ogDescription": "Check SPF, DMARC, DKIM selectors and BIMI records for free. Save domain checklists in your browser and get practical setup guidance from Kastro."
+    "ogDescription": "Open-source SPF, DKIM, DMARC and BIMI checks. Review public DNS findings and follow setup guidance. No account or email address required."
   },
   "Errors": {
     "somethingBroke": "Something broke",
@@ -49,7 +49,7 @@
       },
       "reports": {
         "title": "Review DMARC reports",
-        "detail": "Choose a report service or mailbox you control. Confirm external reporting authorization where required. Review legitimate and unknown senders across a representative business cycle. Dmark does not receive or host aggregate reports in this release."
+        "detail": "Choose a report service or mailbox you control. Confirm external reporting authorization where required. Review legitimate and unknown senders across a representative business cycle. dmark does not receive or host aggregate reports in this release."
       },
       "dmarc": {
         "title": "Plan DMARC enforcement",
@@ -87,7 +87,6 @@
     "sidebar_empty": "Your domains will appear here.",
     "guest_workspace": "Private workspace",
     "cookie_note": "Saved only in this browser. No account, ever.",
-    "kastro_help": "Need help? Talk to Kastro",
     "overview_text": "A place to check your email security and work through the setup.",
     "add_domain": "Add domain",
     "domain_placeholder": "yourcompany.is",
@@ -122,7 +121,6 @@
     "ready_check_text": "Run a live check to see SPF and DMARC findings, DKIM discovery and the default BIMI record.",
     "reference": "Reference library",
     "guide_intro": "Work through these steps at your own pace. Verify legitimate senders before changing enforcement.",
-    "free_by_kastro": "Free email security by Kastro",
     "checks_note": "DNS observations are not a security certification.",
     "invalid_domain": "Enter a valid domain, without an email address.",
     "invalid_selector": "Enter a valid DKIM selector, such as selector1 or google.",
@@ -151,11 +149,11 @@
     "privacy_chip": "No account · No email",
     "privacy_eyebrow": "Private by design",
     "privacy_title": "We never ask who you are.",
-    "privacy_text": "Dmark has no accounts on purpose. Your domain list lives in your browser, not in our database.",
+    "privacy_text": "dmark has no accounts on purpose. Your domain list lives in your browser, not in our database.",
     "privacy_point_account": "No sign-up, no password, no email address.",
     "privacy_point_storage": "Saved domains stay in a cookie on this device. Clear it and they are gone.",
     "privacy_point_lookup": "A check sends only the domain name, and an optional DKIM selector, to look up public DNS records. Results are not saved on our servers.",
-    "hero_eyebrow": "Free community service by Kastro",
+    "hero_eyebrow": "Open-source email security",
     "hero_title": "Is your email protected?",
     "hero_text": "Enter your domain and we'll tell you in plain language whether someone can send email pretending to be you, and exactly how to fix it.",
     "hero_label": "Your domain",
@@ -172,6 +170,8 @@
     "verdict_almost": "Partly protected",
     "verdict_exposed": "Not protected",
     "verdict_unknown": "Not checked",
-    "check_again": "Check again"
+    "check_again": "Check again",
+    "source_code": "View source on GitHub",
+    "open_source": "Open-source email security"
   }
 }

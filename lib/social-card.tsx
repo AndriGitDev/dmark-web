@@ -18,7 +18,7 @@ export async function socialCard({ locale, eyebrow, heading, sub, footer, showVe
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
           <span style={{ fontSize: 44, fontWeight: 700, letterSpacing: -2 }}>dmark<span style={{ color: "#f2b705" }}>.</span></span>
-          <span style={{ fontSize: 20, color: "#b8b4aa" }}>by Kastro</span>
+          <span style={{ fontSize: 20, color: "#b8b4aa" }}>{locale === "en" ? "Open source" : "Opinn hugbúnaður"}</span>
         </div>
         <span style={{ fontSize: 20, color: "#f2b705", textTransform: "uppercase", letterSpacing: 2 }}>{eyebrow}</span>
       </div>

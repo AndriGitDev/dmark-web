@@ -98,9 +98,9 @@ for (const locale of ['is', 'en']) {
   }
   assert.ok(sitemap.includes(`<loc>https://www.dmark.is/${locale}/${guideFiles[locale][0]}/</loc>`));
 }
-assert.ok(robots.includes('User-Agent: GPTBot') && robots.includes('User-Agent: ClaudeBot') && robots.includes('User-Agent: PerplexityBot'));
+assert.ok(robots.includes('User-Agent: *'));
 assert.ok(!/https:\/\/dmark\.is\//.test(sitemap + robots + llms), 'Apex URLs must not be published');
-console.log('Guide checks passed: 14 guide pages with canonical/hreflang, schema/FAQ agreement, social cards, sitemap, robots AI rules and llms.txt.');
+console.log('Guide checks passed: 14 guide pages with canonical/hreflang, schema/FAQ agreement, social cards, sitemap, crawler-neutral robots rules and llms.txt.');
 console.log('Launch checks passed: both rendered locales, canonical/hreflang, social metadata and PNGs, visible schema/FAQ agreement, one H1, form descriptions, sitemap, robots, app icons and API noindex headers.');
 
 const css = readFileSync(join(root, 'app/globals.css'), 'utf8');

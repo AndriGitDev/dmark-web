@@ -4,9 +4,9 @@ export const dynamic = "force-static";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "dmark.is",
+    name: "dmark",
     short_name: "dmark",
-    description: "Free SPF, DKIM, DMARC and BIMI checks and domain setup guidance from Kastro.",
+    description: "Open-source email security: SPF, DKIM, DMARC and BIMI checks and domain setup guidance.",
     start_url: "/is/",
     scope: "/",
     display: "standalone",

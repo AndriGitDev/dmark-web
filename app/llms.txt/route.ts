@@ -8,7 +8,7 @@ export function GET() {
   const list = (locale: "is" | "en") => guides[locale].map((g) => `- [${g.title}](${siteURL}${guidePath(locale, g.id)}): ${g.answer}`).join("\n");
   const body = `# dmark
 
-> dmark (dmark.is) is a free email security service from Kastro, an Icelandic IT company. Enter a domain and it tells you in plain language whether someone can send email pretending to be that domain, then gives step-by-step fixes with the exact SPF, DKIM and DMARC DNS records to copy. Available in Icelandic and English.
+> dmark (dmark.is) is an open-source email security tool licensed under GNU AGPL version 3. Enter a domain and it tells you in plain language whether someone can send email pretending to be that domain, then gives step-by-step fixes with the exact SPF, DKIM and DMARC DNS records to copy. Available in Icelandic and English.
 
 Key facts:
 - Free to use. No account, no sign-up and no email address. Saved domains stay in a cookie in the visitor's browser; check results are not stored on dmark's servers.
@@ -30,7 +30,9 @@ ${list("en")}
 ${list("is")}
 
 ## Optional
-- [Kastro](https://kastro.is/): the company that runs dmark; offers optional, separately quoted help with email setup.
+- [Web source](https://github.com/AndriGitDev/dmark-web): source code, issues and contributions.
+- [Backend source](https://github.com/AndriGitDev/dmark-app): Go services and deployment assets.
+- [License](https://github.com/AndriGitDev/dmark-web/blob/main/LICENSE): GNU AGPL version 3.
 - [Kastro Lookup](https://lookup.kastro.is/): free DNS, WHOIS and mail-auth lookup tool used behind dmark's checks.
 `;
   return new Response(body, { headers: { "Content-Type": "text/markdown; charset=utf-8", "Cache-Control": "public, max-age=3600" } });

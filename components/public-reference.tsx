@@ -1,11 +1,11 @@
-import { contentForLocale } from "@/lib/public-content";
+import { backendSourceURL, contentForLocale, sourceURL } from "@/lib/public-content";
 import { guideIndexCopy, guidePath, guides, toGuideLocale } from "@/lib/guides";
 
 export function PublicReference({ locale }: { locale: string }) {
   const content = contentForLocale(locale);
   return (
     <section id="about-dmark" className="public-reference" aria-labelledby="about-dmark-heading">
-      <p className="app-eyebrow">Dmark / Kastro</p>
+      <p className="app-eyebrow">dmark</p>
       <h2 id="about-dmark-heading">{content.heading}</h2>
       <p className="reference-intro">{content.intro}</p>
       <h3>{guideIndexCopy[toGuideLocale(locale)].title}</h3>
@@ -23,7 +23,7 @@ export function PublicReference({ locale }: { locale: string }) {
           </details>
         ))}
       </div>
-      <p className="reference-help">{content.help} <a href={`https://kastro.is/${locale === "en" ? "en" : "is"}/contact`} target="_blank" rel="noreferrer">{content.helpLabel} ↗</a></p>
+      <p className="reference-help">{content.help} <a href={sourceURL} target="_blank" rel="noreferrer">{content.helpLabel} ↗</a>{" · "}<a href={backendSourceURL} target="_blank" rel="noreferrer">{locale === "en" ? "Backend source" : "Frumkóði bakenda"} ↗</a></p>
     </section>
   );
 }

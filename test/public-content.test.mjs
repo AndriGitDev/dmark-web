@@ -18,7 +18,9 @@ for (const locale of ['is', 'en']) {
     assert.equal(app.url, `https://www.dmark.is/${locale}/`);
     assert.equal(app.description, content.intro);
     assert.equal(app.isAccessibleForFree, true);
-    assert.equal(app.offers.price, '0');
+    assert.equal(app.name, 'dmark');
+    assert.deepEqual(Array.from(app.codeRepository), ['https://github.com/AndriGitDev/dmark-web', 'https://github.com/AndriGitDev/dmark-app']);
+    assert.equal(app.license, 'https://github.com/AndriGitDev/dmark-web/blob/main/LICENSE');
     assert.equal(app.aggregateRating, undefined);
     assert.equal(app.review, undefined);
   });

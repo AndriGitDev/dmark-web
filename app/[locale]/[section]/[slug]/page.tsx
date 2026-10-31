@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     openGraph: {
       type: "article",
       url: `${siteURL}${guidePath(l, guide.id)}`,
-      siteName: "dmark by Kastro",
+      siteName: "dmark",
       locale: l === "en" ? "en_GB" : "is_IS",
       title: guide.title,
       description: guide.description,
