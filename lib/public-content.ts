@@ -21,6 +21,7 @@ export const publicContent = {
       { question: "Does dmark change my DNS or host SPF?", answer: "No. dmark reads public DNS and provides guidance. You make any changes through your DNS provider. The advanced SPF generator creates an on-demand snapshot of supported dependencies. It is not hosted SPF and does not automatically update when provider IP addresses change." },
       { question: "What happens to my domain when I run a check?", answer: "The selected domain is sent to Kastro Lookup for its SPF and DMARC assessment, and public DNS is queried for DKIM and BIMI records. Your saved domains stay in a browser cookie, and check results are not saved on dmark’s servers. Domain names are excluded from dmark’s custom analytics events." },
       { question: "Why might a DKIM key not be found?", answer: "A domain can use a custom DKIM selector that common-selector discovery does not find. Enter the selector supplied by your email provider, or the s= value from a DKIM-Signature header, and recheck. An undiscovered key does not prove DKIM is missing. Verify real email from every sending service before increasing DMARC enforcement." },
+      { question: "Who makes dmark?", answer: "dmark is built and run by Kastro, an independent Icelandic technology company that works on websites, infrastructure and security. The tool is free and open source. Kastro also takes on client work; see kastro.is." },
     ],
   },
   is: {
@@ -41,6 +42,7 @@ export const publicContent = {
       { question: "Breytir dmark DNS færslunum mínum eða hýsir SPF?", answer: "Nei. dmark les opinberar DNS færslur og veitir leiðsögn. Þú gerir breytingar hjá DNS veitandanum þínum. Ítarlegi SPF valkosturinn býr til stöðumynd af studdum tilvísunum eftir þörfum. Þetta er ekki hýst SPF og færsla uppfærist ekki sjálfkrafa þegar IP svið veitenda breytast." },
       { question: "Hvað verður um lénið mitt þegar ég athuga það?", answer: "Valið lén er sent til Kastro Lookup fyrir SPF og DMARC mat og opinberar DNS færslur eru sóttar fyrir DKIM og BIMI. Vistuð lén eru geymd í vafraköku og niðurstöður athugana eru ekki vistaðar á netþjónum dmark. Lénsheiti eru ekki send í sérsniðnum greiningarviðburðum dmark." },
       { question: "Af hverju finnst DKIM lykillinn ekki?", answer: "Lén getur notað sérsniðinn DKIM selector sem leit að algengum selectors finnur ekki. Sláðu inn selector frá póstveitandanum eða s= gildið úr DKIM-Signature haus og athugaðu aftur. Lykill sem finnst ekki sannar ekki að DKIM vanti. Staðfestu raunverulegan póst frá öllum sendiþjónustum áður en þú herðir DMARC framfylgd." },
+      { question: "Hver stendur á bak við dmark?", answer: "Kastro, sjálfstætt íslenskt tæknifyrirtæki sem vinnur að vefsíðum, innviðum og öryggismálum, smíðar og rekur dmark. Tólið er ókeypis og opinn hugbúnaður. Kastro tekur einnig að sér verkefni fyrir viðskiptavini; sjá kastro.is." },
     ],
   },
 } as const;

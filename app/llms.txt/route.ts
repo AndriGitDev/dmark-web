@@ -33,6 +33,7 @@ ${list("is")}
 - [Web source](https://github.com/AndriGitDev/dmark-web): source code, issues and contributions.
 - [Backend source](https://github.com/AndriGitDev/dmark-app): Go services and deployment assets.
 - [License](https://github.com/AndriGitDev/dmark-web/blob/main/LICENSE): GNU AGPL version 3.
+- [Kastro](https://kastro.is/en): the independent Icelandic technology company that builds and runs dmark; websites, infrastructure and security work.
 - [Kastro Lookup](https://lookup.kastro.is/): free DNS, WHOIS and mail-auth lookup tool used behind dmark's checks.
 `;
   return new Response(body, { headers: { "Content-Type": "text/markdown; charset=utf-8", "Cache-Control": "public, max-age=3600" } });

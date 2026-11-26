@@ -4,10 +4,11 @@ import Image from "next/image";
 import kastroYellow from "@/public/brand/kastro/star-yellow.png";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { guidePath, toGuideLocale } from "@/lib/guides";
+import { kastroURL } from "@/lib/site";
 
 const copy = {
-  is: { check: "Athuga lén", guides: "Leiðbeiningar", other: "English", privacy: "Persónuvernd", terms: "Skilmálar", contact: "Hafa samband", free: "Opinn hugbúnaður fyrir tölvupóstöryggi", skip: "Fara í efni" },
-  en: { check: "Check a domain", guides: "Guides", other: "Íslenska", privacy: "Privacy", terms: "Terms", contact: "Contact", free: "Open-source email security", skip: "Skip to content" },
+  is: { check: "Athuga lén", guides: "Leiðbeiningar", other: "English", privacy: "Persónuvernd", terms: "Skilmálar", contact: "Hafa samband", free: "Opinn hugbúnaður fyrir tölvupóstöryggi", maker: "dmark er ókeypis tól frá ", skip: "Fara í efni" },
+  en: { check: "Check a domain", guides: "Guides", other: "Íslenska", privacy: "Privacy", terms: "Terms", contact: "Contact", free: "Open-source email security", maker: "dmark is a free tool from ", skip: "Skip to content" },
 } as const;
 
 /** Static, crawlable shell for guide pages: no client state, plain links. */
@@ -30,13 +31,13 @@ export function GuideLayout({ locale, alternateHref, children }: { locale: strin
       </header>
       <main id="guide-content" className="guide-main">{children}</main>
       <footer className="app-footer guide-footer">
-        <span>{c.free}</span>
+        <span className="footer-maker">{c.maker}<a href={kastroURL(l)} rel="noopener">Kastro</a></span>
         <nav aria-label={c.free}>
           <a href={sourceURL}>{l === "en" ? "Source code" : "Frumkóði"}</a>
           <a href={`${sourceURL}/blob/main/LICENSE`}>AGPL-3.0</a>
-          <a href={`https://kastro.is/${l}/privacy`}>{c.privacy}</a>
-          <a href={`https://kastro.is/${l}/terms`}>{c.terms}</a>
-          <a href={`https://kastro.is/${l}/contact`}>{c.contact}</a>
+          <a href={kastroURL(l, "/privacy")}>{c.privacy}</a>
+          <a href={kastroURL(l, "/terms")}>{c.terms}</a>
+          <a href={kastroURL(l, "/contact")}>{c.contact}</a>
         </nav>
       </footer>
     </div>
