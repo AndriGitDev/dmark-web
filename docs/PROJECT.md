@@ -4,6 +4,7 @@ dmark is an open-source email security tool. Its purpose is to make email-authen
 
 ## Available in the web app
 
+- A plain verdict for each domain and a step-by-step fix with the exact DNS records.
 - On-demand SPF and DMARC checks, common DKIM-selector discovery, explicit selector checks and BIMI publication checks.
 - A transparent five-check DNS readiness score, with explanations of incomplete evidence and limitations.
 - Domain checklists saved in the browser without accounts or email addresses.
@@ -13,6 +14,6 @@ Users publish DNS changes through their own provider. Scores describe observed D
 
 ## Source and data flow
 
-The [web app](https://github.com/AndriGitDev/dmark-web) and [Go backend](https://github.com/AndriGitDev/dmark-app) form dmark. A public web check currently uses Kastro Lookup for SPF/DMARC evidence and queries public DNS for supplementary records. The public web app does not use account services; the Go backend retains separate organization and account APIs for operator deployments. See the README for deployment configuration, storage behavior and operational limitations.
+The [web app](https://github.com/AndriGitDev/dmark-web) and [Go backend](https://github.com/AndriGitDev/dmark-app) form dmark. A public web check currently uses Kastro Lookup for SPF/DMARC evidence and queries public DNS for supplementary records. The public web app does not use account services; the Go backend retains separate organization and account APIs for operator deployments. See the [README](../README.md) for setup and configuration, and [ARCHITECTURE.md](ARCHITECTURE.md) for storage behavior and operational limits.
 
 Resource limits protect the service and apply consistently. Contributions should improve accuracy, clear guidance, privacy, accessibility and reproducible operation.

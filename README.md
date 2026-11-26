@@ -1,77 +1,111 @@
 # dmark
 
-dmark is an open-source email security tool for inspecting SPF, DKIM, DMARC and BIMI records and working through domain setup guidance.
+[![Verify](https://github.com/AndriGitDev/dmark-web/actions/workflows/verify.yml/badge.svg)](https://github.com/AndriGitDev/dmark-web/actions/workflows/verify.yml)
+[![License: AGPL-3.0-only](https://img.shields.io/badge/license-AGPL--3.0--only-blue.svg)](LICENSE)
 
-This repository contains the bilingual web app. The [Go backend](https://github.com/AndriGitDev/dmark-app) contains additional email-authentication services. See [project scope](docs/PROJECT.md) and [contributing](CONTRIBUTING.md).
+dmark tells you in plain language whether someone can send email pretending to be your domain, and gives you the exact DNS records to fix it. It checks SPF, DKIM, DMARC and BIMI, in Icelandic and English, with no account and no email address.
 
-A bilingual public app for dmark.is: the domain workspace is the homepage. Visitors add domains, run live checks, inspect records and work through their checklist. There are no accounts by design: no sign-up, password or email address. Saved work lives only in a first-party browser cookie, and check results are not stored server-side. Checklist completion is user-declared progress, not a security certificate.
+**Try it at [dmark.is](https://www.dmark.is).**
 
-## Development and verification
+This repository is the web app. The [Go backend](https://github.com/AndriGitDev/dmark-app) holds additional email-authentication services. dmark is built and run by [Kastro](https://kastro.is/en).
+
+## What it does
+
+- **A plain verdict.** Each domain is rated protected, partly protected or not protected.
+- **A step-by-step fix.** The steps come in a safe order, with copyable records for the detected email provider and DNS host.
+- **A message for your IT contact.** A ready-written email carries the exact records to whoever manages the domain.
+- **Technical details on request.** Raw records, a DKIM selector check, a BIMI publication check and a five-check DNS readiness score.
+- **An SPF snapshot generator.** It flattens a supported SPF record into explicit networks, on demand.
+- **Guides.** Static pages cover DMARC, SPF, DKIM, Microsoft 365, Google Workspace and domains that send no email.
+
+dmark reads public DNS and gives guidance. It never changes DNS, does not monitor domains continuously and does not receive DMARC reports. A result describes published DNS records; it does not certify that every message is authenticated.
+
+## Privacy
+
+- There are no accounts: no sign-up, password, session or email address.
+- Saved domains live in a first-party cookie in the visitor's browser.
+- A check sends only the domain name and an optional DKIM selector to the server. Results are not stored server-side.
+- Analytics are off unless configured, and events never include the domain.
+
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) describes exactly what is stored and where.
+
+## Quick start
+
+You need Node.js 22 or later.
 
 ```sh
 npm ci
 npm run dev
-npm test
-npm run lint
-npm run build
-npm run test:launch
-npx playwright install chromium
-npm run test:browser
 ```
 
-Pages: `/is/` and `/en/`. Production runs on Coolify (see [COOLIFY.md](COOLIFY.md)). The pages are prerendered, while the scan and SPF routes run as Node.js handlers. Static export is intentionally disabled to support these routes.
+Open <http://localhost:3000/en/> or <http://localhost:3000/is/>. Live checks call the public Kastro Lookup service, so they need network access.
 
-## Live scanner
+## Scripts
 
-The browser sends a domain to the same-origin scan route. The route validates it, calls the fixed `https://lookup.kastro.is/api/lookup?q=...&scope=mail` endpoint from `AndriGitDev/whois-there`, validates its response, and returns only email-security evidence. The mail scope makes Lookup run DNS and mail-auth checks only, with no WHOIS, TLS, DNSSEC or GeoIP calls. The route does not forward cookies, credentials, user IP headers or unrelated infrastructure details, and stores nothing.
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Start the development server. |
+| `npm test` | Run the unit tests with the Node.js test runner. |
+| `npm run lint` | Run ESLint. |
+| `npm run build` | Create the production build. |
+| `npm run test:launch` | Check the build output: metadata, structured data, sitemap, robots, icons and color contrast. Run it after `npm run build`. |
+| `npm run test:browser` | Run the Playwright suite, including axe-core accessibility checks. Run `npx playwright install chromium` first. |
 
-Checks typically complete in under two seconds. The upstream deadline is 45 seconds; the function budget is 60 seconds. Responses are not cached. Upstream failures and rate limits produce explicit errors with no simulated fallback.
+The browser suite uses mocked DNS responses. Passing it does not confirm the deployed Lookup service or real DNS results.
 
-All dmark scans reach Lookup from the dmark server, so they share one Lookup rate-limit bucket. The mail scope allows 120 requests per minute per source. Set the optional `KASTRO_LOOKUP_TOKEN` environment variable to a value listed in Lookup's `LOOKUP_SERVICE_TOKENS` to give dmark its own bucket of 1,200 requests per minute. Do not forward caller-supplied IP headers to evade limits.
+## Configuration
 
-### Rating scope
+Every setting is optional. The app runs with none of them.
 
-Ratings describe observed SPF/DMARC configuration, not whether an individual message is authenticated or whether spoofing is impossible. F indicates missing/non-enforcing DMARC or failed SPF posture; A requires assessed SPF and full reject enforcement with upstream green findings; B/C indicate remaining configuration concerns. An incomplete SPF chain, blocked target, or resolver warning suppresses the overall grade. Common-selector DKIM discovery is shown separately and does not lower the rating when no key is found. This is not a complete standards conformance validator, and upstream resolver limitations may yield incomplete results. Verify findings against authoritative DNS and message/report evidence before changes.
+| Variable | Purpose |
+| --- | --- |
+| `KASTRO_LOOKUP_TOKEN` | Gives this deployment its own Kastro Lookup rate-limit bucket. It must match a token configured on the Lookup service. |
+| `DMARK_ANALYTICS_PROVIDER` | `plausible`, `umami` or `posthog`. Analytics stay off unless this and the next two are valid. |
+| `DMARK_ANALYTICS_DOMAIN` | The site domain reported to the analytics provider. |
+| `DMARK_ANALYTICS_SCRIPT_URL` | HTTPS URL of the provider script. Only known provider paths are accepted. |
+| `DMARK_ANALYTICS_SITE_ID` | Site identifier, for providers that need one. |
 
-## Saved domains and supplementary DNS checks
+Never commit environment values to the repository.
 
-Guest domains, six checklist flags and an optional DKIM selector are saved in the compact `dmark_workspace_v2` first-party cookie (one year, SameSite=Lax, Secure on HTTPS). It contains no scan results, credentials or email addresses. Browser cookie size can limit the workspace below the 20-domain ceiling; overflow is reported rather than silently truncating work. If cookies are blocked, the app remains usable for that visit. Existing `dmark:domains:v1` localStorage work is migrated only after cookie persistence succeeds.
+## How it works
 
-## No accounts
+The app is built with Next.js, React, next-intl and Tailwind CSS. Pages under `/is/` and `/en/` are prerendered. Two Node.js route handlers do the live work:
 
-Accounts were removed deliberately: dmark never asks for an email address, never creates a session and has no account API routes. The public app provides on-demand checks and manual DNS guidance. Clearing the `dmark_workspace_v2` cookie and `dmark:scores:v1` localStorage removes everything dmark knows about a visitor's workspace.
+- `POST /api/scan/` validates the domain, asks Kastro Lookup for SPF and DMARC evidence, and resolves DKIM and BIMI records directly. It stores nothing.
+- `POST /api/spf/flatten/` resolves an SPF record and returns a flattened candidate with the source of every network.
 
-The scanner accepts one optional DKIM selector and performs bounded Node DNS TXT resolution for that selector and `default._bimi`. DNS timeouts are shown as unknown, distinct from a missing record. The new observations do not alter the SPF/DMARC grade and do not fetch remote logos, certificates or arbitrary URLs. They check basic publication only, not cryptographic or full standards validity. Public scan traffic still needs a shared deployment-level rate limiter for substantial use; the new lookups are bounded per request and do not forward caller IP headers.
+Static export is disabled because these routes need a server.
 
-## Analytics
+| Path | Contents |
+| --- | --- |
+| `app/` | Routes, API handlers, sitemap, robots, social images and `llms.txt`. |
+| `components/` | The workspace, fix plan, guides and SPF tool. |
+| `lib/` | Scan mapping, scoring, mail setup plans, guide content and SPF flattening. |
+| `messages/` | Icelandic and English interface strings. |
+| `test/`, `scripts/` | Unit tests, launch checks and the browser suite. |
 
-The domain is sent to Kastro Lookup for the requested check, but is not included in scanner analytics events. Events permit only status and source. Optional build-time analytics settings: `DMARK_ANALYTICS_PROVIDER`, `DMARK_ANALYTICS_DOMAIN`, `DMARK_ANALYTICS_SCRIPT_URL`, and `DMARK_ANALYTICS_SITE_ID`. Policy and contact links lead to Kastro, the current site operator.
+## Deployment
 
+`Dockerfile.coolify` builds a standalone image that listens on port 3000 and exposes `/api/healthz` for health checks:
 
-## Domain scores and guided improvements
+```sh
+docker build -f Dockerfile.coolify -t dmark-web .
+docker run --rm -p 3000:3000 dmark-web
+```
 
-Adding a domain starts its first live check. Dashboard cards show DNS readiness out of 100, the existing SPF/DMARC letter grade, last-check time and a refresh action. The improvement plan orders unmet checks, gives DNS names and provider-led remediation instructions, and explains how to verify each fix. Checklist notes never award points.
+[COOLIFY.md](COOLIFY.md) describes the production setup for dmark.is.
 
-Readiness is a transparent product checklist: 20 points each for valid SPF within the receiver lookup limit, green SPF with fewer than eight lookups, a published DKIM key, valid DMARC, and green DMARC with full reject enforcement. Incomplete scans get no score. Explicit selector results take precedence over common-selector discovery. A missing discovered key means more verification is needed, not proof that no DKIM exists. Scores measure this DNS checklist, not sender alignment, key cryptography, real-message signatures or guaranteed protection. BIMI remains an optional branding goal outside the score. Enforcement guidance requires reviewing real senders and reports before increasing protection and never recommends weakening an existing policy.
+## Documentation
 
-The versioned `dmark:scores:v1` localStorage cache contains at most 20 domain/selector/score/grade/timestamp snapshots. Cached scores are labelled as saved observations, marked older after 24 hours and discarded on load after seven days. Selector changes hide incompatible results. Full findings are checked again before a personalised guide is shown after reload. Storage blocking leaves checking usable in memory.
+- [Project scope](docs/PROJECT.md)
+- [Architecture and limits](docs/ARCHITECTURE.md)
+- [Launch readiness](docs/LAUNCH_READINESS.md)
+- [Production deployment](COOLIFY.md)
 
-## On-demand SPF flattening
+## Contributing
 
-The domain improvement plan includes an advanced SPF generator (`POST /api/spf/flatten/`). It resolves fresh TXT records and emits explicit `ip4`/`ip6` networks, preserving the root final policy and tracking each network's source. Supported records contain positive IP/include mechanisms, an explicit final `-all`/`~all`/`?all`, or a final redirect to a supported policy. Included non-pass policies do not become parent failures; redirects carry the target's terminal policy. Repeated dependencies are cached within one request, and identical networks are deduplicated without widening or merging ranges.
-
-This deliberately restricted generator refuses a/mx/ptr/exists, macros, non-positive mechanisms, +all, exp/unknown modifiers, unreachable/ambiguous terms, missing/duplicate records and invalid addresses. DNS failures never return partial results. Generation is bounded to 40 TXT requests, 12 recursion levels, 100 expanded lookup terms, 200 source entries, a 12-second DNS deadline and a conservative 450-character output cap. TXT chunk formatting emits one record with multiple quoted strings where needed; it never creates multiple SPF records.
-
-The app shows original/candidate records, generation time, dependency counts, provenance, copy controls and a downloadable snapshot. Generating or exporting does not change DNS or the score. Users must review their senders, publish manually, recheck, and regenerate when provider IPs change. No hosted SPF endpoint, background refresh or automatic DNS editing is provided. An over-limit original may currently yield SPF permerror; generation preserves the supported authorisation rules, not that resource-limit failure. The displayed term count is the expanded include/redirect graph, not an observed message-delivery result.
-
-SPF semantics reference: https://www.rfc-editor.org/rfc/rfc7208.html (sections 4.6.4, 5.1, 5.2, 5.6 and 6.1).
-
-## Launch readiness
-
-The redesign and its discovery/accessibility work are documented in [LAUNCH_READINESS.md](docs/LAUNCH_READINESS.md). `npm run test:launch` verifies the production build output in both languages, social images, icons, structured content, sitemap, indexing directives and declared color contrast. Run it after `npm run build`.
-
-The browser suite includes axe-core checks for WCAG A/AA rules, keyboard tabs, invalid-input focus, responsive overflow, the privacy card, and the scan/SPF flows. It fails if the app ever calls an account route. Browser checks use mocked DNS responses: passing them does not confirm the deployed Lookup upstream.
+Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first. Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 
 ## License
 
-Copyright (C) 2026 dmark contributors. Licensed under [GNU AGPL version 3](LICENSE) (`AGPL-3.0-only`). See [CONTRIBUTING.md](CONTRIBUTING.md).
+Copyright (C) 2026 dmark contributors. Licensed under the [GNU Affero General Public License version 3](LICENSE) (`AGPL-3.0-only`).
