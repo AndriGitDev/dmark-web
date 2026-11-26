@@ -4,6 +4,8 @@ import { useLocale } from "next-intl";
 import { ArrowRight, Check, Copy, ExternalLink, Loader2, Mail, RefreshCw } from "lucide-react";
 import type { ScanPayload } from "@/lib/scan";
 import { buildMailPlan, itMessage, type SetupRecord, type SetupStep } from "@/lib/mail-setup";
+import { trackPrivacyEvent } from "@/lib/privacy-events";
+import { kastroURL } from "@/lib/site";
 
 async function copyText(value: string) {
   try {
@@ -151,7 +153,7 @@ export function FixPlan({ result, busy, onRecheck }: { result: ScanPayload; busy
             </div>
           </dl>
         </div>
-        <button className="app-button" disabled={busy} onClick={onRecheck}>
+        <button className="app-button ghost" disabled={busy} onClick={onRecheck}>
           {busy ? <Loader2 size={16} className="spin" /> : <RefreshCw size={16} />}
           {busy ? t("Checking…", "Athuga…") : t("Check again", "Athuga aftur")}
         </button>
@@ -193,7 +195,7 @@ export function FixPlan({ result, busy, onRecheck }: { result: ScanPayload; busy
             </p>
           </div>
           <div className="send-actions">
-            <a className="app-button dark" href={`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`}>
+            <a className="app-button ghost" href={`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`}>
               <Mail size={16} />
               {t("Open in email", "Opna í tölvupósti")}
               <ArrowRight size={15} />
@@ -202,6 +204,28 @@ export function FixPlan({ result, busy, onRecheck }: { result: ScanPayload; busy
           </div>
         </aside>
       ) : null}
+
+      {/* Quiet maker credit: the one place a visitor may want a person rather than a checklist. */}
+      <p className="kastro-note">
+        {plan.verdict !== "protected"
+          ? t(
+              "Would you rather hand this off? dmark is made by Kastro, which helps businesses in Iceland with IT and security.",
+              "Viltu frekar fá aðstoð við þetta? dmark er smíðað af Kastro, sem aðstoðar íslensk fyrirtæki við upplýsingatækni og öryggismál.",
+            )
+          : t(
+              "dmark is free and made by Kastro, an independent Icelandic technology company.",
+              "dmark er ókeypis og smíðað af Kastro, sjálfstæðu íslensku tæknifyrirtæki.",
+            )}{" "}
+        <a
+          href={kastroURL(locale, plan.verdict !== "protected" ? "/services/cybersecurity" : "")}
+          target="_blank"
+          rel="noopener"
+          onClick={() => trackPrivacyEvent("cta_click", { source: "result_help" })}
+        >
+          {plan.verdict !== "protected" ? t("See how Kastro can help", "Skoða þjónustu Kastro") : t("See what else Kastro makes", "Sjá fleira frá Kastro")}
+          <ExternalLink size={13} aria-hidden="true" />
+        </a>
+      </p>
     </div>
   );
 }

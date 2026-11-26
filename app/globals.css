@@ -524,3 +524,28 @@ html { scroll-padding-top: 100px; }
 .guide-record-type { overflow-wrap: normal; }
 .guide-sources a { display: inline-flex; align-items: center; gap: 6px; }
 @media (max-width: 700px) { .guide-record { grid-template-columns: 1fr; } }
+
+/* Design review: one primary action per screen, readable small headings, real list markers */
+a.app-button:hover { color: var(--paper); background: #ffc61a; border-color: #ffc61a; }
+.app-button.ghost { background: transparent; color: var(--ink); border-color: #777268; }
+.app-button.ghost:hover:enabled, a.app-button.ghost:hover { background: transparent; color: var(--lime); border-color: var(--lime); }
+.verdict > .app-button { flex-shrink: 0; }
+.guide-section h3, .guide-cta h2, .send-to-it h3, .public-reference h3, .setup-note h2 { font-variation-settings: 'wdth' 88; letter-spacing: 0; line-height: 1.2; }
+.step-how, .guide-section ol { list-style: decimal; }
+.guide-related ul, .guide-sources ul { list-style: disc; }
+.guide-related li::marker, .guide-sources li::marker, .step-how li::marker { color: var(--dim); }
+.guide-cta .app-button { flex-shrink: 0; }
+@media (max-width: 850px) {
+  .domain-heading { flex-wrap: nowrap; align-items: flex-start; }
+  .domain-heading-actions { margin-top: 0; }
+  .app-topbar { position: static; }
+}
+
+/* Kastro: maker credit, never a banner */
+.kastro-note { margin-top: 28px; max-width: 70ch; color: var(--dim); font-size: 14px; line-height: 1.7; }
+.kastro-note a { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); text-decoration: underline; text-underline-offset: 4px; white-space: nowrap; }
+.footer-maker a, .guide-meta a { color: var(--muted); text-decoration: underline; text-underline-offset: 4px; }
+.kastro-note a:hover, .footer-maker a:hover, .guide-meta a:hover { color: var(--lime); }
+.sidebar-bottom a.made-by { margin-top: 6px; color: var(--muted); }
+.sidebar-bottom a.made-by:hover { color: var(--lime); }
+.step-how li:only-child { list-style: none; margin-left: -20px; }

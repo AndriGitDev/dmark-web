@@ -46,6 +46,7 @@ import {
 import { presentScan } from "@/lib/scan-presentation";
 import { AuthenticationFindings } from "@/components/authentication-findings";
 import { trackPrivacyEvent } from "@/lib/privacy-events";
+import { kastroURL } from "@/lib/site";
 
 type View = "overview" | "domain" | "guide";
 
@@ -354,6 +355,16 @@ export function DmarkApp({ reference }: { reference: ReactNode }) {
             rel="noreferrer"
           >
             {t("source_code")}
+            <ExternalLink size={14} />
+          </a>
+          <a
+            className="made-by"
+            href={kastroURL(locale)}
+            target="_blank"
+            rel="noopener"
+            onClick={() => trackPrivacyEvent("cta_click", { source: "nav" })}
+          >
+            {text("Made by Kastro", "Smíðað af Kastro")}
             <ExternalLink size={14} />
           </a>
         </div>
@@ -666,15 +677,18 @@ export function DmarkApp({ reference }: { reference: ReactNode }) {
           )}
           {view === "overview" ? reference : null}
           <footer className="app-footer">
-            <span>{t("open_source")}</span>
+            <span className="footer-maker">
+              {text("dmark is a free tool from ", "dmark er ókeypis tól frá ")}
+              <a href={kastroURL(locale)} target="_blank" rel="noopener" onClick={() => trackPrivacyEvent("cta_click", { source: "footer" })}>Kastro</a>
+            </span>
             <span>{t("checks_note")}</span>
             <nav aria-label={text("Policies and contact", "Skilmálar og samband")}>
               <a href={sourceURL} target="_blank" rel="noreferrer">{t("source_code")}</a>
               <a href={`${sourceURL}/blob/main/LICENSE`}>AGPL-3.0</a>
-              <a href={`https://kastro.is/${locale}/privacy`}>{text("Privacy", "Persónuvernd")}</a>
-              <a href={`https://kastro.is/${locale}/terms`}>{text("Terms", "Skilmálar")}</a>
-              <a href={`https://kastro.is/${locale}/security`}>{text("Report a vulnerability", "Tilkynna öryggisveikleika")}</a>
-              <a href={`https://kastro.is/${locale}/contact`}>{text("Contact", "Hafa samband")}</a>
+              <a href={kastroURL(locale, "/privacy")}>{text("Privacy", "Persónuvernd")}</a>
+              <a href={kastroURL(locale, "/terms")}>{text("Terms", "Skilmálar")}</a>
+              <a href={kastroURL(locale, "/security")}>{text("Report a vulnerability", "Tilkynna öryggisveikleika")}</a>
+              <a href={kastroURL(locale, "/contact")}>{text("Contact", "Hafa samband")}</a>
             </nav>
           </footer>
         </main>

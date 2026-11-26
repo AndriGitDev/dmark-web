@@ -5,7 +5,7 @@ import { ExternalLink } from "lucide-react";
 import { CheckCta, GuideLayout } from "@/components/guide-layout";
 import { CopyButton } from "@/components/fix-plan";
 import { guideAlternates, guideById, guideBySlug, guideIndexCopy, guidePath, guides, guideSection, guideStructuredData, toGuideLocale, type Guide } from "@/lib/guides";
-import { lastReviewed, siteURL } from "@/lib/site";
+import { kastroURL, lastReviewed, siteURL } from "@/lib/site";
 
 export const dynamicParams = false;
 export function generateStaticParams() {
@@ -63,7 +63,7 @@ export default async function GuidePage({ params }: Params) {
       </nav>
       <article className="guide-article">
         <h1>{guide.title}</h1>
-        <p className="guide-meta">{t(`Last reviewed ${reviewed} · Kastro`, `Síðast yfirfarið ${reviewed} · Kastro`)}</p>
+        <p className="guide-meta">{t(`Last reviewed ${reviewed}`, `Síðast yfirfarið ${reviewed}`)} · <a href={kastroURL(l)} rel="noopener">Kastro</a></p>
         <p className="guide-answer">{guide.answer}</p>
         {guide.sections.map((s) => (
           <section key={s.heading} className="guide-section">

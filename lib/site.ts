@@ -9,3 +9,8 @@ export const kastroOrganization = {
   url: "https://kastro.is/",
   logo: `${siteURL}/brand/kastro/star-yellow.png`,
 } as const;
+
+/** Kastro publishes its pages under /is and /en only. */
+export function kastroURL(locale: string, path = "") {
+  return `https://kastro.is/${locale === "en" ? "en" : "is"}${path}`;
+}
